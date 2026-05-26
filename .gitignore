@@ -1,0 +1,12 @@
+# Pythonのキャッシュ
+__pycache__/
+*.pyc
+
+# システムファイル
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# エディタ設定
+.vscode/
+*.swp

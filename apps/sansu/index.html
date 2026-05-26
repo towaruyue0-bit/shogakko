@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>計算れんしゅう</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --clr-ok:   #38a169;
+      --clr-ng:   #e53e3e;
+      --clr-main: #667eea;
+    }
+
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(160deg, #e0f0ff 0%, #fce4ff 100%);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ─── ヘッダー ─────────────────────────────────────── */
+    .header {
+      width: 100%;
+      background: linear-gradient(135deg, #FF6B6B, #ee5a24);
+      color: white;
+      text-align: center;
+      padding: 16px 16px 14px;
+      position: relative;
+      box-shadow: 0 3px 14px rgba(238,90,36,0.35);
+    }
+    .header h1 { font-size: 1.3rem; font-weight: 900; }
+    .back-btn {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: white;
+      text-decoration: none;
+      font-size: 0.82rem;
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      padding: 5px 12px;
+    }
+
+    /* ─── セットアップ画面 ──────────────────────────────── */
+    #screen-setup {
+      width: 100%;
+      max-width: 420px;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .setup-section h2 {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #4a5568;
+      margin-bottom: 10px;
+    }
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .chip {
+      padding: 9px 18px;
+      border-radius: 30px;
+      border: 2.5px solid #cbd5e0;
+      background: white;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+      color: #4a5568;
+    }
+    .chip:hover  { border-color: #667eea; color: #667eea; }
+    .chip.active { border-color: #667eea; background: #667eea; color: white; }
+
+    .count-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .count-btn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .count-btn:hover { background: #ebf4ff; }
+    #q-count-display {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #2d3748;
+      min-width: 48px;
+      text-align: center;
+    }
+
+    .start-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #FF6B6B, #ee5a24);
+      color: white;
+      font-size: 1.15rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(238,90,36,0.4);
+      transition: transform 0.12s, box-shadow 0.12s;
+      font-family: inherit;
+    }
+    .start-btn:hover  { transform: translateY(-2px); box-shadow: 0 7px 22px rgba(238,90,36,0.5); }
+    .start-btn:active { transform: scale(0.97); }
+
+    /* ─── クイズ画面 ────────────────────────────────────── */
+    #screen-quiz { display: none; width: 100%; max-width: 460px; padding: 16px; }
+
+    /* 進捗バー */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .progress-bar-bg {
+      flex: 1;
+      height: 10px;
+      background: rgba(255,255,255,0.55);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #FF6B6B, #FECA57);
+      border-radius: 10px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #4a5568;
+      white-space: nowrap;
+    }
+
+    /* 問題カード */
+    .question-card {
+      background: white;
+      border-radius: 22px;
+      padding: 28px 20px 22px;
+      text-align: center;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .question-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #FF6B6B, #FECA57);
+    }
+    .question-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #a0aec0;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .question-text {
+      font-size: 3.2rem;
+      font-weight: 900;
+      color: #2d3748;
+      letter-spacing: 0.03em;
+      line-height: 1.1;
+    }
+    /* フィードバックアニメーション */
+    .feedback {
+      font-size: 2rem;
+      height: 40px;
+      line-height: 40px;
+      margin-top: 10px;
+      transition: opacity 0.3s;
+      opacity: 0;
+    }
+    .feedback.show { opacity: 1; }
+    .feedback.ok { color: var(--clr-ok); }
+    .feedback.ng { color: var(--clr-ng); }
+
+    /* スコア表示 */
+    .score-row {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-bottom: 12px;
+    }
+    .score-chip {
+      background: white;
+      border-radius: 30px;
+      padding: 6px 16px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .score-chip.correct { color: var(--clr-ok); }
+    .score-chip.wrong   { color: var(--clr-ng); }
+
+    /* 答え入力欄 */
+    .answer-area {
+      background: white;
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+      margin-bottom: 14px;
+    }
+    .answer-input {
+      width: 100%;
+      text-align: center;
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: #2d3748;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+      caret-color: #667eea;
+    }
+    .answer-input::placeholder { color: #e2e8f0; }
+
+    /* テンキー */
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .numpad-btn {
+      padding: 18px 8px;
+      border-radius: 13px;
+      border: none;
+      background: white;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.09);
+      transition: background 0.12s, transform 0.1s;
+      font-family: inherit;
+      color: #2d3748;
+    }
+    .numpad-btn:active { transform: scale(0.93); }
+    .numpad-btn:hover  { background: #ebf4ff; }
+    .numpad-btn.zero   { grid-column: 1 / 3; }
+    .numpad-btn.del    { background: #fff5f5; color: #e53e3e; }
+    .numpad-btn.ok     {
+      grid-column: 1 / -1;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 14px rgba(102,126,234,0.35);
+    }
+
+    /* ─── 結果画面 ──────────────────────────────────────── */
+    #screen-result {
+      display: none;
+      width: 100%;
+      max-width: 420px;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    .result-card {
+      background: white;
+      border-radius: 22px;
+      padding: 36px 24px;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .result-emoji { font-size: 4rem; margin-bottom: 12px; }
+    .result-title { font-size: 1.6rem; font-weight: 900; color: #2d3748; margin-bottom: 6px; }
+    .result-sub   { font-size: 0.92rem; color: #718096; margin-bottom: 20px; }
+    .result-score {
+      font-size: 3.5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #FF6B6B, #FECA57);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .result-detail {
+      font-size: 0.85rem;
+      color: #a0aec0;
+      margin-top: 6px;
+    }
+    .retry-btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 13px;
+      border: none;
+      background: linear-gradient(135deg, #FF6B6B, #ee5a24);
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(238,90,36,0.35);
+      margin-bottom: 12px;
+      font-family: inherit;
+      transition: transform 0.12s;
+    }
+    .retry-btn:hover  { transform: translateY(-2px); }
+    .home-btn {
+      display: block;
+      text-align: center;
+      color: #718096;
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── ヘッダー ──────────────────────────────────────────── -->
+<div class="header">
+  <a class="back-btn" href="../../index.html">← もどる</a>
+  <h1>🔢 計算れんしゅう</h1>
+</div>
+
+<!-- ─── セットアップ画面 ──────────────────────────────────── -->
+<div id="screen-setup">
+
+  <div class="setup-section">
+    <h2>📚 学年を選んでね</h2>
+    <div class="chip-row" id="grade-chips">
+      <div class="chip active" data-value="1">1年生</div>
+      <div class="chip"        data-value="2">2年生</div>
+      <div class="chip"        data-value="3">3年生</div>
+      <div class="chip"        data-value="4">4年生</div>
+    </div>
+  </div>
+
+  <div class="setup-section">
+    <h2>✏️ 種類を選んでね（複数OK）</h2>
+    <div class="chip-row" id="op-chips">
+      <div class="chip active" data-value="add">たし算</div>
+      <div class="chip"        data-value="sub">ひき算</div>
+      <div class="chip"        data-value="mul">かけ算</div>
+      <div class="chip"        data-value="div">わり算</div>
+    </div>
+  </div>
+
+  <div class="setup-section">
+    <h2>🔢 もんだいのかず</h2>
+    <div class="count-row">
+      <button class="count-btn" onclick="changeCount(-5)">－</button>
+      <div id="q-count-display">10</div>
+      <button class="count-btn" onclick="changeCount(+5)">＋</button>
+      <span style="font-size:0.85rem;color:#718096">もん</span>
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startQuiz()">
+    🚀 スタート！
+  </button>
+
+</div>
+
+<!-- ─── クイズ画面 ────────────────────────────────────────── -->
+<div id="screen-quiz">
+  <div class="score-row">
+    <div class="score-chip correct">⭕ <span id="correct-count">0</span></div>
+    <div class="score-chip wrong">❌ <span id="wrong-count">0</span></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-text" id="progress-text">1 / 10</div>
+  </div>
+
+  <div class="question-card">
+    <div class="question-label">もんだい</div>
+    <div class="question-text" id="question-text">？</div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <div class="answer-area">
+    <input class="answer-input" id="answer-input"
+           type="text" inputmode="none" readonly placeholder="？">
+  </div>
+
+  <div class="numpad">
+    <button class="numpad-btn" onclick="numInput('7')">7</button>
+    <button class="numpad-btn" onclick="numInput('8')">8</button>
+    <button class="numpad-btn" onclick="numInput('9')">9</button>
+    <button class="numpad-btn" onclick="numInput('4')">4</button>
+    <button class="numpad-btn" onclick="numInput('5')">5</button>
+    <button class="numpad-btn" onclick="numInput('6')">6</button>
+    <button class="numpad-btn" onclick="numInput('1')">1</button>
+    <button class="numpad-btn" onclick="numInput('2')">2</button>
+    <button class="numpad-btn" onclick="numInput('3')">3</button>
+    <button class="numpad-btn zero" onclick="numInput('0')">0</button>
+    <button class="numpad-btn del"  onclick="numDelete()">⌫</button>
+    <button class="numpad-btn ok"   onclick="submitAnswer()">こたえる ✓</button>
+  </div>
+</div>
+
+<!-- ─── 結果画面 ──────────────────────────────────────────── -->
+<div id="screen-result">
+  <div class="result-card">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <div class="result-title" id="result-title">すごい！</div>
+    <div class="result-sub"   id="result-sub">ぜんぶできたよ！</div>
+    <div class="result-score" id="result-score">10 / 10</div>
+    <div class="result-detail" id="result-detail">せいかいりつ 100%</div>
+  </div>
+  <button class="retry-btn" onclick="retryQuiz()">🔄 もういちどやる</button>
+  <a class="home-btn" href="../../index.html">🏠 ランチャーにもどる</a>
+</div>
+
+
+<script>
+  // ─── 定数 ────────────────────────────────────────────────────────────────────
+
+  /** 学年ごとの数値レンジ設定 */
+  const GRADE_CONFIG = {
+    1: { addMax: 10,  subMax: 10,  mulMax: 5,   divMax: 5  },
+    2: { addMax: 100, subMax: 100, mulMax: 9,   divMax: 9  },
+    3: { addMax: 999, subMax: 999, mulMax: 12,  divMax: 12 },
+    4: { addMax: 9999,subMax: 9999,mulMax: 20,  divMax: 20 },
+  };
+
+  /** 学年が上がると使える計算の種類 */
+  const GRADE_ALLOWED_OPS = {
+    1: ['add', 'sub'],
+    2: ['add', 'sub', 'mul'],
+    3: ['add', 'sub', 'mul', 'div'],
+    4: ['add', 'sub', 'mul', 'div'],
+  };
+
+  // ─── 状態変数 ────────────────────────────────────────────────────────────────
+  let selectedGrade   = 1;   // 選択中の学年
+  let selectedOps     = ['add']; // 選択中の計算種類
+  let questionCount   = 10;  // 問題数
+  let questions       = [];  // 生成した問題の配列
+  let currentQ        = 0;   // 現在の問題番号（0始まり）
+  let correctCount    = 0;   // 正解数
+  let wrongCount      = 0;   // 不正解数
+  let answered        = false; // 現在の問題に答えたか
+
+  // ─── セットアップ画面の操作 ──────────────────────────────────────────────────
+
+  /** 学年チップを押したとき */
+  document.getElementById('grade-chips').addEventListener('click', e => {
+    if (!e.target.dataset.value) return;
+    selectedGrade = parseInt(e.target.dataset.value);
+    document.querySelectorAll('#grade-chips .chip').forEach(c => c.classList.remove('active'));
+    e.target.classList.add('active');
+
+    // 選べない計算種類のチップを無効化
+    const allowed = GRADE_ALLOWED_OPS[selectedGrade];
+    document.querySelectorAll('#op-chips .chip').forEach(c => {
+      const op = c.dataset.value;
+      if (!allowed.includes(op)) {
+        c.classList.remove('active');
+        c.style.opacity = '0.35';
+        c.style.pointerEvents = 'none';
+      } else {
+        c.style.opacity = '';
+        c.style.pointerEvents = '';
+      }
+    });
+    // 選択されているopsのうち、使えないものを除外
+    selectedOps = selectedOps.filter(op => allowed.includes(op));
+    if (selectedOps.length === 0) {
+      selectedOps = ['add'];
+      document.querySelector('#op-chips .chip[data-value="add"]').classList.add('active');
+    }
+    updateOpChips();
+  });
+
+  /** 計算種類チップを押したとき（複数選択可） */
+  document.getElementById('op-chips').addEventListener('click', e => {
+    if (!e.target.dataset.value) return;
+    const op = e.target.dataset.value;
+    if (!GRADE_ALLOWED_OPS[selectedGrade].includes(op)) return;
+
+    if (selectedOps.includes(op)) {
+      // 最低1つは選択させる
+      if (selectedOps.length === 1) return;
+      selectedOps = selectedOps.filter(o => o !== op);
+    } else {
+      selectedOps.push(op);
+    }
+    updateOpChips();
+  });
+
+  function updateOpChips() {
+    document.querySelectorAll('#op-chips .chip').forEach(c => {
+      if (selectedOps.includes(c.dataset.value)) {
+        c.classList.add('active');
+      } else {
+        c.classList.remove('active');
+      }
+    });
+  }
+
+  /** 問題数の変更 */
+  function changeCount(delta) {
+    questionCount = Math.max(5, Math.min(30, questionCount + delta));
+    document.getElementById('q-count-display').textContent = questionCount;
+  }
+
+  // ─── 問題生成 ────────────────────────────────────────────────────────────────
+
+  /**
+   * 指定した学年・計算種類に合わせたランダムな問題を1つ生成する。
+   * @returns {{ text: string, answer: number }} 問題文と正解
+   */
+  function generateQuestion() {
+    const cfg = GRADE_CONFIG[selectedGrade];
+    const op  = selectedOps[Math.floor(Math.random() * selectedOps.length)];
+
+    let a, b, answer, opSymbol;
+
+    if (op === 'add') {
+      a = rand(1, cfg.addMax);
+      b = rand(1, cfg.addMax);
+      answer = a + b;
+      opSymbol = '＋';
+
+    } else if (op === 'sub') {
+      a = rand(1, cfg.subMax);
+      b = rand(1, a); // 答えが0以上になるよう
+      answer = a - b;
+      opSymbol = '－';
+
+    } else if (op === 'mul') {
+      a = rand(1, cfg.mulMax);
+      b = rand(1, cfg.mulMax);
+      answer = a * b;
+      opSymbol = '×';
+
+    } else { // div
+      // 割り切れる問題だけ作る
+      b = rand(1, cfg.divMax);
+      answer = rand(1, cfg.divMax);
+      a = b * answer;
+      opSymbol = '÷';
+    }
+
+    return {
+      text: `${a}  ${opSymbol}  ${b}  ＝`,
+      answer,
+    };
+  }
+
+  /** min 以上 max 以下のランダムな整数 */
+  function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  // ─── クイズ開始 ──────────────────────────────────────────────────────────────
+
+  function startQuiz() {
+    // 問題を一気に生成
+    questions = Array.from({ length: questionCount }, generateQuestion);
+    currentQ     = 0;
+    correctCount = 0;
+    wrongCount   = 0;
+
+    document.getElementById('screen-setup').style.display  = 'none';
+    document.getElementById('screen-result').style.display = 'none';
+    document.getElementById('screen-quiz').style.display   = 'block';
+
+    showQuestion();
+  }
+
+  /** 現在の問題を表示する */
+  function showQuestion() {
+    answered = false;
+    const q = questions[currentQ];
+    document.getElementById('question-text').textContent = q.text;
+    document.getElementById('answer-input').value = '';
+    document.getElementById('feedback').className  = 'feedback';
+    document.getElementById('feedback').textContent = '';
+
+    // 進捗バーを更新
+    const pct = (currentQ / questions.length) * 100;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent =
+      `${currentQ + 1} / ${questions.length}`;
+
+    // スコアを更新
+    document.getElementById('correct-count').textContent = correctCount;
+    document.getElementById('wrong-count').textContent   = wrongCount;
+  }
+
+  // ─── テンキー入力 ────────────────────────────────────────────────────────────
+
+  function numInput(digit) {
+    if (answered) return;
+    const el = document.getElementById('answer-input');
+    if (el.value.length >= 6) return; // 最大6桁
+    el.value += digit;
+  }
+
+  function numDelete() {
+    if (answered) return;
+    const el = document.getElementById('answer-input');
+    el.value = el.value.slice(0, -1);
+  }
+
+  /** キーボード入力にも対応 */
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('screen-quiz').style.display === 'none') return;
+    if (e.key >= '0' && e.key <= '9') numInput(e.key);
+    else if (e.key === 'Backspace')    numDelete();
+    else if (e.key === 'Enter')        submitAnswer();
+  });
+
+  // ─── 答え合わせ ──────────────────────────────────────────────────────────────
+
+  function submitAnswer() {
+    if (answered) {
+      // 答えた後にもう一度押したら次の問題へ
+      nextQuestion();
+      return;
+    }
+
+    const input = document.getElementById('answer-input').value.trim();
+    if (input === '') return;
+
+    answered = true;
+    const userAnswer = parseInt(input, 10);
+    const correct    = questions[currentQ].answer;
+    const fb         = document.getElementById('feedback');
+
+    if (userAnswer === correct) {
+      // 正解
+      correctCount++;
+      fb.textContent = `⭕  せいかい！（${correct}）`;
+      fb.className   = 'feedback show ok';
+    } else {
+      // 不正解
+      wrongCount++;
+      fb.textContent = `❌  こたえは ${correct} だよ`;
+      fb.className   = 'feedback show ng';
+    }
+
+    document.getElementById('correct-count').textContent = correctCount;
+    document.getElementById('wrong-count').textContent   = wrongCount;
+
+    // 0.8秒後に自動で次へ
+    setTimeout(nextQuestion, 900);
+  }
+
+  function nextQuestion() {
+    currentQ++;
+    if (currentQ >= questions.length) {
+      showResult();
+    } else {
+      showQuestion();
+    }
+  }
+
+  // ─── 結果表示 ────────────────────────────────────────────────────────────────
+
+  function showResult() {
+    document.getElementById('screen-quiz').style.display   = 'none';
+    document.getElementById('screen-result').style.display = 'block';
+
+    const pct = Math.round((correctCount / questions.length) * 100);
+
+    // 点数によって違うメッセージを表示
+    let emoji, title, sub;
+    if (pct === 100) {
+      emoji = '🎉'; title = 'かんぺき！！';  sub = 'ぜんぶせいかい！すごい！';
+    } else if (pct >= 80) {
+      emoji = '😊'; title = 'すごい！';      sub = 'ほぼぜんぶできたよ！';
+    } else if (pct >= 60) {
+      emoji = '🙂'; title = 'よくできた！';  sub = 'もうすこしだよ！';
+    } else if (pct >= 40) {
+      emoji = '😅'; title = 'がんばれ！';    sub = 'れんしゅうしてみよう！';
+    } else {
+      emoji = '💪'; title = 'チャレンジ！';  sub = 'いっしょにれんしゅうしよう！';
+    }
+
+    document.getElementById('result-emoji').textContent  = emoji;
+    document.getElementById('result-title').textContent  = title;
+    document.getElementById('result-sub').textContent    = sub;
+    document.getElementById('result-score').textContent  =
+      `${correctCount} / ${questions.length}`;
+    document.getElementById('result-detail').textContent =
+      `せいかいりつ ${pct}%`;
+  }
+
+  function retryQuiz() {
+    document.getElementById('screen-result').style.display = 'none';
+    document.getElementById('screen-setup').style.display  = 'flex';
+  }
+</script>
+</body>
+</html>

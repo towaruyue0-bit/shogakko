@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アプリ管理ツール</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      min-height: 100vh;
+    }
+
+    /* ─── ヘッダー ─────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #434190 0%, #553c9a 100%);
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+    .header h1 { font-size: 1.2rem; font-weight: 800; }
+    .header-links { margin-left: auto; display: flex; gap: 10px; }
+    .header-links a {
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 6px 14px;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 20px;
+      transition: background 0.2s;
+    }
+    .header-links a:hover { background: rgba(255,255,255,0.15); }
+
+    /* ─── メインレイアウト ──────────────────────────────── */
+    .container { max-width: 820px; margin: 0 auto; padding: 28px 16px; }
+
+    /* ─── セクションカード ──────────────────────────────── */
+    .card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #434190;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e9edf5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ─── アプリリスト ──────────────────────────────────── */
+    .app-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .app-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fafbff;
+    }
+    .app-item:hover { border-color: #7c6fe0; background: #f7f5ff; }
+
+    .app-item-icon {
+      font-size: 2rem;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .app-item-info { flex: 1; min-width: 0; }
+    .app-item-name { font-weight: 700; font-size: 0.95rem; }
+    .app-item-desc { font-size: 0.78rem; color: #718096; margin-top: 2px; }
+    .app-item-url  { font-size: 0.7rem; color: #a0aec0; margin-top: 2px;
+                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .app-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-small {
+      padding: 5px 12px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    .btn-small:hover { opacity: 0.8; }
+    .btn-edit   { background: #ebf4ff; color: #2b6cb0; }
+    .btn-delete { background: #fff5f5; color: #c53030; }
+    .btn-toggle { background: #f0fff4; color: #276749; }
+    .btn-toggle.hidden { background: #fffaf0; color: #975a16; }
+
+    /* ─── 追加・編集フォーム ────────────────────────────── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #4a5568;
+    }
+    .form-group input, .form-group select {
+      padding: 8px 11px;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+      outline: none;
+      font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: #7c6fe0;
+      box-shadow: 0 0 0 3px rgba(124,111,224,0.15);
+    }
+
+    /* アイコンプレビュー */
+    .icon-row { display: flex; align-items: center; gap: 10px; }
+    .icon-row input { flex: 1; }
+    .icon-preview {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      background: #f0f0f0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+      border: 1.5px solid #cbd5e0;
+    }
+
+    /* カラーピッカー */
+    .color-row { display: flex; align-items: center; gap: 8px; }
+    .color-row input[type="color"] {
+      width: 44px; height: 38px;
+      padding: 2px 3px;
+      cursor: pointer;
+    }
+    .color-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+    .color-dot {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .color-dot:hover { transform: scale(1.2); border-color: #4a5568; }
+
+    /* ─── ボタン ────────────────────────────────────────── */
+    .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+    .btn {
+      padding: 10px 22px;
+      border-radius: 9px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.92rem;
+      font-weight: 700;
+      transition: opacity 0.15s, transform 0.1s;
+      font-family: inherit;
+    }
+    .btn:hover  { opacity: 0.88; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary  { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn-cancel   { background: #edf2f7; color: #4a5568; }
+    .btn-save-all { background: linear-gradient(135deg, #38a169, #2f855a); color: white;
+                    width: 100%; padding: 14px; font-size: 1rem; border-radius: 10px;
+                    margin-top: 6px; }
+
+    /* ─── トースト通知 ──────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: #2d3748;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 9999;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ─── モーダル背景 ──────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-box h3 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      color: #434190;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <span>⚙️</span>
+  <h1>アプリ管理ツール</h1>
+  <div class="header-links">
+    <a href="index.html">← ランチャーへ</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ── 現在のアプリ一覧 ───────────────────────────────── -->
+  <div class="card">
+    <h2>📋 現在のアプリ一覧</h2>
+    <div class="app-list" id="app-list">
+      <p style="color:#a0aec0;text-align:center;padding:20px">読み込み中...</p>
+    </div>
+  </div>
+
+  <!-- ── 新しいアプリを追加 ─────────────────────────────── -->
+  <div class="card">
+    <h2>➕ 新しいアプリを追加</h2>
+    <div class="form-grid" id="add-form">
+
+      <div class="form-group full">
+        <label>アプリ名 *</label>
+        <input id="f-name" type="text" placeholder="例：漢字テスト">
+      </div>
+
+      <div class="form-group">
+        <label>アイコン（絵文字）</label>
+        <div class="icon-row">
+          <input id="f-icon" type="text" placeholder="例：📖" maxlength="4"
+                 oninput="document.getElementById('icon-prev').textContent=this.value||'📖'">
+          <div class="icon-preview" id="icon-prev">📖</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>カテゴリ</label>
+        <input id="f-category" type="text" placeholder="例：算数・漢字・その他">
+      </div>
+
+      <div class="form-group full">
+        <label>説明文</label>
+        <input id="f-desc" type="text" placeholder="例：たし算・ひき算の練習">
+      </div>
+
+      <div class="form-group full">
+        <label>URL（ファイルのパス）</label>
+        <input id="f-url" type="text" placeholder="例：apps/kanji/index.html">
+      </div>
+
+      <div class="form-group full">
+        <label>カードの色</label>
+        <div class="color-row">
+          <input type="color" id="f-color" value="#667eea">
+          <div class="color-presets" id="color-presets"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addApp()">➕ 追加する</button>
+    </div>
+  </div>
+
+  <!-- ── 保存 ───────────────────────────────────────────── -->
+  <button class="btn btn-save-all" onclick="saveAll()">
+    💾 すべての変更を保存してランチャーに反映する
+  </button>
+
+</div>
+
+<!-- ── 編集モーダル ─────────────────────────────────────── -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <h3>✏️ アプリを編集</h3>
+    <div class="form-grid">
+      <input type="hidden" id="e-idx">
+
+      <div class="form-group full">
+        <label>アプリ名 *</label>
+        <input id="e-name" type="text">
+      </div>
+
+      <div class="form-group">
+        <label>アイコン（絵文字）</label>
+        <div class="icon-row">
+          <input id="e-icon" type="text" maxlength="4"
+                 oninput="document.getElementById('edit-icon-prev').textContent=this.value||'📖'">
+          <div class="icon-preview" id="edit-icon-prev">📖</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>カテゴリ</label>
+        <input id="e-category" type="text">
+      </div>
+
+      <div class="form-group full">
+        <label>説明文</label>
+        <input id="e-desc" type="text">
+      </div>
+
+      <div class="form-group full">
+        <label>URL</label>
+        <input id="e-url" type="text">
+      </div>
+
+      <div class="form-group full">
+        <label>カードの色</label>
+        <div class="color-row">
+          <input type="color" id="e-color" value="#667eea">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── トースト通知 ─────────────────────────────────────── -->
+<div id="toast"></div>
+
+
+<script>
+  // ─── プリセットカラー ─────────────────────────────────────────────────────────
+  const PRESET_COLORS = [
+    '#FF6B6B','#FF9F43','#FECA57','#48DBFB',
+    '#1DD1A1','#54A0FF','#5F27CD','#C8D6E5',
+    '#EE5A24','#009432','#1289A7','#833471',
+  ];
+
+  // ─── データ ──────────────────────────────────────────────────────────────────
+  let siteData = { title: '', subtitle: '', apps: [] };
+
+  // ─── 初期化 ──────────────────────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', async () => {
+    buildColorPresets('color-presets', 'f-color');
+    await loadData();
+    renderList();
+  });
+
+  /** カラープリセットのドットを並べる */
+  function buildColorPresets(containerId, inputId) {
+    const el = document.getElementById(containerId);
+    PRESET_COLORS.forEach(c => {
+      const dot = document.createElement('div');
+      dot.className = 'color-dot';
+      dot.style.background = c;
+      dot.title = c;
+      dot.onclick = () => { document.getElementById(inputId).value = c; };
+      el.appendChild(dot);
+    });
+  }
+
+  /** apps.json を読み込む */
+  async function loadData() {
+    try {
+      const res = await fetch('apps.json?t=' + Date.now());
+      siteData = await res.json();
+      if (!Array.isArray(siteData.apps)) siteData.apps = [];
+    } catch {
+      showToast('⚠️ apps.json の読み込みに失敗しました。サーバーが起動しているか確認してください。');
+    }
+  }
+
+  // ─── アプリ一覧の描画 ────────────────────────────────────────────────────────
+  function renderList() {
+    const list = document.getElementById('app-list');
+    if (siteData.apps.length === 0) {
+      list.innerHTML = '<p style="color:#a0aec0;text-align:center;padding:20px">アプリがまだありません</p>';
+      return;
+    }
+    list.innerHTML = siteData.apps.map((app, i) => `
+      <div class="app-item" id="item-${i}">
+        <div class="app-item-icon" style="background:${app.color||'#eee'}22">
+          ${escHtml(app.icon || '📖')}
+        </div>
+        <div class="app-item-info">
+          <div class="app-item-name">${escHtml(app.name)}</div>
+          <div class="app-item-desc">${escHtml(app.description || '')}</div>
+          <div class="app-item-url">${escHtml(app.url || '')}</div>
+        </div>
+        <div class="app-item-actions">
+          <button class="btn-small btn-toggle ${app.visible===false?'hidden':''}"
+                  onclick="toggleVisible(${i})">
+            ${app.visible===false ? '🙈 非表示' : '👁 表示中'}
+          </button>
+          <button class="btn-small btn-edit"   onclick="openEdit(${i})">✏️ 編集</button>
+          <button class="btn-small btn-delete" onclick="deleteApp(${i})">🗑 削除</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ─── アプリ追加 ──────────────────────────────────────────────────────────────
+  function addApp() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { showToast('⚠️ アプリ名を入力してください'); return; }
+
+    const app = {
+      id: 'app_' + Date.now(),
+      name,
+      description: document.getElementById('f-desc').value.trim(),
+      icon:     document.getElementById('f-icon').value.trim() || '📖',
+      color:    document.getElementById('f-color').value,
+      url:      document.getElementById('f-url').value.trim(),
+      category: document.getElementById('f-category').value.trim() || 'その他',
+      visible:  true,
+    };
+
+    siteData.apps.push(app);
+    renderList();
+    showToast('✅ 追加しました！「保存」ボタンを押すとランチャーに反映されます。');
+
+    // フォームをリセット
+    ['f-name','f-desc','f-icon','f-url','f-category'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('f-color').value = '#667eea';
+    document.getElementById('icon-prev').textContent = '📖';
+  }
+
+  // ─── 表示切り替え ─────────────────────────────────────────────────────────────
+  function toggleVisible(i) {
+    siteData.apps[i].visible = siteData.apps[i].visible === false ? true : false;
+    renderList();
+  }
+
+  // ─── 削除 ────────────────────────────────────────────────────────────────────
+  function deleteApp(i) {
+    const name = siteData.apps[i].name;
+    if (!confirm(`「${name}」を削除しますか？`)) return;
+    siteData.apps.splice(i, 1);
+    renderList();
+    showToast('🗑 削除しました。「保存」ボタンを押すと反映されます。');
+  }
+
+  // ─── 編集モーダル ─────────────────────────────────────────────────────────────
+  function openEdit(i) {
+    const app = siteData.apps[i];
+    document.getElementById('e-idx').value      = i;
+    document.getElementById('e-name').value     = app.name || '';
+    document.getElementById('e-icon').value     = app.icon || '';
+    document.getElementById('e-desc').value     = app.description || '';
+    document.getElementById('e-url').value      = app.url || '';
+    document.getElementById('e-category').value = app.category || '';
+    document.getElementById('e-color').value    = app.color || '#667eea';
+    document.getElementById('edit-icon-prev').textContent = app.icon || '📖';
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+  }
+
+  function saveEdit() {
+    const i   = parseInt(document.getElementById('e-idx').value);
+    const app = siteData.apps[i];
+    app.name        = document.getElementById('e-name').value.trim();
+    app.icon        = document.getElementById('e-icon').value.trim() || '📖';
+    app.description = document.getElementById('e-desc').value.trim();
+    app.url         = document.getElementById('e-url').value.trim();
+    app.category    = document.getElementById('e-category').value.trim() || 'その他';
+    app.color       = document.getElementById('e-color').value;
+    closeModal();
+    renderList();
+    showToast('✅ 編集しました。「保存」ボタンを押すと反映されます。');
+  }
+
+  // ─── 保存（サーバーAPIにPOST） ────────────────────────────────────────────────
+  async function saveAll() {
+    try {
+      const res = await fetch('/api/save-apps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(siteData),
+      });
+      const result = await res.json();
+      if (result.ok) {
+        showToast('🎉 保存しました！ランチャーを更新すると反映されます。');
+      } else {
+        showToast('⚠️ 保存に失敗しました: ' + (result.error || '不明なエラー'));
+      }
+    } catch {
+      showToast('⚠️ サーバーに接続できません。サーバーが起動しているか確認してください。');
+    }
+  }
+
+  // ─── トースト通知 ─────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  /** XSS対策：HTML特殊文字をエスケープ */
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // モーダル外クリックで閉じる
+  document.getElementById('edit-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+</script>
+</body>
+</html>

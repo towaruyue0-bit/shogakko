@@ -1,0 +1,16 @@
+{
+  "title": "小学校 学習アプリ",
+  "subtitle": "いっしょにべんきょうしよう！",
+  "apps": [
+    {
+      "id": "sansu",
+      "name": "計算れんしゅう",
+      "description": "たし算・ひき算・かけ算・わり算",
+      "icon": "🔢",
+      "color": "#FF6B6B",
+      "url": "apps/sansu/",
+      "category": "算数",
+      "visible": true
+    }
+  ]
+}
