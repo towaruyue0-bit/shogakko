@@ -351,13 +351,9 @@
     </div>
   </div>
 
-  <!-- 問題文 -->
+  <!-- 問題文（JS で「Aと□でB」か「□とAでB」を描画） -->
   <div class="question-box">
-    <div class="q-text">
-      <span class="q-target" id="q-target">10</span> は&nbsp;
-      <span class="q-given" id="q-given">3</span> と&nbsp;
-      <span class="q-blank" id="q-blank">？</span>
-    </div>
+    <div class="q-text" id="q-text"></div>
   </div>
 
   <!-- 答えボタン -->
@@ -403,6 +399,7 @@
   let givenNum = 0;         // 提示している数（given）
   let waiting = false;      // 答え判定中フラグ（連打防止）
   let usedGivens = [];      // 同じ問題が続かないよう管理
+  let blankFirst = false;   // □が左側かどうか（「□とAでB」or「Aと□でB」）
 
   // ======================================================
   // スタート画面
@@ -459,18 +456,32 @@
     givenNum = newGiven;
     correctAns = target - givenNum;
 
+    // □ が左右どちらに来るかをランダムに決める
+    blankFirst = Math.random() < 0.5;
+
     // UI 更新
-    document.getElementById('q-target').textContent = target;
-    document.getElementById('q-given').textContent = givenNum;
-    document.getElementById('q-blank').textContent = '？';
-    document.getElementById('q-blank').className = 'q-blank';
     document.getElementById('target-disp').textContent = target;
     document.getElementById('score-disp').textContent = score;
     document.getElementById('qnum-disp').textContent = qNum;
     document.getElementById('qtotal-disp').textContent = TOTAL_Q;
 
+    renderQuestion();
     renderDots();
     renderChoices();
+  }
+
+  /**
+   * 問題文を描画する。
+   * blankFirst=true  → 「□ と A で B」
+   * blankFirst=false → 「A と □ で B」
+   */
+  function renderQuestion() {
+    const blank = `<span class="q-blank" id="q-blank">□</span>`;
+    const given = `<span class="q-given">${givenNum}</span>`;
+    const tgt   = `<span class="q-target">${target}</span>`;
+    document.getElementById('q-text').innerHTML = blankFirst
+      ? `${blank} と ${given} で ${tgt}`
+      : `${given} と ${blank} で ${tgt}`;
   }
 
   /** 10マス（5×2）のドットを描画する */
@@ -482,10 +493,12 @@
       let cls;
       if (i >= target) {
         cls = 'dot unused';
-      } else if (i < givenNum) {
-        cls = 'dot filled';    // 与えられた数（赤）
+      } else if (blankFirst) {
+        // 「□ と given で target」→ 空白が先、赤が後ろ
+        cls = i < correctAns ? 'dot empty' : 'dot filled';
       } else {
-        cls = 'dot empty';     // 答えの数（空白）
+        // 「given と □ で target」→ 赤が先、空白が後ろ
+        cls = i < givenNum ? 'dot filled' : 'dot empty';
       }
       cells.push(`<div class="${cls}"></div>`);
     }
@@ -531,7 +544,7 @@
       btn.classList.add('wrong-ans');
 
       setTimeout(() => {
-        blank.textContent = '？';
+        blank.textContent = '□';
         blank.className = 'q-blank';
         btn.classList.remove('wrong-ans');
         allBtns.forEach(b => b.disabled = false);
