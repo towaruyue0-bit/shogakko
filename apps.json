@@ -11,6 +11,26 @@
       "url": "apps/sansu/",
       "category": "算数",
       "visible": true
+    },
+    {
+      "id": "ikutsutoikutsu",
+      "name": "いくつと いくつ",
+      "description": "○は□といくつ？ かずの ゲーム",
+      "icon": "🎯",
+      "color": "#26C6DA",
+      "url": "apps/ikutsutoikutsu/",
+      "category": "算数",
+      "visible": true
+    },
+    {
+      "id": "ondoku",
+      "name": "おんどく れんしゅう",
+      "description": "おはなしを よみあげよう",
+      "icon": "📖",
+      "color": "#FF6B9D",
+      "url": "apps/ondoku/",
+      "category": "こくご",
+      "visible": true
     }
   ]
 }

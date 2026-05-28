@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>いくつと いくつ</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(135deg, #E0F7FA 0%, #E8F5E9 100%);
+      min-height: 100dvh;
+      color: #2d3748;
+      user-select: none;
+    }
+
+    /* ─── ヘッダー ─────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #26C6DA 0%, #43A047 100%);
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 3px 12px rgba(38,198,218,0.35);
+    }
+    .back-btn {
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: white;
+      font-size: 0.9rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: inherit;
+    }
+    .back-btn:active { opacity: 0.7; }
+    .header h1 { font-size: 1.25rem; font-weight: 900; }
+
+    /* ─── スタート画面 ─────────────────────── */
+    #screen-start {
+      padding: 32px 20px;
+      text-align: center;
+    }
+    .start-icon { font-size: 4rem; margin-bottom: 12px; }
+    .start-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #00838F;
+      margin-bottom: 6px;
+    }
+    .start-sub { font-size: 0.9rem; color: #718096; margin-bottom: 32px; }
+
+    .num-select-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #718096;
+      margin-bottom: 14px;
+    }
+    .num-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      max-width: 320px;
+      margin: 0 auto 32px;
+    }
+    .num-btn {
+      background: white;
+      border: 3px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 18px 8px;
+      font-size: 2rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      color: #2d3748;
+      transition: transform 0.13s, border-color 0.13s, background 0.13s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+    }
+    .num-btn:active,
+    .num-btn.sel {
+      transform: scale(0.95);
+      border-color: #26C6DA;
+      background: #E0F7FA;
+      color: #00838F;
+    }
+    .num-btn .num-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #a0aec0;
+      margin-top: 4px;
+    }
+    .start-go-btn {
+      background: linear-gradient(135deg, #26C6DA, #43A047);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 18px 48px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 16px rgba(38,198,218,0.4);
+      transition: opacity 0.15s;
+    }
+    .start-go-btn:active { opacity: 0.85; }
+
+    /* ─── ゲーム画面 ────────────────────────── */
+    #screen-game {
+      display: none;
+      flex-direction: column;
+      padding: 20px 18px;
+      gap: 20px;
+    }
+
+    /* スコア・問題数バー */
+    .game-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .score-box {
+      background: white;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #43A047;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .qnum-box {
+      background: white;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #718096;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    /* ドット表示エリア */
+    .dot-area {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .dot-area-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #a0aec0;
+      margin-bottom: 14px;
+      letter-spacing: 0.06em;
+    }
+    /* 10マス（5×2グリッド）で表示 */
+    .dot-frame {
+      display: inline-grid;
+      grid-template-columns: repeat(5, 44px);
+      grid-template-rows: repeat(2, 44px);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .dot {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .dot.filled {
+      background: #FF6B6B;
+      border-color: #FF6B6B;
+      box-shadow: 0 2px 6px rgba(255,107,107,0.4);
+    }
+    .dot.answer {
+      background: #26C6DA;
+      border-color: #26C6DA;
+      box-shadow: 0 2px 6px rgba(38,198,218,0.4);
+    }
+    .dot.empty {
+      background: #f7fafc;
+      border-color: #CBD5E0;
+    }
+    /* 対象外のマス（使わないマス）は非表示 */
+    .dot.unused {
+      visibility: hidden;
+    }
+
+    /* 問題文 */
+    .question-box {
+      background: white;
+      border-radius: 20px;
+      padding: 22px 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .q-text {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      line-height: 1.6;
+    }
+    .q-target { color: #43A047; }
+    .q-given  { color: #FF6B6B; }
+    .q-blank  {
+      display: inline-block;
+      min-width: 60px;
+      height: 52px;
+      background: #E0F7FA;
+      border: 3px solid #26C6DA;
+      border-radius: 12px;
+      vertical-align: middle;
+      line-height: 46px;
+      font-size: 2rem;
+      color: #00838F;
+      transition: background 0.2s;
+    }
+    .q-blank.correct { background: #CCFFD6; border-color: #43A047; }
+    .q-blank.wrong   { background: #FFE0E0; border-color: #FF6B6B;
+                       animation: shake 0.3s ease; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-8px); }
+      75%      { transform: translateX(8px); }
+    }
+
+    /* 答えボタン */
+    .answer-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .ans-btn {
+      background: white;
+      border: 3px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px 8px;
+      font-size: 1.6rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      color: #2d3748;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+      transition: transform 0.1s, border-color 0.1s;
+    }
+    .ans-btn:active { transform: scale(0.93); }
+    .ans-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+    .ans-btn.correct-ans {
+      background: #CCFFD6;
+      border-color: #43A047;
+      color: #43A047;
+    }
+    .ans-btn.wrong-ans {
+      background: #FFE0E0;
+      border-color: #FF6B6B;
+      color: #FF6B6B;
+    }
+
+    /* ─── かんりょう画面 ────────────────────── */
+    #screen-done {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80dvh;
+      padding: 40px 24px;
+      text-align: center;
+      gap: 0;
+    }
+    .done-star { font-size: 5rem; animation: pop 0.5s ease; margin-bottom: 16px; }
+    @keyframes pop {
+      0%   { transform: scale(0.3) rotate(-15deg); }
+      70%  { transform: scale(1.2) rotate(5deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    .done-title { font-size: 1.9rem; font-weight: 900; color: #43A047; margin-bottom: 8px; }
+    .done-sub   { font-size: 1rem; color: #718096; margin-bottom: 28px; }
+    .done-score {
+      background: white;
+      border-radius: 20px;
+      padding: 20px 40px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+    }
+    .done-score-num {
+      font-size: 3rem;
+      font-weight: 900;
+      color: #26C6DA;
+      line-height: 1;
+    }
+    .done-score-label { font-size: 0.9rem; color: #a0aec0; margin-top: 4px; }
+    .done-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .retry-btn, .home-btn {
+      border: none;
+      border-radius: 14px;
+      padding: 16px 28px;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .retry-btn {
+      background: linear-gradient(135deg, #26C6DA, #43A047);
+      color: white;
+      box-shadow: 0 4px 14px rgba(38,198,218,0.35);
+    }
+    .home-btn {
+      background: white;
+      color: #718096;
+      border: 2px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <button class="back-btn" id="header-back" onclick="handleBack()">‹ もどる</button>
+  <h1>🔢 いくつと いくつ</h1>
+</div>
+
+<!-- ① スタート画面（数字えらび） -->
+<div id="screen-start">
+  <div class="start-icon">🎯</div>
+  <div class="start-title">いくつと いくつ？</div>
+  <div class="start-sub">れんしゅうする かずを えらんでね</div>
+
+  <div class="num-select-label">どの かずで れんしゅうする？</div>
+  <div class="num-grid" id="num-grid"></div>
+
+  <button class="start-go-btn" onclick="startGame()">スタート！ ▶</button>
+</div>
+
+<!-- ② ゲーム画面 -->
+<div id="screen-game">
+  <div class="game-topbar">
+    <div class="score-box">⭕ <span id="score-disp">0</span>もん せいかい</div>
+    <div class="qnum-box"><span id="qnum-disp">1</span> / <span id="qtotal-disp">10</span>もん め</div>
+  </div>
+
+  <!-- ドットフレーム（10マス） -->
+  <div class="dot-area">
+    <div class="dot-area-label">ぜんぶで いくつ？</div>
+    <div class="dot-frame" id="dot-frame"></div>
+    <div style="font-size:2rem; font-weight:900; color:#43A047">
+      ぜんぶで <span id="target-disp" style="font-size:2.5rem">10</span> こ
+    </div>
+  </div>
+
+  <!-- 問題文 -->
+  <div class="question-box">
+    <div class="q-text">
+      <span class="q-target" id="q-target">10</span> は&nbsp;
+      <span class="q-given" id="q-given">3</span> と&nbsp;
+      <span class="q-blank" id="q-blank">？</span>
+    </div>
+  </div>
+
+  <!-- 答えボタン -->
+  <div class="answer-grid" id="answer-grid"></div>
+</div>
+
+<!-- ③ かんりょう画面 -->
+<div id="screen-done">
+  <div class="done-star">🏆</div>
+  <div class="done-title">かんりょう！</div>
+  <div class="done-sub">よく がんばったね！</div>
+  <div class="done-score">
+    <div class="done-score-num"><span id="final-score">0</span> / <span id="final-total">10</span></div>
+    <div class="done-score-label">せいかい</div>
+  </div>
+  <div class="done-btns">
+    <button class="retry-btn" onclick="retryGame()">もう いちど ▶</button>
+    <button class="home-btn" onclick="showScreen('start')">かずを かえる</button>
+  </div>
+</div>
+
+<script>
+  // ======================================================
+  // 設定
+  // ======================================================
+  const TOTAL_Q = 10;       // 1ゲームの問題数
+  const NUM_CHOICES = 4;    // 答えの選択肢数
+
+  // 選択できる対象数（1年生の学習範囲：5〜10）
+  const TARGET_NUMS = [
+    { n: 5,  label: '5' },
+    { n: 6,  label: '6' },
+    { n: 7,  label: '7' },
+    { n: 8,  label: '8' },
+    { n: 9,  label: '9' },
+    { n: 10, label: '10' },
+  ];
+
+  let target = 10;          // 選択した対象数
+  let score = 0;            // 正解数
+  let qNum = 0;             // 現在の問題番号（0始まり）
+  let correctAns = 0;       // 現在の問題の正解
+  let givenNum = 0;         // 提示している数（given）
+  let waiting = false;      // 答え判定中フラグ（連打防止）
+  let usedGivens = [];      // 同じ問題が続かないよう管理
+
+  // ======================================================
+  // スタート画面
+  // ======================================================
+  function initStartScreen() {
+    document.getElementById('num-grid').innerHTML = TARGET_NUMS.map(t =>
+      `<button class="num-btn ${t.n === target ? 'sel' : ''}"
+               onclick="selectTarget(${t.n})">
+        ${t.n}
+        <span class="num-label">${'⭐'.repeat(t.n <= 6 ? 1 : t.n <= 8 ? 2 : 3)}</span>
+      </button>`
+    ).join('');
+  }
+
+  function selectTarget(n) {
+    target = n;
+    initStartScreen();
+  }
+
+  function startGame() {
+    score = 0;
+    qNum = 0;
+    usedGivens = [];
+    showScreen('game');
+    nextQuestion();
+  }
+
+  function retryGame() {
+    startGame();
+  }
+
+  // ======================================================
+  // ゲーム
+  // ======================================================
+  function nextQuestion() {
+    waiting = false;
+    qNum++;
+
+    // 全問終了
+    if (qNum > TOTAL_Q) {
+      showDone();
+      return;
+    }
+
+    // given をランダムに決める（target-1 通り、直前と同じ値は避ける）
+    let newGiven;
+    const all = Array.from({ length: target - 1 }, (_, i) => i + 1);
+    // 使ったgivensが全部埋まったらリセット
+    if (usedGivens.length >= all.length) usedGivens = [];
+    const available = all.filter(n => !usedGivens.includes(n));
+    newGiven = available[Math.floor(Math.random() * available.length)];
+    usedGivens.push(newGiven);
+
+    givenNum = newGiven;
+    correctAns = target - givenNum;
+
+    // UI 更新
+    document.getElementById('q-target').textContent = target;
+    document.getElementById('q-given').textContent = givenNum;
+    document.getElementById('q-blank').textContent = '？';
+    document.getElementById('q-blank').className = 'q-blank';
+    document.getElementById('target-disp').textContent = target;
+    document.getElementById('score-disp').textContent = score;
+    document.getElementById('qnum-disp').textContent = qNum;
+    document.getElementById('qtotal-disp').textContent = TOTAL_Q;
+
+    renderDots();
+    renderChoices();
+  }
+
+  /** 10マス（5×2）のドットを描画する */
+  function renderDots() {
+    const frame = document.getElementById('dot-frame');
+    // 10マス固定で描画し、target 以降は unused（透明）にする
+    const cells = [];
+    for (let i = 0; i < 10; i++) {
+      let cls;
+      if (i >= target) {
+        cls = 'dot unused';
+      } else if (i < givenNum) {
+        cls = 'dot filled';    // 与えられた数（赤）
+      } else {
+        cls = 'dot empty';     // 答えの数（空白）
+      }
+      cells.push(`<div class="${cls}"></div>`);
+    }
+    frame.innerHTML = cells.join('');
+  }
+
+  /** 答えの選択肢ボタンを生成する */
+  function renderChoices() {
+    // 正解 + ランダムな間違い (NUM_CHOICES-1)個
+    const all = Array.from({ length: target + 1 }, (_, i) => i); // 0〜target
+    const wrong = shuffle(all.filter(n => n !== correctAns));
+    const choices = shuffle([correctAns, ...wrong.slice(0, NUM_CHOICES - 1)]);
+
+    document.getElementById('answer-grid').innerHTML = choices.map(n =>
+      `<button class="ans-btn" onclick="checkAnswer(${n}, this)">${n}</button>`
+    ).join('');
+  }
+
+  /** 答えをチェックする */
+  function checkAnswer(chosen, btn) {
+    if (waiting) return;
+    waiting = true;
+
+    const blank = document.getElementById('q-blank');
+    const allBtns = document.querySelectorAll('.ans-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    if (chosen === correctAns) {
+      // ─ 正解 ─
+      score++;
+      blank.textContent = chosen;
+      blank.classList.add('correct');
+      btn.classList.add('correct-ans');
+
+      // ドットを正解色（青）に塗る
+      const dots = document.querySelectorAll('#dot-frame .dot.empty');
+      dots.forEach(d => { d.classList.remove('empty'); d.classList.add('answer'); });
+
+      setTimeout(nextQuestion, 1000);
+    } else {
+      // ─ 不正解 ─
+      blank.classList.add('wrong');
+      btn.classList.add('wrong-ans');
+
+      setTimeout(() => {
+        blank.textContent = '？';
+        blank.className = 'q-blank';
+        btn.classList.remove('wrong-ans');
+        allBtns.forEach(b => b.disabled = false);
+        waiting = false;
+      }, 700);
+    }
+  }
+
+  // ======================================================
+  // 結果画面
+  // ======================================================
+  function showDone() {
+    document.getElementById('final-score').textContent = score;
+    document.getElementById('final-total').textContent = TOTAL_Q;
+    showScreen('done');
+  }
+
+  // ======================================================
+  // 画面切り替え
+  // ======================================================
+  function showScreen(name) {
+    document.getElementById('screen-start').style.display = name === 'start' ? 'block' : 'none';
+    const gEl = document.getElementById('screen-game');
+    gEl.style.display = name === 'game' ? 'flex' : 'none';
+    if (name === 'game') gEl.style.flexDirection = 'column';
+    const dEl = document.getElementById('screen-done');
+    dEl.style.display = name === 'done' ? 'flex' : 'none';
+    if (name === 'done') dEl.style.flexDirection = 'column';
+  }
+
+  function handleBack() {
+    const gameVisible = document.getElementById('screen-game').style.display === 'flex';
+    const doneVisible = document.getElementById('screen-done').style.display === 'flex';
+    if (gameVisible || doneVisible) {
+      showScreen('start');
+    } else {
+      location.href = '../../index.html';
+    }
+  }
+
+  // ======================================================
+  // ユーティリティ
+  // ======================================================
+  /** 配列をランダムにシャッフルする（Fisher-Yates） */
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // ======================================================
+  // 起動
+  // ======================================================
+  initStartScreen();
+</script>
+</body>
+</html>
