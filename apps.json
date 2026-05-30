@@ -31,6 +31,16 @@
       "url": "apps/ondoku/",
       "category": "こくご",
       "visible": true
+    },
+    {
+      "id": "keyboard",
+      "name": "キーボード れんしゅう",
+      "description": "アルファベットを キーボードで うとう",
+      "icon": "⌨️",
+      "color": "#4299e1",
+      "url": "apps/keyboard/",
+      "category": "えいご",
+      "visible": true
     }
   ]
 }
