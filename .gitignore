@@ -10,3 +10,6 @@ desktop.ini
 # エディタ設定
 .vscode/
 *.swp
+
+# Local Netlify folder
+.netlify
