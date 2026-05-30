@@ -737,7 +737,8 @@
     answered = true;
 
     const target = questions[currentQ];
-    const isCorrect = (typed === target);
+    // 大文字・小文字の区別をせず、キーの位置だけで判定する
+    const isCorrect = (typed.toLowerCase() === target.toLowerCase());
     const fb = document.getElementById('feedback');
     const letterEl = document.getElementById('target-letter');
 
