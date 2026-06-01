@@ -128,7 +128,7 @@
 
     .read-body {
       flex: 1;
-      padding: 28px 22px 16px;
+      padding: 28px 22px 100px;
       overflow-y: auto;
       line-height: 2.4;
       font-size: 1.65rem;
@@ -150,12 +150,17 @@
     .sen.done { color: #cbd5e0; }
 
     .read-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
       padding: 16px;
       display: flex;
       align-items: center;
       gap: 12px;
       background: white;
       box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+      z-index: 10;
     }
     .counter-badge {
       background: #f7fafc;
