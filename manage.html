@@ -203,6 +203,26 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    /* ─── おんどく テキストエリア ──────────────────────── */
+    .od-textarea {
+      width: 100%;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 8px;
+      padding: 8px 11px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      min-height: 160px;
+      line-height: 2;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .od-textarea:focus {
+      border-color: #FF6B9D;
+      box-shadow: 0 0 0 3px rgba(255,107,157,0.15);
+    }
+    .od-hint { font-size: 0.75rem; color: #a0aec0; margin-top: 4px; }
+
     /* ─── モーダル背景 ──────────────────────────────────── */
     .modal-overlay {
       display: none;
@@ -305,6 +325,43 @@
     💾 すべての変更を保存してランチャーに反映する
   </button>
 
+  <!-- ── おんどく おはなし管理 ──────────────────────────── -->
+  <div class="card" style="margin-top:32px">
+    <h2 style="color:#d53f8c">📖 おんどく れんしゅう — おはなし管理</h2>
+
+    <div id="ondoku-list" class="app-list"></div>
+
+    <div style="margin-top:20px; border-top:2px solid #e9edf5; padding-top:20px">
+      <p style="font-size:0.85rem; font-weight:700; color:#4a5568; margin-bottom:14px">＋ おはなしを追加</p>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>タイトル *</label>
+          <input id="od-title" type="text" placeholder="例：だくてん れんしゅう">
+        </div>
+        <div class="form-group">
+          <label>えもじ</label>
+          <div class="icon-row">
+            <input id="od-emoji" type="text" placeholder="🐐" maxlength="4"
+                   oninput="document.getElementById('od-emoji-prev').textContent=this.value||'📖'">
+            <div class="icon-preview" id="od-emoji-prev">📖</div>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>ぶんしょう *</label>
+          <textarea id="od-text" class="od-textarea"
+            placeholder="ここにぶんしょうをうちこんでください。&#10;&#10;Enterキー（かいぎょう）でくぎると&#10;1ぎょうずつよめます。"></textarea>
+          <p class="od-hint">※ Enterで改行すると 1文ずつ読めます</p>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" style="background:linear-gradient(135deg,#FF6B9D,#A855F7);color:white"
+                onclick="addOndokuStory()">➕ おはなしを追加する</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ── 編集モーダル ─────────────────────────────────────── -->
@@ -378,6 +435,7 @@
     buildColorPresets('color-presets', 'f-color');
     await loadData();
     renderList();
+    renderOndokuList();
   });
 
   /** カラープリセットのドットを並べる */
@@ -546,6 +604,78 @@
   document.getElementById('edit-modal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
   });
+
+  // ─── おんどく おはなし管理 ────────────────────────────────────────────────────
+  const ONDOKU_KEY = 'ondoku_v1';
+
+  /** localStorageからおはなし一覧を読み込む */
+  function loadOndokuStories() {
+    try {
+      const raw = localStorage.getItem(ONDOKU_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  }
+
+  /** localStorageにおはなし一覧を保存する */
+  function saveOndokuStories(stories) {
+    localStorage.setItem(ONDOKU_KEY, JSON.stringify(stories));
+  }
+
+  /** おはなし一覧を画面に描画する */
+  function renderOndokuList() {
+    const stories = loadOndokuStories();
+    const list = document.getElementById('ondoku-list');
+    if (stories.length === 0) {
+      list.innerHTML = '<p style="color:#a0aec0;text-align:center;padding:16px">おはなしがまだありません</p>';
+      return;
+    }
+    list.innerHTML = stories.map((s, i) => {
+      const lines = s.text.split('\n').filter(l => l.trim()).length;
+      return `
+        <div class="app-item">
+          <div class="app-item-icon" style="background:#FFF0F8; font-size:1.8rem;">
+            ${escHtml(s.emoji || '📖')}
+          </div>
+          <div class="app-item-info">
+            <div class="app-item-name">${escHtml(s.title)}</div>
+            <div class="app-item-desc">${lines}ぶん</div>
+          </div>
+          <div class="app-item-actions">
+            <button class="btn-small btn-delete" onclick="deleteOndokuStory(${i})">🗑 削除</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  /** おはなしを追加してlocalStorageに保存する */
+  function addOndokuStory() {
+    const title = document.getElementById('od-title').value.trim();
+    const text  = document.getElementById('od-text').value.trim();
+    if (!title || !text) {
+      showToast('⚠️ タイトルとぶんしょうを入力してください');
+      return;
+    }
+    const emoji = document.getElementById('od-emoji').value.trim() || '📖';
+    const stories = loadOndokuStories();
+    stories.push({ id: 'story_' + Date.now(), title, emoji, text });
+    saveOndokuStories(stories);
+    renderOndokuList();
+    showToast('✅ おはなしを追加しました！');
+    document.getElementById('od-title').value = '';
+    document.getElementById('od-text').value  = '';
+    document.getElementById('od-emoji').value = '';
+    document.getElementById('od-emoji-prev').textContent = '📖';
+  }
+
+  /** おはなしを削除してlocalStorageに保存する */
+  function deleteOndokuStory(i) {
+    const stories = loadOndokuStories();
+    if (!confirm(`「${stories[i].title}」を削除しますか？`)) return;
+    stories.splice(i, 1);
+    saveOndokuStories(stories);
+    renderOndokuList();
+    showToast('🗑 削除しました');
+  }
 </script>
 </body>
 </html>
