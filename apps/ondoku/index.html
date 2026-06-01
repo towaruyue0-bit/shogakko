@@ -357,29 +357,37 @@
   let sentences = [];
   let curIdx = 0;
 
+  // アプリに最初から入れておくおはなし一覧
+  const PRESET_STORIES = [
+    {
+      id: 'sample1',
+      title: 'サンプル：はるの いちにち',
+      emoji: '🌸',
+      text: 'きょうは はるの いいてんき です。\nそらは あおく、はなが さいています。\nちょうちょが ひらひら とんでいます。\nきもちの よい いちにちです。'
+    },
+    {
+      id: 'sample2',
+      title: 'だくてん れんしゅう',
+      emoji: '🐐',
+      text: 'かき　かぎ\nさる　ざる\nたい　だい\nふかふか　ぶかぶか　ぷかぷか\nみぎに　なべ　もつ　やぎさんと、\nひだりに　ふた　もつ　ぶたさんが、\nおひるの　おかず　かんがえる。'
+    }
+  ];
+
   /** 初期化：localStorage からストーリーを読み込む */
   function init() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       try { stories = JSON.parse(raw); } catch { stories = []; }
-    } else {
-      // 初回はサンプルを2件入れておく
-      stories = [
-        {
-          id: 'sample1',
-          title: 'サンプル：はるの いちにち',
-          emoji: '🌸',
-          text: 'きょうは はるの いいてんき です。\nそらは あおく、はなが さいています。\nちょうちょが ひらひら とんでいます。\nきもちの よい いちにちです。'
-        },
-        {
-          id: 'sample2',
-          title: 'だくてん れんしゅう',
-          emoji: '🐐',
-          text: 'かき　かぎ\nさる　ざる\nたい　だい\nふかふか　ぶかぶか　ぷかぷか\nみぎに　なべ　もつ　やぎさんと、\nひだりに　ふた　もつ　ぶたさんが、\nおひるの　おかず　かんがえる。'
-        }
-      ];
-      save();
     }
+    // プリセットのおはなしがなければ追加する（新しい端末・削除後も自動で復元）
+    let changed = false;
+    PRESET_STORIES.forEach(preset => {
+      if (!stories.find(s => s.id === preset.id)) {
+        stories.push(preset);
+        changed = true;
+      }
+    });
+    if (changed) save();
     renderEmojis();
     renderList();
   }
