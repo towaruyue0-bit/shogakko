@@ -326,6 +326,66 @@
       font-size: 0.9rem;
       padding: 10px;
     }
+
+    /* ─── 画面が低いスマホ向け：各要素をコンパクトにする ── */
+    @media (max-height: 700px) {
+      #screen-quiz            { padding: 8px 16px; }
+      .score-row              { margin-bottom: 4px; }
+      .progress-wrap          { margin-bottom: 6px; }
+      .question-card          { padding: 12px 20px 12px; margin-bottom: 8px; }
+      .question-text          { font-size: 2.6rem; }
+      /* 空のときは高さ0に折りたたむ。答えたときだけ高さが出る */
+      .feedback:not(.show)    { height: 0; overflow: hidden; margin-top: 0; }
+      .feedback.show          { height: auto; font-size: 1.4rem; margin-top: 6px; }
+      .cherry-area            { margin-top: 10px; padding: 8px 14px 10px; }
+      .cherry-formula         { font-size: 1.7rem; }
+      .cherry-hint            { font-size: 0.72rem; margin-top: 4px; }
+      .cherry-label           { margin-bottom: 4px; }
+      .answer-area            { padding: 6px 16px; margin-bottom: 8px; }
+      .answer-input           { font-size: 2rem; }
+      .numpad-btn             { padding: 11px 8px; font-size: 1.25rem; }
+      .numpad-btn.ok          { padding: 11px; font-size: 0.95rem; }
+      .numpad                 { gap: 7px; }
+    }
+
+    /* ─── 答え入力ラベル ────────────────────────────────── */
+    .answer-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #a0aec0;
+      text-align: center;
+      min-height: 18px;
+      margin-bottom: 2px;
+    }
+
+    /* ─── さくらんぼけいさんエリア ──────────────────────── */
+    .cherry-area {
+      margin-top: 16px;
+      padding: 13px 16px 14px;
+      background: linear-gradient(135deg, #fff0f4, #fde0eb);
+      border-radius: 16px;
+      border: 2.5px dashed #f9a8c9;
+      text-align: center;
+    }
+    .cherry-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #be3a69;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+    .cherry-formula {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #2d3748;
+      letter-spacing: 0.04em;
+    }
+    .cherry-hint {
+      font-size: 0.78rem;
+      color: #be3a69;
+      margin-top: 7px;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -369,6 +429,17 @@
     </div>
   </div>
 
+  <div class="setup-section">
+    <h2>🍒 さくらんぼけいさん</h2>
+    <div class="chip-row" id="step-chips">
+      <div class="chip" data-value="on">とちゅうのしきをみせる</div>
+      <div class="chip active" data-value="off">みせない</div>
+    </div>
+    <p style="font-size:0.73rem;color:#a0aec0;margin-top:8px;line-height:1.6">
+      ※ 1ねんせいのたし算（くりあがりあり）のもんだいで<br>□＋10のとちゅうのしきをいっしょにみせます
+    </p>
+  </div>
+
   <button class="start-btn" onclick="startQuiz()">
     🚀 スタート！
   </button>
@@ -393,9 +464,15 @@
     <div class="question-label">もんだい</div>
     <div class="question-text" id="question-text">？</div>
     <div class="feedback" id="feedback"></div>
+    <div class="cherry-area" id="cherry-area" style="display:none">
+      <div class="cherry-label">🍒 さくらんぼけいさん</div>
+      <div class="cherry-formula" id="cherry-formula">□  ＋  10  ＝</div>
+      <div class="cherry-hint" id="cherry-hint">□ に はいる かずは？</div>
+    </div>
   </div>
 
   <div class="answer-area">
+    <div class="answer-label" id="answer-label"></div>
     <input class="answer-input" id="answer-input"
            type="text" inputmode="none" readonly placeholder="？">
   </div>
@@ -450,14 +527,16 @@
   };
 
   // ─── 状態変数 ────────────────────────────────────────────────────────────────
-  let selectedGrade   = 1;   // 選択中の学年
-  let selectedOps     = ['add']; // 選択中の計算種類
-  let questionCount   = 10;  // 問題数
-  let questions       = [];  // 生成した問題の配列
-  let currentQ        = 0;   // 現在の問題番号（0始まり）
-  let correctCount    = 0;   // 正解数
-  let wrongCount      = 0;   // 不正解数
-  let answered        = false; // 現在の問題に答えたか
+  let selectedGrade   = 1;        // 選択中の学年
+  let selectedOps     = ['add'];  // 選択中の計算種類
+  let questionCount   = 10;       // 問題数
+  let questions       = [];       // 生成した問題の配列
+  let currentQ        = 0;        // 現在の問題番号（0始まり）
+  let correctCount    = 0;        // 正解数
+  let wrongCount      = 0;        // 不正解数
+  let answered        = false;    // 現在の問題に答えたか
+  let stepMode        = false;    // さくらんぼけいさんモード
+  let currentPhase    = 'direct'; // 'direct' | 'box' | 'final'
 
   // ─── セットアップ画面の操作 ──────────────────────────────────────────────────
 
@@ -516,6 +595,15 @@
     });
   }
 
+  /** さくらんぼけいさんチップを押したとき */
+  document.getElementById('step-chips').addEventListener('click', e => {
+    if (!e.target.dataset.value) return;
+    stepMode = (e.target.dataset.value === 'on');
+    document.querySelectorAll('#step-chips .chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.value === e.target.dataset.value);
+    });
+  });
+
   /** 問題数の変更 */
   function changeCount(delta) {
     questionCount = Math.max(5, Math.min(30, questionCount + delta));
@@ -535,8 +623,16 @@
     let a, b, answer, opSymbol;
 
     if (op === 'add') {
-      a = rand(1, cfg.addMax);
-      b = rand(1, cfg.addMax);
+      // stepModeかつ1年生のとき、60%の確率で繰り上がり問題を意図的に生成する
+      if (stepMode && selectedGrade === 1 && Math.random() < 0.6) {
+        do {
+          a = rand(2, 9);
+          b = rand(2, 9);
+        } while (a + b < 10 || a + b > 18);
+      } else {
+        a = rand(1, cfg.addMax);
+        b = rand(1, cfg.addMax);
+      }
       answer = a + b;
       opSymbol = '＋';
 
@@ -560,9 +656,27 @@
       opSymbol = '÷';
     }
 
+    // 繰り上がり判定：1桁どうしのたし算で答えが10以上18以下
+    const isKuriagari = op === 'add'
+      && a >= 1 && a <= 9
+      && b >= 1 && b <= 9
+      && answer >= 10 && answer <= 18;
+
+    // さくらんぼけいさん用の中間ステップを計算する
+    // 例: 5+8 → 大きい方(8)を10にする → 5から2引く → 3+10=13
+    let intermediate = null;
+    if (isKuriagari && stepMode) {
+      const big  = Math.max(a, b);
+      const small = Math.min(a, b);
+      const need = 10 - big;    // bigを10にするのに必要な数
+      const rest = small - need; // smallから引いた残り（□の答え）
+      intermediate = { boxValue: rest };
+    }
+
     return {
       text: `${a}  ${opSymbol}  ${b}  ＝`,
       answer,
+      intermediate, // null のとき通常モード
     };
   }
 
@@ -589,12 +703,29 @@
 
   /** 現在の問題を表示する */
   function showQuestion() {
-    answered = false;
     const q = questions[currentQ];
+
+    // フェーズを初期化する（さくらんぼあり → 'box'、なし → 'direct'）
+    currentPhase = q.intermediate ? 'box' : 'direct';
+    answered = false;
+
     document.getElementById('question-text').textContent = q.text;
     document.getElementById('answer-input').value = '';
     document.getElementById('feedback').className  = 'feedback';
     document.getElementById('feedback').textContent = '';
+
+    // さくらんぼエリアと入力ラベルの表示を更新する
+    const cherryArea = document.getElementById('cherry-area');
+    const answerLabel = document.getElementById('answer-label');
+    if (q.intermediate) {
+      cherryArea.style.display = 'block';
+      document.getElementById('cherry-formula').textContent = '□  ＋  10  ＝';
+      document.getElementById('cherry-hint').textContent = '□ に はいる かずは？';
+      answerLabel.textContent = '□ に はいる かず';
+    } else {
+      cherryArea.style.display = 'none';
+      answerLabel.textContent = '';
+    }
 
     // 進捗バーを更新
     const pct = (currentQ / questions.length) * 100;
@@ -634,7 +765,9 @@
 
   function submitAnswer() {
     if (answered) {
-      // 答えた後にもう一度押したら次の問題へ
+      // boxフェーズの遷移中（answered=trueだがfinalにまだ移行していない）は何もしない
+      if (currentPhase === 'box') return;
+      // direct/finalフェーズで「もう一度押し」→次の問題へ
       nextQuestion();
       return;
     }
@@ -642,10 +775,51 @@
     const input = document.getElementById('answer-input').value.trim();
     if (input === '') return;
 
+    const q  = questions[currentQ];
+    const fb = document.getElementById('feedback');
+
+    // ─── boxフェーズ：□に入る数を確認する ───────────────────────────────
+    if (currentPhase === 'box') {
+      answered = true;
+      const userVal  = parseInt(input, 10);
+      const boxVal   = q.intermediate.boxValue;
+
+      if (userVal === boxVal) {
+        // □正解 → 0.9秒後にfinalフェーズへ移行
+        fb.textContent = `⭕  そう！  ${boxVal}  ＋  10  だね！`;
+        fb.className   = 'feedback show ok';
+        setTimeout(() => {
+          answered     = false;
+          currentPhase = 'final';
+          document.getElementById('answer-input').value = '';
+          fb.className = 'feedback';
+          document.getElementById('cherry-formula').textContent =
+            `${boxVal}  ＋  10  ＝`;
+          document.getElementById('cherry-hint').textContent = 'こたえは？';
+          document.getElementById('answer-label').textContent = 'こたえ';
+        }, 900);
+      } else {
+        // □まちがい → 正しい□を教えて、1.5秒後にfinalフェーズへ移行
+        fb.textContent = `□は ${boxVal} だよ！  ${boxVal}  ＋  10  でこたえよう`;
+        fb.className   = 'feedback show ng';
+        setTimeout(() => {
+          answered     = false;
+          currentPhase = 'final';
+          document.getElementById('answer-input').value = '';
+          fb.className = 'feedback';
+          document.getElementById('cherry-formula').textContent =
+            `${boxVal}  ＋  10  ＝`;
+          document.getElementById('cherry-hint').textContent = 'こたえは？';
+          document.getElementById('answer-label').textContent = 'こたえ';
+        }, 1500);
+      }
+      return;
+    }
+
+    // ─── direct / finalフェーズ：最終答えを確認する ─────────────────────
     answered = true;
     const userAnswer = parseInt(input, 10);
-    const correct    = questions[currentQ].answer;
-    const fb         = document.getElementById('feedback');
+    const correct    = q.answer;
 
     if (userAnswer === correct) {
       // 正解
@@ -662,7 +836,7 @@
     document.getElementById('correct-count').textContent = correctCount;
     document.getElementById('wrong-count').textContent   = wrongCount;
 
-    // 0.8秒後に自動で次へ
+    // 0.9秒後に自動で次へ
     setTimeout(nextQuestion, 900);
   }
 

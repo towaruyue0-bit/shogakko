@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>は・へ・を の つかいかた</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --clr-main: #7c3aed;
+      --clr-ok:   #38a169;
+      --clr-ng:   #e53e3e;
+    }
+
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(160deg, #ede9fe 0%, #fce7f3 100%);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ─── ヘッダー ─────────────────────────────────── */
+    .header {
+      width: 100%;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white;
+      text-align: center;
+      padding: 16px 64px 14px;
+      position: relative;
+      box-shadow: 0 3px 14px rgba(124,58,237,0.4);
+    }
+    .header h1  { font-size: 1.25rem; font-weight: 900; }
+    .header p   { font-size: 0.8rem; opacity: 0.85; margin-top: 3px; }
+    .back-btn {
+      position: absolute;
+      left: 12px; top: 50%;
+      transform: translateY(-50%);
+      color: white;
+      text-decoration: none;
+      font-size: 0.8rem;
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      padding: 5px 12px;
+      white-space: nowrap;
+    }
+
+    /* ─── ホーム画面 ─────────────────────────────── */
+    #screen-home {
+      display: none;
+      width: 100%;
+      max-width: 440px;
+      padding: 24px 16px 40px;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .intro-card {
+      background: white;
+      border-radius: 18px;
+      padding: 22px 20px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .intro-card .emoji { font-size: 2.8rem; display: block; margin-bottom: 10px; }
+    .intro-card p {
+      font-size: 1rem;
+      color: #4a5568;
+      line-height: 1.8;
+    }
+    .intro-card b { color: #7c3aed; }
+
+    .mode-section-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #718096;
+      margin-bottom: -8px;
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .mode-btn {
+      background: white;
+      border: 3px solid transparent;
+      border-radius: 18px;
+      padding: 20px 12px 16px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.09);
+      transition: transform 0.12s, box-shadow 0.12s;
+      font-family: inherit;
+    }
+    .mode-btn:hover  { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0,0,0,0.15); }
+    .mode-btn:active { transform: scale(0.96); }
+    .mode-chars { font-size: 2rem; font-weight: 900; line-height: 1; margin-bottom: 8px; }
+    .mode-label { font-size: 0.82rem; font-weight: 700; color: #718096; }
+    .mode-count { font-size: 0.72rem; color: #a0aec0; margin-top: 4px; }
+
+    .mode-hawa { border-color: #f6ad55; }
+    .mode-hawa .mode-chars { color: #dd6b20; }
+    .mode-hewe { border-color: #68d391; }
+    .mode-hewe .mode-chars { color: #276749; }
+    .mode-woao { border-color: #63b3ed; }
+    .mode-woao .mode-chars { color: #2b6cb0; }
+    .mode-all  {
+      border-color: #d6bcfa;
+      background: linear-gradient(135deg, #f5f3ff, #fdf4ff);
+      grid-column: 1 / -1;
+    }
+    .mode-all .mode-chars { color: #6b46c1; }
+
+    /* ─── クイズ画面 ─────────────────────────────── */
+    #screen-quiz {
+      display: none;
+      width: 100%;
+      max-width: 460px;
+      padding: 16px;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .progress-bar-bg {
+      flex: 1;
+      height: 10px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7c3aed, #f6ad55);
+      border-radius: 10px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #4a5568;
+      white-space: nowrap;
+    }
+
+    .score-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+    .score-chip {
+      background: white;
+      border-radius: 30px;
+      padding: 5px 18px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .score-chip.ok { color: var(--clr-ok); }
+    .score-chip.ng { color: var(--clr-ng); }
+
+    .question-card {
+      background: white;
+      border-radius: 22px;
+      padding: 28px 20px 22px;
+      text-align: center;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .question-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #7c3aed, #f6ad55);
+    }
+
+    .q-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #a0aec0;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+    }
+
+    /* 文章：ひらがなを大きく */
+    .sentence {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #2d3748;
+      line-height: 1.6;
+      letter-spacing: 0.04em;
+      word-break: keep-all;
+    }
+    /* □の部分 */
+    .blank {
+      display: inline-block;
+      min-width: 1.1em;
+      color: #7c3aed;
+      border-bottom: 4px solid #7c3aed;
+      line-height: 1.1;
+      margin: 0 1px;
+      vertical-align: baseline;
+    }
+
+    .hint-text {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 0.88rem;
+      color: #6b46c1;
+      background: #f5f3ff;
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-weight: 700;
+    }
+    .hint-text.hidden { display: none; }
+
+    .feedback-area {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feedback-msg {
+      font-size: 1.4rem;
+      font-weight: 900;
+      opacity: 0;
+      transition: opacity 0.2s;
+      text-align: center;
+    }
+    .feedback-msg.show { opacity: 1; }
+    .feedback-msg.ok   { color: var(--clr-ok); }
+    .feedback-msg.ng   { color: var(--clr-ng); }
+
+    /* 選択ボタン（大きく・タップしやすく） */
+    .choice-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .choice-btn {
+      height: 96px;
+      border-radius: 20px;
+      border: 3px solid #e2e8f0;
+      background: white;
+      font-size: 3rem;
+      font-weight: 900;
+      color: #2d3748;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .choice-btn:hover:not(:disabled)  {
+      border-color: #7c3aed;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 22px rgba(124,58,237,0.22);
+    }
+    .choice-btn:active:not(:disabled) { transform: scale(0.94); }
+    .choice-btn:disabled { cursor: default; transform: none; }
+    .choice-btn.chosen-ok {
+      border-color: var(--clr-ok);
+      background: #f0fff4;
+      color: var(--clr-ok);
+      box-shadow: 0 4px 20px rgba(56,161,105,0.3);
+    }
+    .choice-btn.chosen-ng {
+      border-color: var(--clr-ng);
+      background: #fff5f5;
+      color: var(--clr-ng);
+      box-shadow: 0 4px 20px rgba(229,62,62,0.25);
+    }
+    .choice-btn.correct-hint {
+      border-color: var(--clr-ok);
+      background: #f0fff4;
+      color: var(--clr-ok);
+    }
+
+    /* ─── けっか画面 ─────────────────────────────── */
+    #screen-result {
+      display: none;
+      width: 100%;
+      max-width: 440px;
+      padding: 28px 16px 48px;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      text-align: center;
+    }
+
+    .res-emoji { font-size: 4.5rem; }
+    .res-title {
+      font-size: 1.9rem;
+      font-weight: 900;
+      color: #2d3748;
+    }
+    .res-score {
+      font-size: 4rem;
+      font-weight: 900;
+      color: #7c3aed;
+      line-height: 1;
+    }
+    .res-detail {
+      font-size: 0.95rem;
+      color: #718096;
+      margin-top: -8px;
+    }
+    .res-card {
+      width: 100%;
+      background: white;
+      border-radius: 18px;
+      padding: 18px 22px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      font-size: 1.05rem;
+      color: #4a5568;
+      line-height: 1.8;
+    }
+
+    .res-btns {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .retry-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 18px rgba(124,58,237,0.4);
+      transition: transform 0.12s;
+    }
+    .retry-btn:hover { transform: translateY(-2px); }
+    .home-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 2px solid #e2e8f0;
+      background: white;
+      color: #4a5568;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.12s;
+    }
+    .home-btn:hover { background: #f7fafc; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="../../" class="back-btn">← もどる</a>
+  <h1>は・へ・を の つかいかた</h1>
+  <p>ことばを えらんで こたえよう！</p>
+</div>
+
+<!-- ─── ホーム画面 ─────────────────────────────────── -->
+<div id="screen-home">
+  <div class="intro-card">
+    <span class="emoji">📝</span>
+    <p>
+      「<b>は</b>」と「<b>わ</b>」、「<b>へ</b>」と「<b>え</b>」、<br>
+      「<b>を</b>」と「<b>お</b>」の つかいかたを<br>
+      れんしゅう しよう！
+    </p>
+  </div>
+
+  <div class="mode-section-label">れんしゅうする もじを えらぼう</div>
+
+  <div class="mode-grid">
+    <button class="mode-btn mode-hawa" onclick="startMode('hawa')">
+      <div class="mode-chars">は・わ</div>
+      <div class="mode-label">は と わ</div>
+      <div class="mode-count">10もん</div>
+    </button>
+    <button class="mode-btn mode-hewe" onclick="startMode('hewe')">
+      <div class="mode-chars">へ・え</div>
+      <div class="mode-label">へ と え</div>
+      <div class="mode-count">8もん</div>
+    </button>
+    <button class="mode-btn mode-woao" onclick="startMode('woao')">
+      <div class="mode-chars">を・お</div>
+      <div class="mode-label">を と お</div>
+      <div class="mode-count">9もん</div>
+    </button>
+    <button class="mode-btn mode-all" onclick="startMode('all')">
+      <div class="mode-chars">ぜんぶ！</div>
+      <div class="mode-label">まぜて れんしゅう</div>
+      <div class="mode-count">27もん</div>
+    </button>
+  </div>
+</div>
+
+<!-- ─── クイズ画面 ─────────────────────────────────── -->
+<div id="screen-quiz">
+  <div class="progress-wrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+    <span class="progress-text" id="prog-text">1 / 10</span>
+  </div>
+
+  <div class="score-row">
+    <span class="score-chip ok" id="score-ok">⭐ 0</span>
+    <span class="score-chip ng" id="score-ng">❌ 0</span>
+  </div>
+
+  <div class="question-card">
+    <div class="q-label" id="q-label">もん１</div>
+    <div class="sentence" id="q-sentence"></div>
+    <div class="hint-text hidden" id="q-hint"></div>
+  </div>
+
+  <div class="feedback-area">
+    <div class="feedback-msg" id="feedback-msg"></div>
+  </div>
+
+  <div class="choice-area">
+    <button class="choice-btn" id="btn-a" onclick="choose(0)"></button>
+    <button class="choice-btn" id="btn-b" onclick="choose(1)"></button>
+  </div>
+</div>
+
+<!-- ─── けっか画面 ─────────────────────────────────── -->
+<div id="screen-result">
+  <div class="res-emoji" id="res-emoji">🏆</div>
+  <div class="res-title"  id="res-title">かんぺき！</div>
+  <div class="res-score"  id="res-score">10 / 10</div>
+  <div class="res-detail" id="res-detail"></div>
+  <div class="res-card"   id="res-card"></div>
+  <div class="res-btns">
+    <button class="retry-btn" id="retry-btn" onclick="retry()">もう いちど やる</button>
+    <button class="home-btn"  onclick="showHome()">← もどる</button>
+  </div>
+</div>
+
+<script>
+/* ─── 問題データ ─────────────────────────────────────────
+   pre  : □の前の文字列
+   post : □の後の文字列（文章の続き）
+   answer: 正解の文字
+   hint : ヒント（空文字のときは非表示）
+─────────────────────────────────────────────────────── */
+const QUESTIONS = {
+  hawa: [
+    { pre: 'わたし', post: ' がっこうに いきます',       answer: 'は', hint: '' },
+    { pre: 'か',     post: 'で さかなを とります',        answer: 'わ', hint: 'か□ → かわ（川）' },
+    { pre: 'ねこ',   post: ' かわいいです',               answer: 'は', hint: '' },
+    { pre: 'に',     post: 'に はなが さいています',      answer: 'わ', hint: 'に□ → にわ（庭）' },
+    { pre: 'きょう', post: ' はれています',               answer: 'は', hint: '' },
+    { pre: '',       post: 'らいながら あそびます',       answer: 'わ', hint: '□らい → わらい（笑い）' },
+    { pre: 'うみ',   post: ' ひろいです',                 answer: 'は', hint: '' },
+    { pre: '',       post: 'るいことは しません',         answer: 'わ', hint: '□るい → わるい（悪い）' },
+    { pre: 'これ',   post: ' なんですか',                 answer: 'は', hint: '' },
+    { pre: 'か',     post: 'いいいぬが います',           answer: 'わ', hint: 'か□いい → かわいい' },
+  ],
+  hewe: [
+    { pre: 'がっこう',   post: ' いきます',               answer: 'へ', hint: '' },
+    { pre: '',           post: 'を かきました',           answer: 'え', hint: '□ → え（絵）' },
+    { pre: 'うち',       post: ' かえります',             answer: 'へ', hint: '' },
+    { pre: 'う',         post: 'に あがります',           answer: 'え', hint: 'う□ → うえ（上）' },
+    { pre: 'みぎ',       post: ' まがります',             answer: 'へ', hint: '' },
+    { pre: '',           post: 'んぴつを もちます',       answer: 'え', hint: '□んぴつ → えんぴつ' },
+    { pre: 'こうえん',   post: ' あそびに いきます',      answer: 'へ', hint: '' },
+    { pre: '',           post: 'がおで あいさつします',   answer: 'え', hint: '□がお → えがお（笑顔）' },
+  ],
+  woao: [
+    { pre: 'りんご', post: ' たべます',                   answer: 'を', hint: '' },
+    { pre: '',       post: 'かあさんが います',           answer: 'お', hint: '□かあさん → おかあさん' },
+    { pre: 'ほん',   post: ' よみます',                   answer: 'を', hint: '' },
+    { pre: '',       post: 'とうさんと あそびます',       answer: 'お', hint: '□とうさん → おとうさん' },
+    { pre: 'うた',   post: ' うたいます',                 answer: 'を', hint: '' },
+    { pre: '',       post: 'やつを たべます',             answer: 'お', hint: '□やつ → おやつ' },
+    { pre: 'みず',   post: ' のみます',                   answer: 'を', hint: '' },
+    { pre: '',       post: 'はようございます',            answer: 'お', hint: '□はよう → おはよう' },
+    { pre: 'ボール', post: ' なげます',                   answer: 'を', hint: '' },
+  ],
+};
+
+const CHOICES = { hawa: ['は', 'わ'], hewe: ['へ', 'え'], woao: ['を', 'お'] };
+
+const OK_MSGS = ['せいかい！✨', 'すごい！⭐', 'よくできました！🌟', 'ばっちり！💫', 'かんぺき！🎉', 'やったね！🌈'];
+const NG_MSGS = ['ざんねん…', 'おしい！', 'まちがえたね'];
+
+/* ─── ゲーム状態 ────────────────────────────────────── */
+let currentQuestions = [];
+let currentMode      = '';
+let qIndex   = 0;
+let scoreOk  = 0;
+let scoreNg  = 0;
+let answered = false;
+let timer    = null;
+
+/* ─── 画面切り替え ──────────────────────────────────── */
+function showScreen(id) {
+  ['screen-home', 'screen-quiz', 'screen-result'].forEach(s => {
+    document.getElementById(s).style.display = 'none';
+  });
+  const el = document.getElementById(id);
+  el.style.display = 'flex';
+}
+
+function showHome() {
+  if (timer) { clearTimeout(timer); timer = null; }
+  showScreen('screen-home');
+}
+
+/* ─── モード開始 ─────────────────────────────────────── */
+function startMode(mode) {
+  currentMode = mode;
+
+  if (mode === 'all') {
+    const tagged = [
+      ...QUESTIONS.hawa.map(q => ({ ...q, choices: CHOICES.hawa })),
+      ...QUESTIONS.hewe.map(q => ({ ...q, choices: CHOICES.hewe })),
+      ...QUESTIONS.woao.map(q => ({ ...q, choices: CHOICES.woao })),
+    ];
+    currentQuestions = shuffle(tagged);
+  } else {
+    currentQuestions = QUESTIONS[mode].map(q => ({ ...q, choices: CHOICES[mode] }));
+  }
+
+  qIndex  = 0;
+  scoreOk = 0;
+  scoreNg = 0;
+  showScreen('screen-quiz');
+  showQuestion();
+}
+
+function retry() { startMode(currentMode); }
+
+/* ─── 配列シャッフル ─────────────────────────────────── */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ─── HTML エスケープ ────────────────────────────────── */
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* ─── 問題を表示 ─────────────────────────────────────── */
+function showQuestion() {
+  answered = false;
+  const q     = currentQuestions[qIndex];
+  const total = currentQuestions.length;
+
+  /* プログレスバー */
+  document.getElementById('prog-fill').style.width = (qIndex / total * 100) + '%';
+  document.getElementById('prog-text').textContent = (qIndex + 1) + ' / ' + total;
+
+  /* スコア */
+  document.getElementById('score-ok').textContent = '⭐ ' + scoreOk;
+  document.getElementById('score-ng').textContent = '❌ ' + scoreNg;
+
+  /* もん番号 */
+  document.getElementById('q-label').textContent = 'もん' + (qIndex + 1);
+
+  /* 文章（□をハイライト） */
+  document.getElementById('q-sentence').innerHTML =
+    esc(q.pre) + '<span class="blank">□</span>' + esc(q.post);
+
+  /* ヒント */
+  const hintEl = document.getElementById('q-hint');
+  if (q.hint) {
+    hintEl.textContent = '💡 ' + q.hint;
+    hintEl.classList.remove('hidden');
+  } else {
+    hintEl.classList.add('hidden');
+  }
+
+  /* フィードバック クリア */
+  const fb = document.getElementById('feedback-msg');
+  fb.textContent = '';
+  fb.className   = 'feedback-msg';
+
+  /* 選択ボタン（左右をランダムに入れ替え） */
+  const order   = Math.random() < 0.5 ? [...q.choices] : [...q.choices].reverse();
+  const btnA    = document.getElementById('btn-a');
+  const btnB    = document.getElementById('btn-b');
+  btnA.textContent = order[0];
+  btnB.textContent = order[1];
+  btnA.className   = 'choice-btn';
+  btnB.className   = 'choice-btn';
+  btnA.disabled    = false;
+  btnB.disabled    = false;
+}
+
+/* ─── 選択処理 ───────────────────────────────────────── */
+function choose(btnIdx) {
+  if (answered) return;
+  answered = true;
+
+  const q      = currentQuestions[qIndex];
+  const btnA   = document.getElementById('btn-a');
+  const btnB   = document.getElementById('btn-b');
+  const chosen = btnIdx === 0 ? btnA : btnB;
+  const isOk   = chosen.textContent === q.answer;
+
+  btnA.disabled = true;
+  btnB.disabled = true;
+
+  const fb = document.getElementById('feedback-msg');
+
+  if (isOk) {
+    chosen.classList.add('chosen-ok');
+    scoreOk++;
+    fb.textContent = OK_MSGS[Math.floor(Math.random() * OK_MSGS.length)];
+    fb.className   = 'feedback-msg ok show';
+  } else {
+    chosen.classList.add('chosen-ng');
+    /* 正解のボタンをハイライト */
+    if (btnA.textContent === q.answer) btnA.classList.add('correct-hint');
+    else                               btnB.classList.add('correct-hint');
+    scoreNg++;
+    fb.textContent = '「' + q.answer + '」が ただしいよ！';
+    fb.className   = 'feedback-msg ng show';
+  }
+
+  const delay = isOk ? 1200 : 2400;
+  timer = setTimeout(nextQuestion, delay);
+}
+
+/* ─── 次の問題へ ─────────────────────────────────────── */
+function nextQuestion() {
+  timer = null;
+  qIndex++;
+  if (qIndex >= currentQuestions.length) showResult();
+  else showQuestion();
+}
+
+/* ─── けっか表示 ─────────────────────────────────────── */
+function showResult() {
+  const total = currentQuestions.length;
+  const pct   = Math.round(scoreOk / total * 100);
+
+  let emoji, title, message;
+  if (pct === 100) {
+    emoji = '🏆'; title = 'かんぺき！';
+    message = 'ぜんもん せいかい！ すごいね！ はなまる100てん！';
+  } else if (pct >= 80) {
+    emoji = '🌟'; title = 'すばらしい！';
+    message = 'とても よくできました！ あと すこしで かんぺきだよ！';
+  } else if (pct >= 60) {
+    emoji = '😊'; title = 'よくがんばりました！';
+    message = 'いい かんじ！ もう いちど やって もっと うまくなろう！';
+  } else {
+    emoji = '💪'; title = 'もう いちど！';
+    message = 'だいじょうぶ！ れんしゅう すれば かならず できるよ！';
+  }
+
+  document.getElementById('res-emoji').textContent  = emoji;
+  document.getElementById('res-title').textContent  = title;
+  document.getElementById('res-score').textContent  = scoreOk + ' / ' + total;
+  document.getElementById('res-detail').textContent =
+    total + 'もん中 ' + scoreOk + 'もん せいかい（' + pct + '%）';
+  document.getElementById('res-card').textContent   = message;
+
+  const modeLabel = { hawa: 'は・わ', hewe: 'へ・え', woao: 'を・お', all: 'ぜんぶ' };
+  document.getElementById('retry-btn').textContent =
+    '「' + modeLabel[currentMode] + '」を もう いちど やる';
+
+  showScreen('screen-result');
+}
+
+/* 起動時はホーム画面を表示 */
+showHome();
+</script>
+</body>
+</html>

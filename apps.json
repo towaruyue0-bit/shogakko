@@ -33,6 +33,16 @@
       "visible": true
     },
     {
+      "id": "joshi",
+      "name": "は・へ・を れんしゅう",
+      "description": "は と わ・へ と え・を と お の つかいかた",
+      "icon": "📝",
+      "color": "#7c3aed",
+      "url": "apps/joshi/",
+      "category": "こくご",
+      "visible": true
+    },
+    {
       "id": "keyboard",
       "name": "キーボード れんしゅう",
       "description": "アルファベットを キーボードで うとう",
