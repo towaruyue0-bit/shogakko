@@ -5,7 +5,7 @@ cd /d "%~dp0"
 
 echo.
 echo ========================================
-echo  📤 GitHub にアップロード中...
+echo   GitHub にアップロード中...
 echo ========================================
 echo.
 
@@ -20,7 +20,7 @@ if %errorlevel% == 0 (
 )
 
 REM 現在の日時をコミットメッセージに使う
-for /f "tokens=*" %%a in ('powershell -NoProfile -Command "Get-Date -Format 'yyyy/MM/dd HH:mm'"') do set TIMESTAMP=%%a
+for /f "usebackq tokens=*" %%a in (`powershell -NoProfile -Command "Get-Date -Format 'yyyy/MM/dd HH:mm'"`) do set TIMESTAMP=%%a
 git commit -m "update: %TIMESTAMP%"
 
 :push
@@ -29,7 +29,7 @@ git push origin main
 
 echo.
 echo ========================================
-echo  ✅ 完了！1〜2分後にスマホで確認してください。
+echo   完了！1〜2分後にスマホで確認してください。
 echo.
 echo     https://towaruyue0-bit.github.io/shogakko/
 echo.
