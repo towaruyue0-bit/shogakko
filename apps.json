@@ -4,11 +4,21 @@
   "apps": [
     {
       "id": "sansu",
-      "name": "計算れんしゅう",
-      "description": "たし算・ひき算・かけ算・わり算",
+      "name": "けいさんれんしゅう",
+      "description": "たしざん・ひきざん・かけざん・わりざん",
       "icon": "🔢",
       "color": "#FF6B6B",
       "url": "apps/sansu/",
+      "category": "算数",
+      "visible": true
+    },
+    {
+      "id": "bunsho",
+      "name": "ぶんしょうだい",
+      "description": "ぶんを よんで しきを かこう",
+      "icon": "📝",
+      "color": "#FF8C42",
+      "url": "apps/bunsho/",
       "category": "算数",
       "visible": true
     },

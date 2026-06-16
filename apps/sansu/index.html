@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>計算れんしゅう</title>
+  <title>けいさんれんしゅう</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -81,6 +81,55 @@
     }
     .chip:hover  { border-color: #667eea; color: #667eea; }
     .chip.active { border-color: #667eea; background: #667eea; color: white; }
+    /* まだ解放されていない学年（カギつき） */
+    .chip.locked {
+      opacity: 0.5;
+      border-style: dashed;
+      border-color: #cbd5e0;
+      background: #f7fafc;
+      color: #a0aec0;
+      cursor: not-allowed;
+    }
+    .chip.locked:hover { border-color: #cbd5e0; color: #a0aec0; }
+
+    /* カギの学年を押したときの ひとことメッセージ */
+    #lock-msg {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #e53e3e;
+      margin-top: 10px;
+      min-height: 20px;
+      transition: opacity 0.2s;
+    }
+
+    /* おうちのひと向けパネル */
+    .parent-link {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #a0aec0;
+      cursor: pointer;
+      user-select: none;
+      padding: 6px;
+    }
+    #parent-panel {
+      display: none;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    #parent-panel button {
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 9px 16px;
+      border-radius: 10px;
+      border: 2px solid #cbd5e0;
+      background: white;
+      color: #4a5568;
+      cursor: pointer;
+    }
+    #parent-panel button:active { background: #ebf4ff; }
 
     .count-row {
       display: flex;
@@ -286,6 +335,18 @@
       box-shadow: 0 6px 28px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
+    /* 学年が解放されたときのバナー */
+    #unlock-banner {
+      display: none;
+      background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+      color: white;
+      font-weight: 900;
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 1.05rem;
+      box-shadow: 0 4px 14px rgba(255,107,107,0.35);
+    }
     .result-emoji { font-size: 4rem; margin-bottom: 12px; }
     .result-title { font-size: 1.6rem; font-weight: 900; color: #2d3748; margin-bottom: 6px; }
     .result-sub   { font-size: 0.92rem; color: #718096; margin-bottom: 20px; }
@@ -470,29 +531,30 @@
 <!-- ─── ヘッダー ──────────────────────────────────────────── -->
 <div class="header">
   <a class="back-btn" href="../../index.html">← もどる</a>
-  <h1>🔢 計算れんしゅう</h1>
+  <h1>🔢 けいさんれんしゅう</h1>
 </div>
 
 <!-- ─── セットアップ画面 ──────────────────────────────────── -->
 <div id="screen-setup">
 
   <div class="setup-section">
-    <h2>📚 学年を選んでね</h2>
+    <h2>📚 がくねんを えらんでね</h2>
     <div class="chip-row" id="grade-chips">
-      <div class="chip active" data-value="1">1年生</div>
-      <div class="chip"        data-value="2">2年生</div>
-      <div class="chip"        data-value="3">3年生</div>
-      <div class="chip"        data-value="4">4年生</div>
+      <div class="chip active" data-value="1">1ねんせい</div>
+      <div class="chip"        data-value="2">2ねんせい</div>
+      <div class="chip"        data-value="3">3ねんせい</div>
+      <div class="chip"        data-value="4">4ねんせい</div>
     </div>
+    <div id="lock-msg"></div>
   </div>
 
   <div class="setup-section">
-    <h2>✏️ 種類を選んでね（複数OK）</h2>
+    <h2>✏️ どれを れんしゅうする？（いくつでも OK）</h2>
     <div class="chip-row" id="op-chips">
-      <div class="chip active" data-value="add">たし算</div>
-      <div class="chip"        data-value="sub">ひき算</div>
-      <div class="chip"        data-value="mul">かけ算</div>
-      <div class="chip"        data-value="div">わり算</div>
+      <div class="chip active" data-value="add">たしざん</div>
+      <div class="chip"        data-value="sub">ひきざん</div>
+      <div class="chip"        data-value="mul">かけざん</div>
+      <div class="chip"        data-value="div">わりざん</div>
     </div>
   </div>
 
@@ -513,13 +575,20 @@
       <div class="chip active" data-value="off">みせない</div>
     </div>
     <p style="font-size:0.73rem;color:#a0aec0;margin-top:8px;line-height:1.6">
-      ※ 1ねんせいのたし算（くりあがりあり）のもんだいで<br>□＋10のとちゅうのしきをいっしょにみせます
+      ※ 1ねんせいの たしざん（くりあがりあり）のもんだいで<br>□＋10の とちゅうのしきを いっしょにみせます
     </p>
   </div>
 
   <button class="start-btn" onclick="startQuiz()">
     🚀 スタート！
   </button>
+
+  <!-- おうちのひと向け：学年の解放をてどうで操作する -->
+  <div class="parent-link" onclick="toggleParentPanel()">おうちのひとへ ▾</div>
+  <div id="parent-panel">
+    <button onclick="parentUnlockAll()">ぜんぶ ひらく</button>
+    <button onclick="parentReset()">さいしょから（1ねんせいだけ）</button>
+  </div>
 
 </div>
 
@@ -603,6 +672,7 @@
 <!-- ─── 結果画面 ──────────────────────────────────────────── -->
 <div id="screen-result">
   <div class="result-card">
+    <div id="unlock-banner"></div>
     <div class="result-emoji" id="result-emoji">🎉</div>
     <div class="result-title" id="result-title">すごい！</div>
     <div class="result-sub"   id="result-sub">ぜんぶできたよ！</div>
@@ -633,6 +703,23 @@
     4: ['add', 'sub', 'mul', 'div'],
   };
 
+  // ─── 学年の解放（アンロック）設定 ─────────────────────────────────────────────
+  const MAX_GRADE   = 4;                      // いちばん上の学年
+  const UNLOCK_PCT  = 80;                     // この正解率(%)以上で次の学年が解放される
+  const STORAGE_KEY = 'sansu_unlocked_grade'; // 解放ずみ学年を保存する場所（ブラウザに記録）
+
+  /** いま解放されている いちばん上の学年を読み込む（はじめは1ねんせい） */
+  function loadUnlockedGrade() {
+    const v = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+    return (v >= 1 && v <= MAX_GRADE) ? v : 1;
+  }
+  /** 解放ずみ学年をブラウザに保存する */
+  function saveUnlockedGrade(g) {
+    localStorage.setItem(STORAGE_KEY, String(g));
+  }
+
+  let unlockedGrade = loadUnlockedGrade(); // 解放ずみのいちばん上の学年
+
   // ─── 状態変数 ────────────────────────────────────────────────────────────────
   let selectedGrade   = 1;        // 選択中の学年
   let selectedOps     = ['add'];  // 選択中の計算種類
@@ -650,11 +737,46 @@
   /** 学年チップを押したとき */
   document.getElementById('grade-chips').addEventListener('click', e => {
     if (!e.target.dataset.value) return;
-    selectedGrade = parseInt(e.target.dataset.value);
-    document.querySelectorAll('#grade-chips .chip').forEach(c => c.classList.remove('active'));
-    e.target.classList.add('active');
+    const grade = parseInt(e.target.dataset.value);
 
-    // 選べない計算種類のチップを無効化
+    // まだ解放されていない学年は えらべない（こどもにメッセージを出す）
+    if (grade > unlockedGrade) {
+      showLockMsg();
+      return;
+    }
+
+    selectedGrade = grade;
+    renderGradeChips();
+    applyAllowedOps();
+  });
+
+  /**
+   * 学年チップの見た目を更新する。
+   * 解放ずみ → ふつう / まだ → カギマーク＋うすく表示
+   */
+  function renderGradeChips() {
+    document.querySelectorAll('#grade-chips .chip').forEach(c => {
+      const g = parseInt(c.dataset.value);
+      const locked = g > unlockedGrade;
+      c.classList.toggle('locked', locked);
+      c.classList.toggle('active', g === selectedGrade && !locked);
+      c.textContent = locked ? `${g}ねんせい 🔒` : `${g}ねんせい`;
+    });
+  }
+
+  /** カギの学年を押したときの ひとことメッセージ（数秒で消える） */
+  let lockMsgTimer = null;
+  function showLockMsg() {
+    const el = document.getElementById('lock-msg');
+    el.textContent =
+      `🔒 いまは ${unlockedGrade}ねんせいまで。${unlockedGrade}ねんせいで ${UNLOCK_PCT}%とると つぎが ひらくよ！`;
+    el.style.opacity = '1';
+    clearTimeout(lockMsgTimer);
+    lockMsgTimer = setTimeout(() => { el.style.opacity = '0'; }, 3000);
+  }
+
+  /** いま選んでいる学年で使える計算種類だけを えらべるようにする */
+  function applyAllowedOps() {
     const allowed = GRADE_ALLOWED_OPS[selectedGrade];
     document.querySelectorAll('#op-chips .chip').forEach(c => {
       const op = c.dataset.value;
@@ -667,14 +789,33 @@
         c.style.pointerEvents = '';
       }
     });
-    // 選択されているopsのうち、使えないものを除外
+    // 選んでいた種類のうち、使えないものを外す
     selectedOps = selectedOps.filter(op => allowed.includes(op));
     if (selectedOps.length === 0) {
       selectedOps = ['add'];
-      document.querySelector('#op-chips .chip[data-value="add"]').classList.add('active');
     }
     updateOpChips();
-  });
+  }
+
+  // ─── おうちのひと向け：学年の解放をてどうで操作する ──────────────────────────
+  function toggleParentPanel() {
+    const p = document.getElementById('parent-panel');
+    p.style.display = (p.style.display === 'flex') ? 'none' : 'flex';
+  }
+  /** ぜんぶの学年を解放する */
+  function parentUnlockAll() {
+    unlockedGrade = MAX_GRADE;
+    saveUnlockedGrade(unlockedGrade);
+    renderGradeChips();
+  }
+  /** さいしょの状態（1ねんせいだけ）にもどす */
+  function parentReset() {
+    unlockedGrade = 1;
+    selectedGrade = 1;
+    saveUnlockedGrade(unlockedGrade);
+    renderGradeChips();
+    applyAllowedOps();
+  }
 
   /** 計算種類チップを押したとき（複数選択可） */
   document.getElementById('op-chips').addEventListener('click', e => {
@@ -1007,12 +1148,32 @@
       `${correctCount} / ${questions.length}`;
     document.getElementById('result-detail').textContent =
       `せいかいりつ ${pct}%`;
+
+    // ─── 学年の解放チェック ───────────────────────────────────────────
+    // いま遊んだ学年が「解放ずみのいちばん上」で、正解率が条件以上なら
+    // 次の学年を解放する。
+    const banner = document.getElementById('unlock-banner');
+    banner.style.display = 'none';
+    if (selectedGrade === unlockedGrade
+        && unlockedGrade < MAX_GRADE
+        && pct >= UNLOCK_PCT) {
+      unlockedGrade++;
+      saveUnlockedGrade(unlockedGrade);
+      renderGradeChips(); // セットアップ画面のカギを外しておく
+      banner.textContent = `🔓 ${unlockedGrade}ねんせいが あそべるように なったよ！`;
+      banner.style.display = 'block';
+    }
   }
 
   function retryQuiz() {
     document.getElementById('screen-result').style.display = 'none';
     document.getElementById('screen-setup').style.display  = 'flex';
   }
+
+  // ─── 起動時のしょきか ────────────────────────────────────────────────────────
+  // 保存されている解放状態にあわせて、学年チップのカギを表示する
+  renderGradeChips();
+  applyAllowedOps();
 </script>
 </body>
 </html>

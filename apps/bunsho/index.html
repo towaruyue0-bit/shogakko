@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>ぶんしょうだい</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(135deg, #FFF3E0 0%, #FFE0EC 100%);
+      min-height: 100dvh;
+      color: #2d3748;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ─── ヘッダー ─────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #FF8C42 0%, #FF6B9D 100%);
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 3px 12px rgba(255,140,66,0.35);
+    }
+    .back-btn {
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: white;
+      font-size: 0.9rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: inherit;
+    }
+    .back-btn:active { opacity: 0.7; }
+    .header h1 { font-size: 1.25rem; font-weight: 900; }
+
+    /* ─── スタート画面 ─────────────────────── */
+    #screen-start { padding: 30px 20px; text-align: center; }
+    .start-icon { font-size: 4rem; margin-bottom: 12px; }
+    .start-title { font-size: 1.5rem; font-weight: 900; color: #E65100; margin-bottom: 6px; }
+    .start-sub { font-size: 0.9rem; color: #718096; margin-bottom: 28px; }
+
+    .opt-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #718096;
+      margin: 22px 0 10px;
+    }
+    .opt-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+    .opt-btn {
+      background: white;
+      border: 3px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      color: #2d3748;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+      transition: transform 0.13s, border-color 0.13s, background 0.13s;
+    }
+    .opt-btn:active, .opt-btn.sel {
+      transform: scale(0.95);
+      border-color: #FF8C42;
+      background: #FFF3E0;
+      color: #E65100;
+    }
+    .start-go-btn {
+      margin-top: 34px;
+      background: linear-gradient(135deg, #FF8C42, #FF6B9D);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 18px 48px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 16px rgba(255,140,66,0.4);
+      transition: opacity 0.15s;
+    }
+    .start-go-btn:active { opacity: 0.85; }
+
+    /* ─── ゲーム画面 ────────────────────────── */
+    #screen-game {
+      display: none;
+      flex-direction: column;
+      padding: 16px 16px 28px;
+      gap: 14px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .game-topbar { display: flex; justify-content: space-between; align-items: center; }
+    .score-box, .qnum-box {
+      background: white;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .score-box { color: #FF6B9D; }
+    .qnum-box  { color: #718096; }
+
+    /* 問題文 */
+    .question-box {
+      background: white;
+      border-radius: 20px;
+      padding: 22px 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .q-text {
+      font-size: 1.35rem;
+      font-weight: 800;
+      line-height: 1.9;
+      letter-spacing: 0.03em;
+    }
+    /* 絵のヒント */
+    .pic-area {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 2px dashed #FFD2B0;
+      text-align: center;
+      font-size: 1.9rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .pic-emoji.gone { opacity: 0.25; filter: grayscale(1); }
+    .pic-plus { color: #FF8C42; font-weight: 900; margin: 0 6px; }
+
+    /* しき入力エリア */
+    .formula-box {
+      background: white;
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .formula-label { font-size: 0.85rem; font-weight: 800; color: #FF8C42; margin-bottom: 8px; }
+    .formula-disp {
+      min-height: 64px;
+      background: #FFF8F0;
+      border: 3px solid #FFD2B0;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.3rem;
+      font-weight: 900;
+      color: #E65100;
+      letter-spacing: 0.05em;
+      padding: 6px 12px;
+      word-break: break-all;
+    }
+    .formula-disp.correct { background: #E8FFE8; border-color: #43A047; color: #2E7D32; }
+    .formula-disp.wrong   { background: #FFE9E9; border-color: #FF6B6B; animation: shake 0.3s ease; }
+    .formula-disp .ph { color: #CBB8A8; font-size: 1.4rem; font-weight: 700; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-8px); }
+      75%      { transform: translateX(8px); }
+    }
+
+    /* メッセージ */
+    .msg {
+      min-height: 26px;
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+    .msg.ok  { color: #43A047; }
+    .msg.ng  { color: #FF6B6B; }
+
+    /* テンキー */
+    .pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .pad-op-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .key {
+      border: none;
+      border-radius: 14px;
+      padding: 16px 8px;
+      font-size: 1.7rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 3px 0 rgba(0,0,0,0.12);
+      transition: transform 0.08s;
+    }
+    .key:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.12); }
+    .key.num { background: white; color: #2d3748; }
+    .key.op  { background: #FFE0B2; color: #E65100; }
+    .key.eq  { background: #FFD2B0; color: #E65100; }
+    .key.del { background: #FFE0EC; color: #C2185B; font-size: 1.3rem; }
+
+    .check-btn {
+      margin-top: 4px;
+      background: linear-gradient(135deg, #FF8C42, #FF6B9D);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 18px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 14px rgba(255,140,66,0.4);
+    }
+    .check-btn:active { opacity: 0.85; }
+    .check-btn:disabled { opacity: 0.5; cursor: default; }
+
+    .next-btn {
+      margin-top: 4px;
+      background: linear-gradient(135deg, #43A047, #66BB6A);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 18px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 14px rgba(67,160,71,0.4);
+      display: none;
+    }
+    .next-btn:active { opacity: 0.85; }
+
+    /* ─── かんりょう画面 ────────────────────── */
+    #screen-done {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80dvh;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .done-star { font-size: 5rem; animation: pop 0.5s ease; margin-bottom: 16px; }
+    @keyframes pop {
+      0%   { transform: scale(0.3) rotate(-15deg); }
+      70%  { transform: scale(1.2) rotate(5deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    .done-title { font-size: 1.9rem; font-weight: 900; color: #E65100; margin-bottom: 8px; }
+    .done-sub   { font-size: 1rem; color: #718096; margin-bottom: 28px; }
+    .done-score {
+      background: white;
+      border-radius: 20px;
+      padding: 20px 40px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+    }
+    .done-score-num { font-size: 3rem; font-weight: 900; color: #FF6B9D; line-height: 1; }
+    .done-score-label { font-size: 0.9rem; color: #a0aec0; margin-top: 4px; }
+    .done-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .retry-btn, .home-btn {
+      border: none;
+      border-radius: 14px;
+      padding: 16px 28px;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .retry-btn {
+      background: linear-gradient(135deg, #FF8C42, #FF6B9D);
+      color: white;
+      box-shadow: 0 4px 14px rgba(255,140,66,0.35);
+    }
+    .home-btn { background: white; color: #718096; border: 2px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <button class="back-btn" onclick="handleBack()">‹ もどる</button>
+  <h1>📝 ぶんしょうだい</h1>
+</div>
+
+<!-- ① スタート画面 -->
+<div id="screen-start">
+  <div class="start-icon">📝</div>
+  <div class="start-title">しきを かいて こたえよう</div>
+  <div class="start-sub">ぶんを よんで「しき」を うとう！</div>
+
+  <div class="opt-label">どんな けいさん？</div>
+  <div class="opt-row" id="mode-row">
+    <button class="opt-btn sel" data-mode="add" onclick="selectMode('add')">＋ たしざん</button>
+    <button class="opt-btn" data-mode="sub" onclick="selectMode('sub')">− ひきざん</button>
+    <button class="opt-btn" data-mode="mix" onclick="selectMode('mix')">まぜまぜ</button>
+  </div>
+
+  <div class="opt-label">かずの おおきさ</div>
+  <div class="opt-row" id="range-row">
+    <button class="opt-btn sel" data-range="10" onclick="selectRange(10)">10まで</button>
+    <button class="opt-btn" data-range="20" onclick="selectRange(20)">20まで</button>
+  </div>
+
+  <button class="start-go-btn" onclick="startGame()">スタート！ ▶</button>
+</div>
+
+<!-- ② ゲーム画面 -->
+<div id="screen-game">
+  <div class="game-topbar">
+    <div class="score-box">⭐ <span id="score-disp">0</span></div>
+    <div class="qnum-box"><span id="qnum-disp">1</span> / <span id="qtotal-disp">10</span>もん</div>
+  </div>
+
+  <!-- 問題文 + 絵のヒント -->
+  <div class="question-box">
+    <div class="q-text" id="q-text"></div>
+    <div class="pic-area" id="pic-area"></div>
+  </div>
+
+  <!-- しき入力 -->
+  <div class="formula-box">
+    <div class="formula-label">しきを かこう</div>
+    <div class="formula-disp" id="formula-disp"></div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <!-- テンキー -->
+  <div class="pad-op-row">
+    <button class="key op" onclick="tap('+')">＋</button>
+    <button class="key op" onclick="tap('-')">−</button>
+  </div>
+  <div class="pad">
+    <button class="key num" onclick="tap('1')">1</button>
+    <button class="key num" onclick="tap('2')">2</button>
+    <button class="key num" onclick="tap('3')">3</button>
+    <button class="key num" onclick="tap('4')">4</button>
+    <button class="key num" onclick="tap('5')">5</button>
+    <button class="key num" onclick="tap('6')">6</button>
+    <button class="key num" onclick="tap('7')">7</button>
+    <button class="key num" onclick="tap('8')">8</button>
+    <button class="key num" onclick="tap('9')">9</button>
+    <button class="key del" onclick="tapDel()">← けす</button>
+    <button class="key num" onclick="tap('0')">0</button>
+    <button class="key eq" onclick="tap('=')">＝</button>
+  </div>
+
+  <button class="check-btn" id="check-btn" onclick="checkAnswer()">こたえあわせ</button>
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">つぎへ ▶</button>
+</div>
+
+<!-- ③ かんりょう画面 -->
+<div id="screen-done">
+  <div class="done-star">🏆</div>
+  <div class="done-title">かんりょう！</div>
+  <div class="done-sub">よく がんばったね！</div>
+  <div class="done-score">
+    <div class="done-score-num"><span id="final-score">0</span> / <span id="final-total">10</span></div>
+    <div class="done-score-label">いっぱつ せいかい</div>
+  </div>
+  <div class="done-btns">
+    <button class="retry-btn" onclick="startGame()">もう いちど ▶</button>
+    <button class="home-btn" onclick="showScreen('start')">せっていを かえる</button>
+  </div>
+</div>
+
+<script>
+  // ======================================================
+  // 設定
+  // ======================================================
+  const TOTAL_Q = 10;   // 1ゲームの問題数
+
+  let mode = 'add';     // 'add'=たしざん / 'sub'=ひきざん / 'mix'=まぜまぜ
+  let maxNum = 10;      // こたえ（や もとの数）の上限
+
+  let score = 0;        // いっぱつ せいかいの数
+  let qNum = 0;         // 現在の問題番号（0始まり）
+  let formula = '';     // 子どもが打っている しき の文字列
+  let current = null;   // 現在の問題データ
+  let firstTry = true;  // この問題を まだ まちがえていないか
+  let solved = false;   // この問題が せいかい済みか（連打・二重加算ぼうし）
+
+  // ======================================================
+  // 問題テンプレート
+  // ======================================================
+  // たしざん：2つの あつまりを あわせる問題
+  // e1,e2 … 絵のヒント用の絵文字（あつまり1・あつまり2）
+  const ADD_TEMPLATES = [
+    { e1:'🌼', e2:'🌹',
+      q:(a,b)=>`しろい はなが ${a}ほん、あかい はなが ${b}ほん さいて います。<br>あわせて なんぼん さいて いますか？` },
+    { e1:'🧒', e2:'🧒',
+      q:(a,b)=>`こうえんに こどもが ${a}にん います。<br>あとから ${b}にん きました。みんなで なんにん ですか？` },
+    { e1:'🍬', e2:'🍬',
+      q:(a,b)=>`あめを ${a}こ もって います。<br>${b}こ もらいました。ぜんぶで なんこ ですか？` },
+    { e1:'🐦', e2:'🐦',
+      q:(a,b)=>`きに とりが ${a}わ います。<br>${b}わ とんで きました。あわせて なんわ ですか？` },
+    { e1:'🚗', e2:'🚗',
+      q:(a,b)=>`ちゅうしゃじょうに くるまが ${a}だい あります。<br>${b}だい きました。ぜんぶで なんだい ですか？` },
+    { e1:'🍎', e2:'🍊',
+      q:(a,b)=>`かごに りんごが ${a}こ、おさらに みかんが ${b}こ あります。<br>あわせて なんこ ですか？` },
+    { e1:'🐟', e2:'🐟',
+      q:(a,b)=>`すいそうに きんぎょが ${a}ひき います。<br>${b}ひき いれました。ぜんぶで なんびき ですか？` },
+    { e1:'✏️', e2:'✏️',
+      q:(a,b)=>`えんぴつを ${a}ほん もって います。<br>${b}ほん かいました。ぜんぶで なんぼん ですか？` },
+    { e1:'🍪', e2:'🍪',
+      q:(a,b)=>`おさらに クッキーが ${a}まい あります。<br>${b}まい やきました。ぜんぶで なんまい ですか？` },
+    { e1:'🐶', e2:'🐱',
+      q:(a,b)=>`いぬが ${a}ひき、ねこが ${b}ひき います。<br>あわせて なんびき ですか？` },
+  ];
+
+  // ひきざん：あつまりから へらす（のこり・ちがい）問題
+  // e … 絵のヒント用の絵文字
+  const SUB_TEMPLATES = [
+    { e:'🍬',
+      q:(a,b)=>`あめが ${a}こ あります。<br>${b}こ たべました。のこりは なんこ ですか？` },
+    { e:'🧒',
+      q:(a,b)=>`こうえんに こどもが ${a}にん いました。<br>${b}にん かえりました。のこりは なんにん ですか？` },
+    { e:'🌷',
+      q:(a,b)=>`はなが ${a}ほん さいて います。<br>${b}ほん つみました。のこりは なんぼん ですか？` },
+    { e:'🐦',
+      q:(a,b)=>`でんせんに とりが ${a}わ います。<br>${b}わ とんで いきました。のこりは なんわ ですか？` },
+    { e:'🎈',
+      q:(a,b)=>`ふうせんが ${a}こ あります。<br>${b}こ われました。のこりは なんこ ですか？` },
+    { e:'🍎',
+      q:(a,b)=>`りんごが ${a}こ あります。<br>${b}こ たべました。のこりは なんこ ですか？` },
+    { e:'🚗',
+      q:(a,b)=>`くるまが ${a}だい ありました。<br>${b}だい でて いきました。のこりは なんだい ですか？` },
+    { e:'🍪',
+      q:(a,b)=>`クッキーが ${a}まい あります。<br>${b}まい たべました。のこりは なんまい ですか？` },
+    { e:'🐟',
+      q:(a,b)=>`きんぎょが ${a}ひき います。<br>${b}ひき あげました。のこりは なんびき ですか？` },
+    { e:'🍭',
+      q:(a,b)=>`あかい あめが ${a}こ、あおい あめが ${b}こ あります。<br>あかい あめは あおい あめより なんこ おおいですか？` },
+  ];
+
+  // ======================================================
+  // スタート画面
+  // ======================================================
+  function selectMode(m) {
+    mode = m;
+    document.querySelectorAll('#mode-row .opt-btn').forEach(b =>
+      b.classList.toggle('sel', b.dataset.mode === m));
+  }
+  function selectRange(r) {
+    maxNum = r;
+    document.querySelectorAll('#range-row .opt-btn').forEach(b =>
+      b.classList.toggle('sel', Number(b.dataset.range) === r));
+  }
+
+  function startGame() {
+    score = 0;
+    qNum = 0;
+    showScreen('game');
+    nextQuestion();
+  }
+
+  // ======================================================
+  // 問題づくり
+  // ======================================================
+  /**
+   * この問題で たしざんにするか ひきざんにするかを決める。
+   * mode が 'mix' のときは ランダムで どちらかを選ぶ。
+   */
+  function pickOp() {
+    if (mode === 'add') return '+';
+    if (mode === 'sub') return '-';
+    return Math.random() < 0.5 ? '+' : '-';
+  }
+
+  /** 1〜n の整数をランダムに返す */
+  function rnd(n) { return Math.floor(Math.random() * n) + 1; }
+
+  /**
+   * 次の問題データを作る。
+   * たしざん … a + b = answer（a+b は maxNum 以下）
+   * ひきざん … a - b = answer（a は maxNum 以下、b は a 未満）
+   */
+  function makeProblem() {
+    const op = pickOp();
+    let a, b, answer, tpl;
+
+    if (op === '+') {
+      // a も b も 1以上、合計が maxNum 以下になるように作る
+      a = rnd(maxNum - 1);
+      b = rnd(maxNum - a);
+      answer = a + b;
+      tpl = ADD_TEMPLATES[Math.floor(Math.random() * ADD_TEMPLATES.length)];
+    } else {
+      // a は 2以上 maxNum 以下、b は 1以上 a未満（のこりが1以上）
+      a = rnd(maxNum - 1) + 1;          // 2〜maxNum
+      b = rnd(a - 1);                   // 1〜a-1
+      answer = a - b;
+      tpl = SUB_TEMPLATES[Math.floor(Math.random() * SUB_TEMPLATES.length)];
+    }
+
+    return { op, a, b, answer, text: tpl.q(a, b), tpl };
+  }
+
+  // ======================================================
+  // ゲーム
+  // ======================================================
+  function nextQuestion() {
+    qNum++;
+    if (qNum > TOTAL_Q) { showDone(); return; }
+
+    current = makeProblem();
+    formula = '';
+    firstTry = true;
+    solved = false;
+
+    document.getElementById('score-disp').textContent = score;
+    document.getElementById('qnum-disp').textContent = qNum;
+    document.getElementById('qtotal-disp').textContent = TOTAL_Q;
+    document.getElementById('q-text').innerHTML = current.text;
+    document.getElementById('msg').textContent = '';
+    document.getElementById('msg').className = 'msg';
+
+    document.getElementById('check-btn').style.display = 'block';
+    document.getElementById('check-btn').disabled = false;
+    document.getElementById('next-btn').style.display = 'none';
+
+    renderPicture();
+    renderFormula();
+  }
+
+  /** 絵のヒントを描画する */
+  function renderPicture() {
+    const area = document.getElementById('pic-area');
+    if (current.op === '+') {
+      // あつまり1 + あつまり2 を並べる
+      const g1 = current.tpl.e1.repeat(current.a);
+      const g2 = current.tpl.e2.repeat(current.b);
+      area.innerHTML =
+        `<span class="pic-emoji">${g1}</span>` +
+        `<span class="pic-plus">＋</span>` +
+        `<span class="pic-emoji">${g2}</span>`;
+    } else {
+      // a個 ならべて、へらす b個 をうすく表示する
+      let html = '';
+      for (let i = 0; i < current.a; i++) {
+        const gone = i >= current.answer ? ' gone' : '';
+        html += `<span class="pic-emoji${gone}">${current.tpl.e}</span>`;
+      }
+      area.innerHTML = html;
+    }
+  }
+
+  /** いま打っている しき を表示する */
+  function renderFormula() {
+    const disp = document.getElementById('formula-disp');
+    if (formula === '') {
+      disp.innerHTML = '<span class="ph">れい： 2+5=7</span>';
+    } else {
+      // 見やすいように ＋ − ＝ に置きかえて表示
+      disp.textContent = formula
+        .replace(/\+/g, '＋').replace(/-/g, '−').replace(/=/g, '＝');
+    }
+    disp.className = 'formula-disp';
+  }
+
+  // ── 入力 ──────────────────────────────
+  function tap(ch) {
+    if (solved) return;
+    formula += ch;
+    document.getElementById('msg').textContent = '';
+    document.getElementById('msg').className = 'msg';
+    renderFormula();
+  }
+  function tapDel() {
+    if (solved) return;
+    formula = formula.slice(0, -1);
+    renderFormula();
+  }
+
+  // パソコンの キーボードでも 打てるようにする
+  document.addEventListener('keydown', (e) => {
+    if (document.getElementById('screen-game').style.display !== 'flex') return;
+    if (e.key >= '0' && e.key <= '9') tap(e.key);
+    else if (e.key === '+' || e.key === '-' || e.key === '=') tap(e.key);
+    else if (e.key === 'Backspace') { e.preventDefault(); tapDel(); }
+    else if (e.key === 'Enter') {
+      if (solved) nextQuestion(); else checkAnswer();
+    }
+  });
+
+  // ======================================================
+  // こたえあわせ
+  // ======================================================
+  function checkAnswer() {
+    if (solved) return;
+
+    const disp = document.getElementById('formula-disp');
+    const msg = document.getElementById('msg');
+
+    // しきの かたちを かくにん（すうじ → ＋か− → すうじ → ＝ → すうじ）
+    const m = formula.match(/^(\d+)([+\-])(\d+)=(\d+)$/);
+    if (!m) {
+      showWrong('「すうじ ＋ すうじ ＝ こたえ」の かたちで かこう！');
+      return;
+    }
+
+    const x = Number(m[1]);          // ひだりの すうじ
+    const opType = m[2];             // ＋ か −
+    const y = Number(m[3]);          // みぎの すうじ
+    const z = Number(m[4]);          // こたえ
+    const { op, a, b, answer } = current;
+
+    // 1) たすのか ひくのか が あっているか
+    if (opType !== op) {
+      showWrong(op === '+' ? 'たしざん だよ。「＋」を つかってね' : 'ひきざん だよ。「−」を つかってね');
+      return;
+    }
+
+    // 2) つかう すうじ が あっているか
+    let numbersOk;
+    if (op === '+') {
+      // たしざんは じゅんばんが ちがっても OK（2+5 でも 5+2 でも◯）
+      numbersOk = (x === a && y === b) || (x === b && y === a);
+    } else {
+      // ひきざんは じゅんばんが きまっている
+      numbersOk = (x === a && y === b);
+    }
+    if (!numbersOk) {
+      showWrong('つかう かずを もういちど みてみよう');
+      return;
+    }
+
+    // 3) こたえ（＝のうしろ）が あっているか
+    if (z !== answer) {
+      showWrong('けいさんを もういちど たしかめてね');
+      return;
+    }
+
+    // ─ せいかい ─
+    solved = true;
+    if (firstTry) score++;
+    disp.className = 'formula-disp correct';
+    msg.textContent = firstTry ? 'せいかい！🎉' : 'できたね！🎉';
+    msg.className = 'msg ok';
+    document.getElementById('score-disp').textContent = score;
+    document.getElementById('check-btn').style.display = 'none';
+    document.getElementById('next-btn').style.display = 'block';
+    // 絵のヒントを ぜんぶ あかるくする（へらした分も見せる）
+    document.querySelectorAll('#pic-area .pic-emoji.gone')
+      .forEach(el => el.classList.remove('gone'));
+  }
+
+  /** まちがいの ときの ひょうじ */
+  function showWrong(text) {
+    firstTry = false;
+    const disp = document.getElementById('formula-disp');
+    const msg = document.getElementById('msg');
+    disp.classList.remove('wrong');
+    void disp.offsetWidth;          // アニメをやりなおすための おまじない
+    disp.classList.add('wrong');
+    msg.textContent = '❌ ' + text;
+    msg.className = 'msg ng';
+    // すこし まってから しきを けして やりなおせるように する
+    setTimeout(() => {
+      formula = '';
+      renderFormula();
+    }, 1100);
+  }
+
+  // ======================================================
+  // 結果画面
+  // ======================================================
+  function showDone() {
+    document.getElementById('final-score').textContent = score;
+    document.getElementById('final-total').textContent = TOTAL_Q;
+    showScreen('done');
+  }
+
+  // ======================================================
+  // 画面切り替え
+  // ======================================================
+  function showScreen(name) {
+    document.getElementById('screen-start').style.display = name === 'start' ? 'block' : 'none';
+    const gEl = document.getElementById('screen-game');
+    gEl.style.display = name === 'game' ? 'flex' : 'none';
+    if (name === 'game') gEl.style.flexDirection = 'column';
+    const dEl = document.getElementById('screen-done');
+    dEl.style.display = name === 'done' ? 'flex' : 'none';
+    if (name === 'done') dEl.style.flexDirection = 'column';
+  }
+
+  function handleBack() {
+    const gameVisible = document.getElementById('screen-game').style.display === 'flex';
+    const doneVisible = document.getElementById('screen-done').style.display === 'flex';
+    if (gameVisible || doneVisible) {
+      showScreen('start');
+    } else {
+      location.href = '../../index.html';
+    }
+  }
+</script>
+</body>
+</html>
