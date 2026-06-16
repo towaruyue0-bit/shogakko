@@ -99,8 +99,8 @@
     #screen-game {
       display: none;
       flex-direction: column;
-      padding: 16px 16px 28px;
-      gap: 14px;
+      padding: 10px 14px 14px;
+      gap: 9px;
       max-width: 560px;
       margin: 0 auto;
     }
@@ -108,8 +108,8 @@
     .score-box, .qnum-box {
       background: white;
       border-radius: 12px;
-      padding: 8px 16px;
-      font-size: 0.9rem;
+      padding: 6px 14px;
+      font-size: 0.85rem;
       font-weight: 800;
       box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
@@ -119,24 +119,24 @@
     /* 問題文 */
     .question-box {
       background: white;
-      border-radius: 20px;
-      padding: 22px 20px;
+      border-radius: 18px;
+      padding: 13px 16px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     }
     .q-text {
-      font-size: 1.35rem;
+      font-size: 1.12rem;
       font-weight: 800;
-      line-height: 1.9;
-      letter-spacing: 0.03em;
+      line-height: 1.55;
+      letter-spacing: 0.02em;
     }
     /* 絵のヒント */
     .pic-area {
-      margin-top: 16px;
-      padding-top: 16px;
+      margin-top: 9px;
+      padding-top: 9px;
       border-top: 2px dashed #FFD2B0;
       text-align: center;
-      font-size: 1.9rem;
-      line-height: 1.5;
+      font-size: 1.4rem;
+      line-height: 1.35;
       word-break: break-word;
     }
     .pic-emoji.gone { opacity: 0.25; filter: grayscale(1); }
@@ -145,29 +145,29 @@
     /* しき入力エリア */
     .formula-box {
       background: white;
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 10px 12px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     }
-    .formula-label { font-size: 0.85rem; font-weight: 800; color: #FF8C42; margin-bottom: 8px; }
+    .formula-label { font-size: 0.82rem; font-weight: 800; color: #FF8C42; margin-bottom: 5px; }
     .formula-disp {
-      min-height: 64px;
+      min-height: 46px;
       background: #FFF8F0;
       border: 3px solid #FFD2B0;
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.3rem;
+      font-size: 1.95rem;
       font-weight: 900;
       color: #E65100;
       letter-spacing: 0.05em;
-      padding: 6px 12px;
+      padding: 3px 12px;
       word-break: break-all;
     }
     .formula-disp.correct { background: #E8FFE8; border-color: #43A047; color: #2E7D32; }
     .formula-disp.wrong   { background: #FFE9E9; border-color: #FF6B6B; animation: shake 0.3s ease; }
-    .formula-disp .ph { color: #CBB8A8; font-size: 1.4rem; font-weight: 700; }
+    .formula-disp .ph { color: #CBB8A8; font-size: 1.4rem; font-weight: 700; letter-spacing: 0.18em; }
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       25%      { transform: translateX(-8px); }
@@ -176,11 +176,11 @@
 
     /* メッセージ */
     .msg {
-      min-height: 26px;
+      min-height: 22px;
       text-align: center;
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: 800;
-      margin-top: 4px;
+      margin-top: 1px;
     }
     .msg.ok  { color: #43A047; }
     .msg.ng  { color: #FF6B6B; }
@@ -189,14 +189,14 @@
     .pad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      gap: 7px;
     }
-    .pad-op-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .pad-op-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
     .key {
       border: none;
-      border-radius: 14px;
-      padding: 16px 8px;
-      font-size: 1.7rem;
+      border-radius: 13px;
+      padding: 10px 8px;
+      font-size: 1.45rem;
       font-weight: 900;
       cursor: pointer;
       font-family: inherit;
@@ -207,16 +207,16 @@
     .key.num { background: white; color: #2d3748; }
     .key.op  { background: #FFE0B2; color: #E65100; }
     .key.eq  { background: #FFD2B0; color: #E65100; }
-    .key.del { background: #FFE0EC; color: #C2185B; font-size: 1.3rem; }
+    .key.del { background: #FFE0EC; color: #C2185B; font-size: 1.1rem; }
 
     .check-btn {
-      margin-top: 4px;
+      margin-top: 2px;
       background: linear-gradient(135deg, #FF8C42, #FF6B9D);
       color: white;
       border: none;
-      border-radius: 16px;
-      padding: 18px;
-      font-size: 1.2rem;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 1.1rem;
       font-weight: 900;
       cursor: pointer;
       font-family: inherit;
@@ -226,13 +226,13 @@
     .check-btn:disabled { opacity: 0.5; cursor: default; }
 
     .next-btn {
-      margin-top: 4px;
+      margin-top: 2px;
       background: linear-gradient(135deg, #43A047, #66BB6A);
       color: white;
       border: none;
-      border-radius: 16px;
-      padding: 18px;
-      font-size: 1.2rem;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 1.1rem;
       font-weight: 900;
       cursor: pointer;
       font-family: inherit;
@@ -240,6 +240,27 @@
       display: none;
     }
     .next-btn:active { opacity: 0.85; }
+
+    /* ─── せのひくい（みじかい）がめん向け：もっとコンパクトに ─── */
+    /* スクロールせずに「もんだい」と「テンキー」が同時に見えるようにする */
+    @media (max-height: 740px) {
+      #screen-game   { gap: 6px; padding: 7px 12px 9px; }
+      .score-box, .qnum-box { padding: 4px 12px; font-size: 0.8rem; }
+      .question-box  { padding: 8px 14px; border-radius: 14px; }
+      .q-text        { font-size: 0.98rem; line-height: 1.4; }
+      .pic-area      { margin-top: 6px; padding-top: 6px; font-size: 1.1rem; line-height: 1.25; }
+      .formula-box   { padding: 7px 10px; }
+      .formula-label { margin-bottom: 3px; font-size: 0.76rem; }
+      .formula-disp  { min-height: 38px; font-size: 1.55rem; }
+      .formula-disp .ph { font-size: 1.1rem; }
+      .msg           { min-height: 16px; font-size: 0.82rem; }
+      .pad           { gap: 6px; }
+      .pad-op-row    { gap: 6px; }
+      .key           { padding: 6px 8px; font-size: 1.2rem; box-shadow: 0 2px 0 rgba(0,0,0,0.12); }
+      .key.del       { font-size: 0.92rem; }
+      .check-btn,
+      .next-btn      { padding: 9px; font-size: 0.98rem; border-radius: 12px; }
+    }
 
     /* ─── かんりょう画面 ────────────────────── */
     #screen-done {
@@ -561,7 +582,7 @@
   function renderFormula() {
     const disp = document.getElementById('formula-disp');
     if (formula === '') {
-      disp.innerHTML = '<span class="ph">れい： 2+5=7</span>';
+      disp.innerHTML = '<span class="ph">〇＋〇＝〇</span>';
     } else {
       // 見やすいように ＋ − ＝ に置きかえて表示
       disp.textContent = formula
