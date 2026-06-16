@@ -329,23 +329,30 @@
 
     /* ─── 画面が低いスマホ向け：各要素をコンパクトにする ── */
     @media (max-height: 700px) {
-      #screen-quiz            { padding: 8px 16px; }
-      .score-row              { margin-bottom: 4px; }
-      .progress-wrap          { margin-bottom: 6px; }
-      .question-card          { padding: 12px 20px 12px; margin-bottom: 8px; }
-      .question-text          { font-size: 2.6rem; }
+      #screen-quiz            { padding: 6px 16px; }
+      .score-row              { margin-bottom: 3px; }
+      .progress-wrap          { margin-bottom: 5px; }
+      .question-card          { padding: 10px 20px 10px; margin-bottom: 6px; }
+      .question-text          { font-size: 2.2rem; }
       /* 空のときは高さ0に折りたたむ。答えたときだけ高さが出る */
       .feedback:not(.show)    { height: 0; overflow: hidden; margin-top: 0; }
-      .feedback.show          { height: auto; font-size: 1.4rem; margin-top: 6px; }
-      .cherry-area            { margin-top: 10px; padding: 8px 14px 10px; }
-      .cherry-formula         { font-size: 1.7rem; }
-      .cherry-hint            { font-size: 0.72rem; margin-top: 4px; }
-      .cherry-label           { margin-bottom: 4px; }
-      .answer-area            { padding: 6px 16px; margin-bottom: 8px; }
-      .answer-input           { font-size: 2rem; }
-      .numpad-btn             { padding: 11px 8px; font-size: 1.25rem; }
-      .numpad-btn.ok          { padding: 11px; font-size: 0.95rem; }
-      .numpad                 { gap: 7px; }
+      .feedback.show          { height: auto; font-size: 1.3rem; margin-top: 5px; }
+      .cherry-area    { margin-top: 2px; }
+      .ca-num         { font-size: 2.7rem; }
+      .ca-op          { font-size: 2.7rem; }
+      .ca-col         { min-width: 50px; }
+      .ca-arrow-col   { min-width: 50px; }
+      .ca-arms        { width: 56px; height: 11px; margin-top: 4px; border-width: 2px; }
+      .ca-kid         { width: 34px; height: 34px; font-size: 1.1rem; border-width: 2px; }
+      .ca-kid.is-box  { font-size: 1.25rem; }
+      .ca-kids        { gap: 11px; margin-top: 4px; }
+      .ca-up-arrow    { font-size: 1.1rem; margin-top: 7px; }
+      .ca-formula     { font-size: 1.5rem; margin-top: 7px; }
+      .answer-area            { padding: 4px 16px; margin-bottom: 6px; }
+      .answer-input           { font-size: 1.9rem; }
+      .numpad-btn             { padding: 9px 8px; font-size: 1.2rem; }
+      .numpad-btn.ok          { padding: 9px; font-size: 0.9rem; }
+      .numpad                 { gap: 6px; }
     }
 
     /* ─── 答え入力ラベル ────────────────────────────────── */
@@ -358,33 +365,103 @@
       margin-bottom: 2px;
     }
 
-    /* ─── さくらんぼけいさんエリア ──────────────────────── */
+    /* ─── さくらんぼけいさん（問題と一体化した表示） ────── */
     .cherry-area {
-      margin-top: 16px;
-      padding: 13px 16px 14px;
-      background: linear-gradient(135deg, #fff0f4, #fde0eb);
-      border-radius: 16px;
-      border: 2.5px dashed #f9a8c9;
+      margin-top: 4px;
       text-align: center;
     }
-    .cherry-label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #be3a69;
-      margin-bottom: 8px;
-      letter-spacing: 0.05em;
+    /* 問題の数式行（上段） */
+    .ca-eq-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
     }
-    .cherry-formula {
-      font-size: 2.2rem;
+    .ca-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 58px;
+    }
+    /* 数字 */
+    .ca-num {
+      font-size: 3.2rem;
       font-weight: 900;
       color: #2d3748;
-      letter-spacing: 0.04em;
+      line-height: 1;
     }
-    .cherry-hint {
-      font-size: 0.78rem;
+    /* ＋ ＝ などの演算子 */
+    .ca-op {
+      font-size: 3.2rem;
+      font-weight: 900;
+      color: #2d3748;
+      line-height: 1;
+    }
+    /* さくらんぼの枝と子どもの行（下段） */
+    .ca-split-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 4px;
+      margin-top: 2px;
+    }
+    /* V字の枝（U字ボーダー） */
+    .ca-arms {
+      width: 66px;
+      height: 14px;
+      border-bottom: 3px solid #f9a8c9;
+      border-left:   3px solid #f9a8c9;
+      border-right:  3px solid #f9a8c9;
+      border-radius: 0 0 14px 14px;
+      margin-top: 5px;
+    }
+    /* 2つの子どもの丸 */
+    .ca-kids {
+      display: flex;
+      gap: 14px;
+      margin-top: 5px;
+    }
+    .ca-kid {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: #ffe0ec;
+      border: 2.5px solid #f9a8c9;
+      font-size: 1.35rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2d3748;
+      transition: background 0.3s, border 0.3s;
+    }
+    /* □（学生が答える丸） */
+    .ca-kid.is-box {
+      border: 2.5px dashed #be3a69;
       color: #be3a69;
-      margin-top: 7px;
-      font-weight: 700;
+      background: white;
+      font-size: 1.6rem;
+    }
+    /* 大きい数の列（↑矢印を置く場所） */
+    .ca-arrow-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 58px;
+    }
+    /* 右の子(need)が大きい数に向かうことを示す矢印 */
+    .ca-up-arrow {
+      font-size: 1.3rem;
+      color: #f9a8c9;
+      font-weight: 900;
+      margin-top: 10px;
+    }
+    /* □を答えた後の数式（例: 3 ＋ 10 ＝） */
+    .ca-formula {
+      font-size: 1.9rem;
+      font-weight: 900;
+      color: #2d3748;
+      margin-top: 10px;
+      letter-spacing: 0.04em;
     }
   </style>
 </head>
@@ -463,12 +540,42 @@
   <div class="question-card">
     <div class="question-label">もんだい</div>
     <div class="question-text" id="question-text">？</div>
-    <div class="feedback" id="feedback"></div>
+    <!-- さくらんぼモード：問題と図を一体化した表示 -->
     <div class="cherry-area" id="cherry-area" style="display:none">
-      <div class="cherry-label">🍒 さくらんぼけいさん</div>
-      <div class="cherry-formula" id="cherry-formula">□  ＋  10  ＝</div>
-      <div class="cherry-hint" id="cherry-hint">□ に はいる かずは？</div>
+      <!-- 上段：問題の数式 -->
+      <div class="ca-eq-row">
+        <div class="ca-col">
+          <div class="ca-num" id="ca-small-num">5</div>
+        </div>
+        <div class="ca-op">＋</div>
+        <div class="ca-col">
+          <div class="ca-num" id="ca-big-num">8</div>
+        </div>
+        <div class="ca-op">＝</div>
+      </div>
+      <!-- 下段：さくらんぼの枝と2つの丸 -->
+      <div class="ca-split-row">
+        <!-- 小さい数の下：V字 ＋ 子どもたち -->
+        <div class="ca-col">
+          <div class="ca-arms"></div>
+          <div class="ca-kids">
+            <!-- 左：□（残り、学生が答える） -->
+            <div class="ca-kid is-box" id="ca-kid-left">□</div>
+            <!-- 右：needの数（大きい数と合わせて10にする） -->
+            <div class="ca-kid" id="ca-kid-right">2</div>
+          </div>
+        </div>
+        <div class="ca-op" style="opacity:0">＋</div>
+        <!-- 大きい数の下：右の子が向かう先を示す↑ -->
+        <div class="ca-arrow-col">
+          <div class="ca-up-arrow">↑</div>
+        </div>
+        <div class="ca-op" style="opacity:0">＝</div>
+      </div>
+      <!-- □答え後に表示する数式（例: 3 ＋ 10 ＝） -->
+      <div class="ca-formula" id="ca-formula" style="display:none"></div>
     </div>
+    <div class="feedback" id="feedback"></div>
   </div>
 
   <div class="answer-area">
@@ -670,7 +777,7 @@
       const small = Math.min(a, b);
       const need = 10 - big;    // bigを10にするのに必要な数
       const rest = small - need; // smallから引いた残り（□の答え）
-      intermediate = { boxValue: rest };
+      intermediate = { boxValue: rest, need, big, small };
     }
 
     return {
@@ -718,11 +825,24 @@
     const cherryArea = document.getElementById('cherry-area');
     const answerLabel = document.getElementById('answer-label');
     if (q.intermediate) {
+      const { need, big, small } = q.intermediate;
+      // question-text を隠し、cherry-area（一体化表示）を出す
+      document.getElementById('question-text').style.display = 'none';
       cherryArea.style.display = 'block';
-      document.getElementById('cherry-formula').textContent = '□  ＋  10  ＝';
-      document.getElementById('cherry-hint').textContent = '□ に はいる かずは？';
+      // 数字をセット
+      document.getElementById('ca-small-num').textContent = small;
+      document.getElementById('ca-big-num').textContent   = big;
+      // 左=□（残り）、右=need（大きい数に足す数）
+      const leftKid = document.getElementById('ca-kid-left');
+      leftKid.textContent = '□';
+      leftKid.className   = 'ca-kid is-box';
+      document.getElementById('ca-kid-right').textContent = need;
+      // 数式はまだ隠す
+      document.getElementById('ca-formula').style.display = 'none';
       answerLabel.textContent = '□ に はいる かず';
     } else {
+      // 通常問題：question-text を表示、cherry-area を隠す
+      document.getElementById('question-text').style.display = '';
       cherryArea.style.display = 'none';
       answerLabel.textContent = '';
     }
@@ -793,23 +913,32 @@
           currentPhase = 'final';
           document.getElementById('answer-input').value = '';
           fb.className = 'feedback';
-          document.getElementById('cherry-formula').textContent =
-            `${boxVal}  ＋  10  ＝`;
-          document.getElementById('cherry-hint').textContent = 'こたえは？';
+          // 左の□を答えで埋める
+          const leftKid = document.getElementById('ca-kid-left');
+          leftKid.textContent = boxVal;
+          leftKid.className   = 'ca-kid';
+          // 数式を表示
+          const formula = document.getElementById('ca-formula');
+          formula.textContent   = `${boxVal}  ＋  10  ＝`;
+          formula.style.display = 'block';
           document.getElementById('answer-label').textContent = 'こたえ';
         }, 900);
       } else {
         // □まちがい → 正しい□を教えて、1.5秒後にfinalフェーズへ移行
-        fb.textContent = `□は ${boxVal} だよ！  ${boxVal}  ＋  10  でこたえよう`;
+        fb.textContent = `□は ${boxVal} だよ！`;
         fb.className   = 'feedback show ng';
         setTimeout(() => {
           answered     = false;
           currentPhase = 'final';
           document.getElementById('answer-input').value = '';
           fb.className = 'feedback';
-          document.getElementById('cherry-formula').textContent =
-            `${boxVal}  ＋  10  ＝`;
-          document.getElementById('cherry-hint').textContent = 'こたえは？';
+          // 正しい値で左の□を埋める
+          const leftKid = document.getElementById('ca-kid-left');
+          leftKid.textContent = boxVal;
+          leftKid.className   = 'ca-kid';
+          const formula = document.getElementById('ca-formula');
+          formula.textContent   = `${boxVal}  ＋  10  ＝`;
+          formula.style.display = 'block';
           document.getElementById('answer-label').textContent = 'こたえ';
         }, 1500);
       }
