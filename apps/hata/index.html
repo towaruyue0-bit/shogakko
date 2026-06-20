@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>はたあげ ゲーム</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(135deg, #E0F7FA 0%, #FFF9E6 100%);
+      min-height: 100dvh;
+      color: #2d3748;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ─── ヘッダー ─────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #10B981 0%, #06B6D4 100%);
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 3px 12px rgba(16,185,129,0.35);
+    }
+    .back-btn {
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: white;
+      font-size: 0.9rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: inherit;
+    }
+    .back-btn:active { opacity: 0.7; }
+    .header h1 { font-size: 1.25rem; font-weight: 900; }
+
+    /* ─── スタート画面 ─────────────────────── */
+    #screen-start {
+      padding: 28px 20px 40px;
+      text-align: center;
+    }
+    .start-icon { font-size: 4rem; margin-bottom: 10px; }
+    .start-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #0E9F6E;
+      margin-bottom: 6px;
+    }
+    .start-sub { font-size: 0.92rem; color: #718096; margin-bottom: 26px; line-height: 1.6; }
+
+    /* 左右のおぼえかた（おてほん） */
+    .hint-card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px 16px;
+      max-width: 340px;
+      margin: 0 auto 26px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+    }
+    .hint-side {
+      flex: 1;
+      border-radius: 14px;
+      padding: 14px 6px;
+    }
+    .hint-side.left  { background: #EBF5FF; }
+    .hint-side.right { background: #FFF0F0; }
+    .hint-hand { font-size: 2.4rem; display: block; line-height: 1; }
+    .hint-word { font-size: 1.3rem; font-weight: 900; margin-top: 6px; }
+    .hint-side.left  .hint-word { color: #2B6CB0; }
+    .hint-side.right .hint-word { color: #E53E3E; }
+
+    .mode-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #718096;
+      margin-bottom: 14px;
+    }
+    .mode-btns { display: flex; flex-direction: column; gap: 14px; max-width: 340px; margin: 0 auto; }
+    .mode-btn {
+      border: none;
+      border-radius: 18px;
+      padding: 18px 20px;
+      font-size: 1.15rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      color: white;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      transition: transform 0.12s, opacity 0.12s;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .mode-btn:active { transform: scale(0.96); opacity: 0.9; }
+    .mode-btn .m-emoji { font-size: 1.7rem; }
+    .mode-btn .m-sub { display: block; font-size: 0.72rem; font-weight: 700; opacity: 0.9; margin-top: 2px; }
+    .mode-btn.easy { background: linear-gradient(135deg, #34D399, #10B981); }
+    .mode-btn.hard { background: linear-gradient(135deg, #FBBF24, #F59E0B); }
+
+    /* 音声オン/オフ */
+    .sound-toggle {
+      margin-top: 26px;
+      font-size: 0.9rem;
+      color: #718096;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+    .sound-toggle .box {
+      width: 22px; height: 22px;
+      border: 2.5px solid #06B6D4;
+      border-radius: 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; color: #06B6D4;
+    }
+
+    /* ─── ゲーム画面 ────────────────────────── */
+    #screen-game {
+      display: none;
+      flex-direction: column;
+      padding: 16px 16px 22px;
+      gap: 14px;
+      min-height: calc(100dvh - 56px);
+    }
+    .game-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .score-box, .qnum-box {
+      background: white;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .score-box { color: #10B981; }
+    .qnum-box  { color: #718096; }
+
+    /* 指示（おだい） */
+    .order-box {
+      background: white;
+      border-radius: 20px;
+      padding: 18px 18px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      text-align: center;
+      position: relative;
+    }
+    .order-text {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+    }
+    .order-text .ord-left  { color: #2B6CB0; }
+    .order-text .ord-right { color: #E53E3E; }
+    .order-text .ord-up    { color: #DD6B20; }
+    .order-text .ord-down  { color: #38A169; }
+    .speaker-btn {
+      position: absolute;
+      top: 12px; right: 12px;
+      background: #E0F7FA;
+      border: none;
+      border-radius: 50%;
+      width: 44px; height: 44px;
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+    .speaker-btn:active { opacity: 0.7; }
+
+    /* ─── キャラクター（旗もち） ─────────────── */
+    .stage {
+      flex: 1;
+      position: relative;
+      background: linear-gradient(180deg, #F0FBFF 0%, #FEFCE8 100%);
+      border-radius: 22px;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+      min-height: 340px;
+      overflow: hidden;
+    }
+    /* 左右のタップ範囲（広くして押しやすく） */
+    .tap-zone {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 50%;
+      cursor: pointer;
+      z-index: 3;
+    }
+    .tap-zone.left  { left: 0; }
+    .tap-zone.right { right: 0; }
+    .tap-zone:active { background: rgba(0,0,0,0.03); }
+
+    /* キャラクターの体（中央） */
+    .char {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 1;
+      text-align: center;
+    }
+    .char-face {
+      font-size: 4.2rem;
+      line-height: 1;
+      filter: drop-shadow(0 3px 5px rgba(0,0,0,0.12));
+    }
+    .char-body {
+      width: 88px;
+      height: 96px;
+      margin: -6px auto 0;
+      background: linear-gradient(180deg, #FDE68A, #FBBF24);
+      border-radius: 44px 44px 30px 30px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+
+    /* 旗（左右の手にもつ）。ポール＋布＋手 を1つのまとまりとして上げ下げする */
+    .flag-arm {
+      position: absolute;
+      bottom: 70px;
+      width: 14px;            /* ポールの太さ */
+      height: 130px;          /* ポールの長さ */
+      z-index: 2;
+      transform-origin: 50% 100%;  /* 手（下端）を支点にする */
+      transition: transform 0.5s cubic-bezier(0.34,1.3,0.64,1);
+    }
+    .flag-arm.left  { left: calc(50% - 60px); }
+    .flag-arm.right { left: calc(50% + 46px); }
+
+    /* ポール（棒） */
+    .pole {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 0;
+      width: 7px;
+      height: 100%;
+      background: linear-gradient(90deg, #B7791F, #D69E2E);
+      border-radius: 4px;
+    }
+    /* 手（ポールの根もと） */
+    .hand {
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.6rem;
+    }
+    /* 旗の布（ポールの上のほう・外側に開く） */
+    .cloth {
+      position: absolute;
+      top: 4px;
+      width: 70px;
+      height: 46px;
+      box-shadow: 2px 3px 6px rgba(0,0,0,0.18);
+    }
+    /* ひだり＝青：布は左（外側）に開く */
+    .flag-arm.left  .cloth {
+      right: 4px;
+      border-radius: 8px 0 0 8px;
+      background: linear-gradient(135deg, #4299E1, #2B6CB0);
+    }
+    /* みぎ＝赤：布は右（外側）に開く */
+    .flag-arm.right .cloth {
+      left: 4px;
+      border-radius: 0 8px 8px 0;
+      background: linear-gradient(135deg, #FC8181, #E53E3E);
+    }
+
+    /* 旗が「さがっている」状態：すこし外にかたむけて下げる */
+    .flag-arm.left  { transform: translateY(34px) rotate(-14deg); }
+    .flag-arm.right { transform: translateY(34px) rotate(14deg); }
+    /* 旗が「あがっている」状態：上にあげて まっすぐに近づける */
+    .flag-arm.left.up  { transform: translateY(-46px) rotate(-4deg); }
+    .flag-arm.right.up { transform: translateY(-46px) rotate(4deg); }
+
+    /* 下の大きなラベル（みぎ・ひだり） */
+    .flag-label {
+      position: absolute;
+      bottom: 44px;
+      width: 46%;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      z-index: 2;
+      letter-spacing: 0.05em;
+    }
+    .flag-label.left  { left: 2%;  color: #2B6CB0; }
+    .flag-label.right { right: 2%; color: #E53E3E; }
+    .flag-label.hidden { visibility: hidden; }
+
+    /* 正解・不正解の演出マーク */
+    .mark {
+      position: absolute;
+      top: 14px;
+      font-size: 3rem;
+      z-index: 4;
+      transform: scale(0);
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .mark.left  { left: 20%; }
+    .mark.right { right: 20%; }
+    .mark.show  { transform: scale(1); }
+
+    /* まちがえたときの揺れ */
+    .stage.shake { animation: shake 0.35s ease; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%     { transform: translateX(-8px); }
+      75%     { transform: translateX(8px); }
+    }
+
+    /* ─── かんりょう画面 ────────────────────── */
+    #screen-done {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80dvh;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .done-star { font-size: 5rem; animation: pop 0.5s ease; margin-bottom: 16px; }
+    @keyframes pop {
+      0%   { transform: scale(0.3) rotate(-15deg); }
+      70%  { transform: scale(1.2) rotate(5deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    .done-title { font-size: 1.9rem; font-weight: 900; color: #10B981; margin-bottom: 8px; }
+    .done-sub   { font-size: 1rem; color: #718096; margin-bottom: 28px; }
+    .done-score {
+      background: white;
+      border-radius: 20px;
+      padding: 20px 40px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+    }
+    .done-score-num { font-size: 3rem; font-weight: 900; color: #06B6D4; line-height: 1; }
+    .done-score-label { font-size: 0.9rem; color: #a0aec0; margin-top: 4px; }
+    .done-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .retry-btn, .home-btn {
+      border: none;
+      border-radius: 14px;
+      padding: 16px 28px;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .retry-btn {
+      background: linear-gradient(135deg, #10B981, #06B6D4);
+      color: white;
+      box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+    }
+    .home-btn {
+      background: white;
+      color: #718096;
+      border: 2px solid #e2e8f0;
+    }
+
+    .end-btn {
+      background: white;
+      color: #0E9F6E;
+      border: 3px solid #10B981;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .end-btn:active { opacity: 0.85; }
+  </style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <button class="back-btn" id="header-back" onclick="handleBack()">‹ もどる</button>
+  <h1>🚩 はたあげ ゲーム</h1>
+</div>
+
+<!-- ① スタート画面 -->
+<div id="screen-start">
+  <div class="start-icon">🚩</div>
+  <div class="start-title">みぎ・ひだり おぼえよう！</div>
+  <div class="start-sub">「みぎ あげて」「ひだり さげて」と<br>いわれた とおりに はたを うごかそう</div>
+
+  <!-- 左右のおぼえかた -->
+  <div class="hint-card">
+    <div class="hint-side left">
+      <span class="hint-hand">🤚</span>
+      <div class="hint-word">ひだり</div>
+    </div>
+    <div class="hint-side right">
+      <span class="hint-hand">✋</span>
+      <div class="hint-word">みぎ</div>
+    </div>
+  </div>
+
+  <div class="mode-label">あそびかたを えらんでね</div>
+  <div class="mode-btns">
+    <button class="mode-btn easy" onclick="startGame('easy')">
+      <span class="m-emoji">⭐</span>
+      <span>やさしい
+        <span class="m-sub">「みぎ・ひだり」のもじが でるよ</span>
+      </span>
+    </button>
+    <button class="mode-btn hard" onclick="startGame('hard')">
+      <span class="m-emoji">🔥</span>
+      <span>チャレンジ
+        <span class="m-sub">もじなし！じぶんで おぼえよう</span>
+      </span>
+    </button>
+  </div>
+
+  <!-- 音声オン/オフ -->
+  <div class="sound-toggle" id="sound-toggle" onclick="toggleSound()">
+    <span class="box" id="sound-box">✓</span>
+    <span id="sound-label">こえで よみあげる：オン</span>
+  </div>
+</div>
+
+<!-- ② ゲーム画面 -->
+<div id="screen-game">
+  <div class="game-topbar">
+    <div class="score-box">⭕ <span id="score-disp">0</span></div>
+    <div class="qnum-box"><span id="qnum-disp">1</span> / <span id="qtotal-disp">10</span>もん め</div>
+  </div>
+
+  <!-- おだい -->
+  <div class="order-box">
+    <button class="speaker-btn" onclick="speakOrder()">🔊</button>
+    <div class="order-text" id="order-text"></div>
+  </div>
+
+  <!-- キャラクター（旗もち） -->
+  <div class="stage" id="stage">
+    <!-- 演出マーク -->
+    <span class="mark left"  id="mark-left"></span>
+    <span class="mark right" id="mark-right"></span>
+
+    <!-- 旗（左・青／右・赤） -->
+    <div class="flag-arm left" id="arm-left">
+      <div class="pole"></div>
+      <div class="cloth"></div>
+      <div class="hand">✊</div>
+    </div>
+    <div class="flag-arm right" id="arm-right">
+      <div class="pole"></div>
+      <div class="cloth"></div>
+      <div class="hand">✊</div>
+    </div>
+
+    <!-- キャラクター本体 -->
+    <div class="char">
+      <div class="char-face" id="char-face">😊</div>
+      <div class="char-body"></div>
+    </div>
+
+    <!-- 下のラベル -->
+    <div class="flag-label left"  id="label-left">ひだり</div>
+    <div class="flag-label right" id="label-right">みぎ</div>
+
+    <!-- タップ範囲（左右の手前） -->
+    <div class="tap-zone left"  onclick="tapFlag('left')"></div>
+    <div class="tap-zone right" onclick="tapFlag('right')"></div>
+  </div>
+
+  <button class="end-btn" onclick="showDone()">おしまい・けっかを みる ▶</button>
+</div>
+
+<!-- ③ かんりょう画面 -->
+<div id="screen-done">
+  <div class="done-star">🏆</div>
+  <div class="done-title">よく できました！</div>
+  <div class="done-sub">みぎ・ひだり ばっちりだね！</div>
+  <div class="done-score">
+    <div class="done-score-num"><span id="final-score">0</span> / <span id="final-total">10</span></div>
+    <div class="done-score-label">もん せいかい</div>
+  </div>
+  <div class="done-btns">
+    <button class="retry-btn" onclick="retryGame()">もう いちど ▶</button>
+    <button class="home-btn" onclick="showScreen('start')">あそびかたを かえる</button>
+  </div>
+</div>
+
+<script>
+  // ======================================================
+  // 設定
+  // ======================================================
+  const TOTAL_Q = 10;   // 1ゲームの問題数
+
+  // ======================================================
+  // 状態（ゲームの今の様子をおぼえておく変数）
+  // ======================================================
+  let gameMode = 'easy';   // 'easy'=もじあり / 'hard'=もじなし
+  let soundOn  = true;     // こえでよみあげるか
+  let leftUp   = false;    // ひだりの旗が上がっているか
+  let rightUp  = false;    // みぎの旗が上がっているか
+  let curSide  = 'right';  // いまのおだいの正解の方向（'left'/'right'）
+  let curAct   = 'up';     // いまのおだいの動作（'up'=あげて / 'down'=さげて）
+  let score    = 0;        // せいかい数
+  let qNum     = 0;        // いまの問題番号（1始まり）
+  let waiting  = false;    // 判定中フラグ（連打ぼうし）
+  let lastSide = '';       // 直前のおだいの方向（同じばかり続かないように）
+
+  const SIDE_LABEL = { left: 'ひだり', right: 'みぎ' };
+  const ACT_LABEL  = { up:  'あげて',  down: 'さげて' };
+
+  // ======================================================
+  // 音声（よみあげ）
+  // ======================================================
+  /**
+   * 文字を日本語のこえでよみあげる。
+   * ブラウザの speechSynthesis（音声合成）を使う。
+   * 使えない端末では何もしない（ゲームはそのまま遊べる）。
+   */
+  function speak(text) {
+    if (!soundOn) return;
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();  // 前のよみあげを止める
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ja-JP';
+      u.rate = 0.9;   // すこしゆっくり
+      u.pitch = 1.1;  // すこし高め（こども向け）
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* 音が出せなくてもゲームは続行 */ }
+  }
+
+  /** いまのおだいをよみあげる（スピーカーボタン用） */
+  function speakOrder() {
+    speak(SIDE_LABEL[curSide] + ' ' + ACT_LABEL[curAct]);
+  }
+
+  /** 音声オン/オフを切り替える */
+  function toggleSound() {
+    soundOn = !soundOn;
+    document.getElementById('sound-box').textContent = soundOn ? '✓' : '';
+    document.getElementById('sound-label').textContent =
+      'こえで よみあげる：' + (soundOn ? 'オン' : 'オフ');
+    if (!soundOn && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
+
+  // ======================================================
+  // ゲーム開始
+  // ======================================================
+  /**
+   * ゲームを始める。
+   * @param {string} mode 'easy'=もじあり / 'hard'=もじなし
+   */
+  function startGame(mode) {
+    gameMode = mode;
+    score = 0;
+    qNum = 0;
+    lastSide = '';
+    leftUp = false;
+    rightUp = false;
+
+    // モードによってラベルを出す／消す
+    const hide = (mode === 'hard');
+    document.getElementById('label-left').classList.toggle('hidden', hide);
+    document.getElementById('label-right').classList.toggle('hidden', hide);
+
+    // 旗を両方とも下げた状態にする
+    renderFlags();
+
+    document.getElementById('qtotal-disp').textContent = TOTAL_Q;
+
+    showScreen('game');
+    nextQuestion();
+  }
+
+  function retryGame() { startGame(gameMode); }
+
+  // ======================================================
+  // 1問ずつ進める
+  // ======================================================
+  function nextQuestion() {
+    waiting = false;
+    qNum++;
+
+    // 規定の問題数をこえたら結果へ
+    if (qNum > TOTAL_Q) { showDone(); return; }
+
+    // 正解の方向をランダムに決める（直前と同じになりにくくする）
+    let side = Math.random() < 0.5 ? 'left' : 'right';
+    if (side === lastSide && Math.random() < 0.6) {
+      side = (side === 'left') ? 'right' : 'left';
+    }
+    curSide = side;
+    lastSide = side;
+
+    // その旗の今の状態にあわせて「あげて／さげて」を決める。
+    // （下がっていれば「あげて」、上がっていれば「さげて」。だから必ず動かせる）
+    const isUp = (side === 'left') ? leftUp : rightUp;
+    curAct = isUp ? 'down' : 'up';
+
+    // 演出マークを消す
+    clearMarks();
+
+    // おだいを表示（方向と動作を色分け）
+    const sideCls = (curSide === 'left') ? 'ord-left' : 'ord-right';
+    const actCls  = (curAct === 'up') ? 'ord-up' : 'ord-down';
+    document.getElementById('order-text').innerHTML =
+      `<span class="${sideCls}">${SIDE_LABEL[curSide]}</span> ` +
+      `<span class="${actCls}">${ACT_LABEL[curAct]}！</span>`;
+
+    // 表示更新
+    document.getElementById('score-disp').textContent = score;
+    document.getElementById('qnum-disp').textContent = qNum;
+
+    // こえでよみあげる（すこし間をおいてから）
+    setTimeout(speakOrder, 300);
+  }
+
+  /** いまの leftUp / rightUp の状態を旗の見た目に反映する */
+  function renderFlags() {
+    document.getElementById('arm-left').classList.toggle('up', leftUp);
+    document.getElementById('arm-right').classList.toggle('up', rightUp);
+  }
+
+  /** 演出マーク（⭕✕👆）を消す */
+  function clearMarks() {
+    ['left', 'right'].forEach(side => {
+      const m = document.getElementById('mark-' + side);
+      m.textContent = '';
+      m.classList.remove('show');
+    });
+  }
+
+  // ======================================================
+  // 旗をタップしたとき
+  // ======================================================
+  /**
+   * 旗（左右）をタップしたときの処理。
+   * @param {string} side タップした方向（'left' か 'right'）
+   */
+  function tapFlag(side) {
+    if (waiting) return;
+    waiting = true;
+
+    const markEl = document.getElementById('mark-' + side);
+
+    if (side === curSide) {
+      // ─ せいかい ─ 旗を実際に上げ下げする
+      if (side === 'left')  leftUp  = (curAct === 'up');
+      else                  rightUp = (curAct === 'up');
+      renderFlags();
+
+      score++;
+      document.getElementById('score-disp').textContent = score;
+      markEl.textContent = '⭕';
+      markEl.classList.add('show');
+      speak('せいかい');
+      setTimeout(nextQuestion, 1200);
+    } else {
+      // ─ まちがい ─ 旗は動かさず、正しい方を教える
+      markEl.textContent = '✕';
+      markEl.classList.add('show');
+      const hint = document.getElementById('mark-' + curSide);
+      hint.textContent = '👆';
+      hint.classList.add('show');
+      const stage = document.getElementById('stage');
+      stage.classList.add('shake');
+      speak('こっちが ' + SIDE_LABEL[curSide] + 'だよ');
+      setTimeout(() => {
+        stage.classList.remove('shake');
+        clearMarks();
+        waiting = false;
+      }, 1600);
+    }
+  }
+
+  // ======================================================
+  // 結果画面
+  // ======================================================
+  function showDone() {
+    document.getElementById('final-score').textContent = score;
+    document.getElementById('final-total').textContent = TOTAL_Q;
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    showScreen('done');
+  }
+
+  // ======================================================
+  // 画面切り替え
+  // ======================================================
+  function showScreen(name) {
+    document.getElementById('screen-start').style.display = name === 'start' ? 'block' : 'none';
+    document.getElementById('screen-game').style.display  = name === 'game' ? 'flex' : 'none';
+    document.getElementById('screen-done').style.display  = name === 'done' ? 'flex' : 'none';
+  }
+
+  function handleBack() {
+    const gameVisible = document.getElementById('screen-game').style.display === 'flex';
+    const doneVisible = document.getElementById('screen-done').style.display === 'flex';
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    if (gameVisible || doneVisible) {
+      showScreen('start');
+    } else {
+      location.href = '../../index.html';
+    }
+  }
+</script>
+</body>
+</html>

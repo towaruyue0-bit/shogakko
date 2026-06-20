@@ -61,6 +61,16 @@
       "url": "apps/keyboard/",
       "category": "えいご",
       "visible": true
+    },
+    {
+      "id": "hata",
+      "name": "はたあげ ゲーム",
+      "description": "みぎ・ひだりを おぼえよう",
+      "icon": "🚩",
+      "color": "#10B981",
+      "url": "apps/hata/",
+      "category": "せいかつ",
+      "visible": true
     }
   ]
 }
