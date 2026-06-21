@@ -501,6 +501,14 @@
   </div>
 
   <div class="setup-section">
+    <h2>➕ つくりかた</h2>
+    <div class="chip-row" id="pair-chips">
+      <div class="chip active" data-value="pair">2まいで 10<small>10のあわせ</small></div>
+      <div class="chip"        data-value="any">なんまいでも<small>3まい・4まいもOK</small></div>
+    </div>
+  </div>
+
+  <div class="setup-section">
     <h2>🃏 むずかしさ（カードのかず）</h2>
     <div class="chip-row" id="level-chips">
       <div class="chip active" data-value="easy">やさしい<small>9まい</small></div>
@@ -588,6 +596,7 @@
   // ─── 状態変数 ──────────────────────────────────────────────────
   let mode      = 'time';     // 'time' | 'relax'
   let level     = 'easy';     // 'easy' | 'normal' | 'hard'
+  let pairMode  = true;       // true=2まいで10 / false=なんまいでもOK
   let board     = [];         // カードの配列 [{id, value}]
   let selected  = [];         // えらんでいるカードの id（タップ順）
   let score     = 0;          // つくった10のかず
@@ -620,6 +629,15 @@
     updateBestLine();
   });
 
+  // つくりかた選択チップ（2まいで10 / なんまいでも）
+  document.getElementById('pair-chips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    pairMode = (chip.dataset.value === 'pair');
+    setActive('pair-chips', chip);
+    updateBestLine();
+  });
+
   /** 指定グループの中で1つだけ active にする */
   function setActive(groupId, chip) {
     document.querySelectorAll('#' + groupId + ' .chip')
@@ -637,8 +655,8 @@
     }
   }
 
-  /** ハイスコアの保存キー（モード＋むずかしさごと） */
-  function bestKey() { return `maketen_best_${level}`; }
+  /** ハイスコアの保存キー（つくりかた＋むずかしさごと） */
+  function bestKey() { return `maketen_best_${pairMode ? 'pair' : 'any'}_${level}`; }
   function loadBest() { return parseInt(localStorage.getItem(bestKey()) || '0', 10); }
   function saveBest(v) { localStorage.setItem(bestKey(), String(v)); }
 
@@ -759,12 +777,23 @@
     const sum = currentSum();
     updateSumPanel();
 
+    if (pairMode) {
+      // 2まいで10モード：2まいえらんだ時点で 合っているか判定する
+      if (selected.length === 2) {
+        if (sum === TARGET) makeTen();
+        else rejectSelection('ざんねん！ 2まいで 10じゃないよ');
+      }
+      // 1まいめのときは そのまま2まいめを待つ
+      return;
+    }
+
+    // なんまいでもOKモード
     if (sum === TARGET) {
       // ぴったり10 → 消す
       makeTen();
     } else if (sum > TARGET) {
       // こえた → 少し見せてから自動でえらびなおし
-      overflow();
+      rejectSelection('あれ？ 10を こえちゃった！');
     }
   }
 
@@ -837,13 +866,13 @@
     }, 400);
   }
 
-  // ─── 10をこえたとき ────────────────────────────────────────────
-  function overflow() {
+  // ─── 10にならなかったとき（こえた／2まいで合わない） ──────────
+  function rejectSelection(text) {
     busy = true;
     const panel = document.getElementById('sum-panel');
     panel.classList.add('over');
     playBuzz();
-    showMsg('あれ？ 10を こえちゃった！');
+    showMsg(text);
 
     setTimeout(() => {
       selected = [];
@@ -889,7 +918,7 @@
    */
   function ensureSolvable(preferIds = []) {
     const values = board.map(c => c.value);
-    if (subsetSumExists(values, TARGET)) return;
+    if (isSolvable(values)) return;
 
     // 入れ替える2まいを選ぶ（消えた直後のカードを優先）
     let targets = board.filter(c => preferIds.includes(c.id));
@@ -903,6 +932,21 @@
     const k = Math.floor(Math.random() * 9) + 1; // 1〜9
     a.value = k;
     b.value = TARGET - k;
+  }
+
+  /** いまのモードで「10が作れる状態」かどうか */
+  function isSolvable(values) {
+    return pairMode ? hasPairTen(values) : subsetSumExists(values, TARGET);
+  }
+
+  /** 2まいの組で合計10になるペアがあるか */
+  function hasPairTen(values) {
+    const seen = new Set();
+    for (const v of values) {
+      if (seen.has(TARGET - v)) return true;  // 相手（10-v）がすでにある
+      seen.add(v);
+    }
+    return false;
   }
 
   /** values の中から合計 target が作れるか（部分和） */
@@ -922,6 +966,19 @@
   /** 合計10になる組み合わせを1つさがして id配列で返す（ヒント用） */
   function findCombo() {
     const ids = board.map(c => c.id);
+
+    // 2まいで10モードは ペアだけをさがす
+    if (pairMode) {
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          if (valueOf(ids[i]) + valueOf(ids[j]) === TARGET) {
+            return [ids[i], ids[j]];
+          }
+        }
+      }
+      return null;
+    }
+
     const result = [];
     function dfs(start, sum) {
       if (sum === TARGET) return true;
