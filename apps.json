@@ -33,6 +33,16 @@
       "visible": true
     },
     {
+      "id": "maketen",
+      "name": "メイクテン",
+      "description": "たして10になるカードを けして あそぼう",
+      "icon": "🔟",
+      "color": "#14B8A6",
+      "url": "apps/maketen/",
+      "category": "算数",
+      "visible": true
+    },
+    {
       "id": "ondoku",
       "name": "おんどく れんしゅう",
       "description": "おはなしを よみあげよう",
