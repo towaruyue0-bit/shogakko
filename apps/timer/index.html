@@ -174,29 +174,6 @@
     .done-title { font-size: 1.8rem; font-weight: 900; color: #1e293b; }
     .done-sub { font-size: 0.95rem; color: #64748b; font-weight: 700; line-height: 1.7; text-align: center; }
 
-    /* ─── テスト用ボタン（あとで消します） ───────────── */
-    .test-box {
-      margin-top: 8px;
-      padding: 12px 14px;
-      border: 2px dashed #cbd5e1;
-      border-radius: 14px;
-      text-align: center;
-      width: 100%;
-    }
-    .test-box p { font-size: 0.72rem; color: #94a3b8; font-weight: 700; margin-bottom: 8px; }
-    .test-btn {
-      background: #f1f5f9;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 10px;
-      padding: 8px 14px;
-      font-size: 0.85rem;
-      font-weight: 800;
-      color: #475569;
-      cursor: pointer;
-      font-family: inherit;
-      margin: 0 4px;
-    }
-    .test-btn:active { transform: scale(0.96); }
   </style>
 </head>
 <body>
@@ -225,14 +202,6 @@
     まだ ポイントが ないよ。<br>
     <b>ゲームで あそんで</b> ポイントを あつめてね！🎮
   </div>
-
-  <!-- テスト用：あとで消します -->
-  <div class="test-box" id="test-box">
-    <p>🔧 テスト用（あとで けします）</p>
-    <button class="test-btn" onclick="testAdd(3)">＋3ポイント</button>
-    <button class="test-btn" onclick="testAdd(10)">＋10ポイント</button>
-    <button class="test-btn" onclick="testReset()">0にもどす</button>
-  </div>
 </div>
 
 <!-- ═══ カウントダウン画面 ═══════════════════════════════ -->
@@ -253,7 +222,7 @@
 </div>
 
 <!-- ポイント共通ライブラリを読み込む -->
-<script src="/shared/points.js"></script>
+<script src="../../shared/points.js"></script>
 <script>
   // ════════════════════════════════════════════════════════════════
   //  どうがタイマー
@@ -371,12 +340,6 @@
         (s === name) ? 'flex' : 'none';
     });
   }
-
-  // ════════════════════════════════════════════════════════════════
-  //  テスト用ボタン（ステップ3で各ゲームがポイントをくれるようになったら消します）
-  // ════════════════════════════════════════════════════════════════
-  function testAdd(n) { Points.add(n); refreshHome(); }
-  function testReset() { Points.set(0); refreshHome(); }
 
   // ════════════════════════════════════════════════════════════════
   //  効果音（ファイル不要のかんたんな音）
