@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>どうがタイマー</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --clr-main:  #7c5cff;   /* テーマ色（むらさき） */
+      --clr-main2: #4f7bff;   /* テーマ色（あお） */
+      --clr-ok:    #16a34a;
+      --clr-ng:    #ef4444;
+      --clr-gold:  #f59e0b;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(160deg, #ede9ff 0%, #e3f0ff 100%);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    /* ─── ヘッダー ─────────────────────────────────────── */
+    .header {
+      width: 100%;
+      background: linear-gradient(135deg, var(--clr-main), var(--clr-main2));
+      color: white;
+      text-align: center;
+      padding: 14px 16px 12px;
+      position: relative;
+      box-shadow: 0 3px 14px rgba(79,123,255,0.35);
+      flex-shrink: 0;
+    }
+    .header h1 { font-size: 1.25rem; font-weight: 900; letter-spacing: 0.04em; }
+    .back-btn {
+      position: absolute;
+      left: 12px; top: 50%;
+      transform: translateY(-50%);
+      color: white;
+      text-decoration: none;
+      font-size: 0.8rem;
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      padding: 5px 12px;
+    }
+    .sound-btn {
+      position: absolute;
+      right: 12px; top: 50%;
+      transform: translateY(-50%);
+      color: white;
+      font-size: 1.1rem;
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 50%;
+      width: 34px; height: 34px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ═══ 共通の画面わく ═══════════════════════════════ */
+    .screen {
+      width: 100%;
+      max-width: 420px;
+      padding: 26px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+
+    /* ─── もちじかんカード ───────────────────────────── */
+    .point-card {
+      width: 100%;
+      background: white;
+      border-radius: 24px;
+      padding: 28px 20px;
+      text-align: center;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+    }
+    .point-card .pc-label { font-size: 0.95rem; font-weight: 800; color: #64748b; }
+    .point-card .pc-big {
+      font-size: 4.4rem;
+      font-weight: 900;
+      line-height: 1.05;
+      margin: 6px 0 2px;
+      background: linear-gradient(135deg, var(--clr-main), var(--clr-main2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .point-card .pc-unit { font-size: 1.3rem; font-weight: 900; color: #94a3b8; }
+    .point-card .pc-sub { font-size: 0.85rem; color: #94a3b8; margin-top: 8px; font-weight: 700; }
+
+    /* なし のときのメッセージ */
+    .empty-note {
+      font-size: 0.95rem;
+      color: #64748b;
+      line-height: 1.7;
+      font-weight: 700;
+      text-align: center;
+    }
+    .empty-note b { color: var(--clr-main); }
+
+    /* ─── おおきなボタン ─────────────────────────────── */
+    .big-btn {
+      width: 100%;
+      padding: 20px;
+      border-radius: 20px;
+      border: none;
+      color: white;
+      font-size: 1.4rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 6px 22px rgba(79,123,255,0.4);
+      transition: transform 0.12s, box-shadow 0.12s, opacity 0.2s;
+    }
+    .big-btn.start { background: linear-gradient(135deg, var(--clr-main), var(--clr-main2)); }
+    .big-btn.stop  { background: linear-gradient(135deg, #f97316, #ef4444); box-shadow: 0 6px 22px rgba(239,68,68,0.4); }
+    .big-btn:hover  { transform: translateY(-2px); }
+    .big-btn:active { transform: scale(0.97); }
+    .big-btn:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: none; }
+
+    /* ─── ホームにもどるリンク ──────────────────────── */
+    .home-link {
+      color: #64748b;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 6px;
+    }
+
+    /* ═══ カウントダウン画面 ═══════════════════════════ */
+    #screen-run { display: none; }
+    .countdown {
+      font-size: 6rem;
+      font-weight: 900;
+      color: #1e293b;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .countdown.low { color: var(--clr-ng); animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    .run-sub { font-size: 1rem; font-weight: 800; color: #64748b; }
+    .tv-emoji { font-size: 3.4rem; }
+
+    /* ─── のこりポイントの帯 ─────────────────────────── */
+    .remain-pill {
+      background: white;
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--clr-main);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+
+    /* ═══ おしまい画面 ═══════════════════════════════ */
+    #screen-done { display: none; }
+    .done-emoji { font-size: 4.4rem; }
+    .done-title { font-size: 1.8rem; font-weight: 900; color: #1e293b; }
+    .done-sub { font-size: 0.95rem; color: #64748b; font-weight: 700; line-height: 1.7; text-align: center; }
+
+    /* ─── テスト用ボタン（あとで消します） ───────────── */
+    .test-box {
+      margin-top: 8px;
+      padding: 12px 14px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      text-align: center;
+      width: 100%;
+    }
+    .test-box p { font-size: 0.72rem; color: #94a3b8; font-weight: 700; margin-bottom: 8px; }
+    .test-btn {
+      background: #f1f5f9;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+      font-family: inherit;
+      margin: 0 4px;
+    }
+    .test-btn:active { transform: scale(0.96); }
+  </style>
+</head>
+<body>
+
+<!-- ─── ヘッダー ──────────────────────────────────────────── -->
+<div class="header">
+  <a class="back-btn" href="../../index.html">← もどる</a>
+  <h1>📺 どうがタイマー</h1>
+  <div class="sound-btn" id="sound-btn" onclick="toggleSound()">🔊</div>
+</div>
+
+<!-- ═══ ホーム画面（もちじかんの表示・スタート） ═══════════ -->
+<div class="screen" id="screen-home">
+
+  <div class="point-card">
+    <div class="pc-label">いま みられる じかん</div>
+    <div class="pc-big"><span id="home-minutes">0</span><span class="pc-unit">ふん</span></div>
+    <div class="pc-sub" id="home-sub">⭐ もっているポイント：0</div>
+  </div>
+
+  <!-- ポイントがあるとき -->
+  <button class="big-btn start" id="start-btn" onclick="startWatch()">▶ どうがを みる</button>
+
+  <!-- ポイントがないとき（startWatch側で出し分け） -->
+  <div class="empty-note" id="empty-note" style="display:none">
+    まだ ポイントが ないよ。<br>
+    <b>ゲームで あそんで</b> ポイントを あつめてね！🎮
+  </div>
+
+  <!-- テスト用：あとで消します -->
+  <div class="test-box" id="test-box">
+    <p>🔧 テスト用（あとで けします）</p>
+    <button class="test-btn" onclick="testAdd(3)">＋3ポイント</button>
+    <button class="test-btn" onclick="testAdd(10)">＋10ポイント</button>
+    <button class="test-btn" onclick="testReset()">0にもどす</button>
+  </div>
+</div>
+
+<!-- ═══ カウントダウン画面 ═══════════════════════════════ -->
+<div class="screen" id="screen-run">
+  <div class="tv-emoji">📺</div>
+  <div class="countdown" id="countdown">00:00</div>
+  <div class="run-sub">のこり じかん</div>
+  <div class="remain-pill">⭐ のこり <span id="run-points">0</span> ポイント</div>
+  <button class="big-btn stop" onclick="stopWatch()">■ おわる</button>
+</div>
+
+<!-- ═══ おしまい画面 ═══════════════════════════════════ -->
+<div class="screen" id="screen-done">
+  <div class="done-emoji" id="done-emoji">🎬</div>
+  <div class="done-title" id="done-title">おしまい！</div>
+  <div class="done-sub" id="done-sub"></div>
+  <button class="big-btn start" onclick="goHome()">🏠 もどる</button>
+</div>
+
+<!-- ポイント共通ライブラリを読み込む -->
+<script src="/shared/points.js"></script>
+<script>
+  // ════════════════════════════════════════════════════════════════
+  //  どうがタイマー
+  //  ・もっているポイント＝みられる分数（1ポイント＝1分）
+  //  ・スタートすると1ふんごとに1ポイントへっていく
+  //  ・とちゅうで「おわる」を押すと、のこりは そのまま貯金される
+  // ════════════════════════════════════════════════════════════════
+
+  let soundOn   = true;     // 効果音 ON/OFF
+  let timerId   = null;     // カウントダウン用のタイマー
+  let totalSec  = 0;        // スタート時の もちじかん（秒）
+  let elapsed   = 0;        // たった秒数
+  let charged   = 0;        // すでに使った（へらした）ポイント数
+
+  // ─── ホーム画面の表示を最新にする ──────────────────────────────
+  function refreshHome() {
+    const p = Points.get();
+    document.getElementById('home-minutes').textContent = p;
+    document.getElementById('home-sub').textContent = `⭐ もっているポイント：${p}`;
+
+    // ポイントが あるか ないかで ボタンとメッセージを出し分け
+    const hasPoints = p > 0;
+    document.getElementById('start-btn').style.display = hasPoints ? 'block' : 'none';
+    document.getElementById('empty-note').style.display = hasPoints ? 'none' : 'block';
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  どうがを みはじめる
+  // ════════════════════════════════════════════════════════════════
+  function startWatch() {
+    const p = Points.get();
+    if (p <= 0) return;          // ポイントが無ければ何もしない
+
+    totalSec = p * 60;           // 1ポイント＝60秒
+    elapsed  = 0;
+    charged  = 0;
+
+    showScreen('run');
+    updateCountdown();
+    playStart();
+
+    clearInterval(timerId);
+    timerId = setInterval(tick, 1000);
+  }
+
+  /** 1びょうごとの処理 */
+  function tick() {
+    elapsed++;
+
+    // 1ふん（60秒）たつごとに 1ポイントへらす
+    const minutesPassed = Math.floor(elapsed / 60);
+    while (charged < minutesPassed) {
+      Points.spend(1);           // 実際にポイントをへらす（貯金箱を更新）
+      charged++;
+    }
+
+    updateCountdown();
+
+    // のこり時間が0になったら おしまい
+    if (elapsed >= totalSec) {
+      finishWatch();
+    }
+  }
+
+  /** カウントダウンの数字を更新する */
+  function updateCountdown() {
+    const remainSec = Math.max(0, totalSec - elapsed);
+    const m = Math.floor(remainSec / 60);
+    const s = remainSec % 60;
+    const text = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+
+    const cd = document.getElementById('countdown');
+    cd.textContent = text;
+    // のこり1分をきったら 赤く点めつ
+    cd.classList.toggle('low', remainSec <= 60 && remainSec > 0);
+
+    document.getElementById('run-points').textContent = Points.get();
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  とちゅうで「おわる」を押したとき
+  // ════════════════════════════════════════════════════════════════
+  function stopWatch() {
+    clearInterval(timerId);
+    const left = Points.get();
+    document.getElementById('done-emoji').textContent = '👍';
+    document.getElementById('done-title').textContent = 'おつかれさま！';
+    document.getElementById('done-sub').innerHTML =
+      `のこりの <b>${left}ポイント</b> は とってあるよ。<br>また あそんでね😊`;
+    showScreen('done');
+    playStop();
+  }
+
+  /** 時間いっぱいまで見て おしまいになったとき */
+  function finishWatch() {
+    clearInterval(timerId);
+    document.getElementById('done-emoji').textContent = '🎬';
+    document.getElementById('done-title').textContent = 'じかんだよ！';
+    document.getElementById('done-sub').innerHTML =
+      `じかんが きました。<br>また ゲームで ポイントを あつめてね🎮`;
+    showScreen('done');
+    playFinish();
+  }
+
+  /** ホームにもどる */
+  function goHome() {
+    refreshHome();
+    showScreen('home');
+  }
+
+  /** 画面を切りかえる（home / run / done のどれか1つだけ表示） */
+  function showScreen(name) {
+    ['home', 'run', 'done'].forEach(s => {
+      document.getElementById('screen-' + s).style.display =
+        (s === name) ? 'flex' : 'none';
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  テスト用ボタン（ステップ3で各ゲームがポイントをくれるようになったら消します）
+  // ════════════════════════════════════════════════════════════════
+  function testAdd(n) { Points.add(n); refreshHome(); }
+  function testReset() { Points.set(0); refreshHome(); }
+
+  // ════════════════════════════════════════════════════════════════
+  //  効果音（ファイル不要のかんたんな音）
+  // ════════════════════════════════════════════════════════════════
+  let audioCtx = null;
+  function ac() {
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) { audioCtx = null; }
+    }
+    return audioCtx;
+  }
+  function beep(freq, dur, type = 'sine', vol = 0.18) {
+    if (!soundOn) return;
+    const ctx = ac();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + dur);
+  }
+  function playStart()  { beep(523, 0.1, 'sine'); setTimeout(() => beep(784, 0.18, 'sine'), 100); }
+  function playStop()   { beep(440, 0.12, 'triangle'); }
+  function playFinish() {
+    [784, 659, 523].forEach((f, i) => setTimeout(() => beep(f, 0.2, 'sine', 0.2), i * 140));
+  }
+  function toggleSound() {
+    soundOn = !soundOn;
+    document.getElementById('sound-btn').textContent = soundOn ? '🔊' : '🔇';
+    if (soundOn) ac();
+  }
+
+  // ─── 起動時 ────────────────────────────────────────────────────
+  refreshHome();
+</script>
+</body>
+</html>

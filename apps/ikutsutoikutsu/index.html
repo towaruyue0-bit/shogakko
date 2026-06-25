@@ -640,6 +640,8 @@
       document.getElementById('final-total-wrap').style.display = 'none';
       document.getElementById('done-score-label').textContent = 'もん せいかい！';
     }
+    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
+    Points.reward(3);
     showScreen('done');
   }
 
@@ -684,5 +686,7 @@
   // ======================================================
   initStartScreen();
 </script>
+<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
+<script src="/shared/points.js"></script>
 </body>
 </html>

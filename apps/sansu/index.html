@@ -1163,6 +1163,9 @@
       banner.textContent = `🔓 ${unlockedGrade}ねんせいが あそべるように なったよ！`;
       banner.style.display = 'block';
     }
+
+    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
+    Points.reward(3);
   }
 
   function retryQuiz() {
@@ -1175,5 +1178,7 @@
   renderGradeChips();
   applyAllowedOps();
 </script>
+<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
+<script src="/shared/points.js"></script>
 </body>
 </html>

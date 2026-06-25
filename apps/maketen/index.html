@@ -577,6 +577,8 @@
 <!-- コンボのふきだし -->
 <div id="combo-pop"></div>
 
+<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
+<script src="/shared/points.js"></script>
 <script>
   // ════════════════════════════════════════════════════════════════
   //  メイクテン … たして10になるカードを消していくカードゲーム
@@ -1067,6 +1069,9 @@
     document.getElementById('screen-game').style.display   = 'none';
     document.getElementById('screen-result').style.display = 'block';
     playFanfare();
+
+    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
+    Points.reward(3);
   }
 
   /** セットアップ画面にもどる */

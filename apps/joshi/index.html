@@ -681,10 +681,15 @@ function showResult() {
     '「' + modeLabel[currentMode] + '」を もう いちど やる';
 
   showScreen('screen-result');
+
+  // クリアのごほうびに 3ポイント（どうがタイマーで使える）
+  Points.reward(3);
 }
 
 /* 起動時はホーム画面を表示 */
 showHome();
 </script>
+<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
+<script src="/shared/points.js"></script>
 </body>
 </html>

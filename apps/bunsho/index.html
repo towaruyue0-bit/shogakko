@@ -701,6 +701,8 @@
   function showDone() {
     document.getElementById('final-score').textContent = score;
     document.getElementById('final-total').textContent = TOTAL_Q;
+    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
+    Points.reward(3);
     showScreen('done');
   }
 
@@ -727,5 +729,7 @@
     }
   }
 </script>
+<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
+<script src="/shared/points.js"></script>
 </body>
 </html>

@@ -816,6 +816,9 @@
     document.getElementById('result-sub').textContent    = sub;
     document.getElementById('result-score').textContent  = `${correctCount} / ${questions.length}`;
     document.getElementById('result-detail').textContent = `せいかいりつ ${pct}%`;
+
+    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
+    Points.reward(3);
   }
 
   /** もう一度やるボタンを押したとき */
@@ -824,5 +827,7 @@
     document.getElementById('screen-setup').style.display  = 'flex';
   }
 </script>
+<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
+<script src="/shared/points.js"></script>
 </body>
 </html>

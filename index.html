@@ -44,6 +44,26 @@
     }
     .manage-btn:hover { background: rgba(255,255,255,0.35); }
 
+    /* ─── いまのポイント（タップで どうがタイマーへ） ───────── */
+    .points-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      background: rgba(255,255,255,0.92);
+      color: #7c5cff;
+      font-weight: 900;
+      font-size: 1rem;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 8px 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+      transition: transform 0.12s;
+    }
+    .points-pill:hover { transform: translateY(-2px); }
+    .points-pill:active { transform: scale(0.96); }
+    .points-pill .pts-num { font-size: 1.25rem; }
+
     /* ─── カテゴリ見出し ────────────────────────────────── */
     .category-label {
       font-size: 0.78rem;
@@ -146,6 +166,7 @@
     <span class="header-icon">📚</span>
     <h1 id="site-title">小学校 学習アプリ</h1>
     <p id="site-subtitle">いっしょにべんきょうしよう！</p>
+    <a class="points-pill" href="apps/timer/">⭐ <span class="pts-num" id="pts-num">0</span> ポイント</a>
   </div>
 
   <div id="loading">⏳</div>
@@ -155,6 +176,8 @@
     <p id="footer-text"></p>
   </div>
 
+  <!-- ポイント共通ライブラリ -->
+  <script src="/shared/points.js"></script>
   <script>
     /**
      * apps.json を読み込んで、アプリ一覧をカードとして表示する。
@@ -240,6 +263,9 @@
     }
 
     loadApps();
+
+    // いまのポイントをヘッダーに表示する
+    document.getElementById('pts-num').textContent = Points.get();
   </script>
 </body>
 </html>

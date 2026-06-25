@@ -81,6 +81,16 @@
       "url": "apps/hata/",
       "category": "せいかつ",
       "visible": true
+    },
+    {
+      "id": "timer",
+      "name": "どうがタイマー",
+      "description": "ためたポイントで どうがを みよう",
+      "icon": "📺",
+      "color": "#7c5cff",
+      "url": "apps/timer/",
+      "category": "ごほうび",
+      "visible": true
     }
   ]
 }
