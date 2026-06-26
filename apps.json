@@ -43,6 +43,16 @@
       "visible": true
     },
     {
+      "id": "timetrial",
+      "name": "たしざん タイムトライアル",
+      "description": "3ぷんで くりあがりなしの たしざんを ぜんもん とこう",
+      "icon": "⏱️",
+      "color": "#4db1ff",
+      "url": "apps/timetrial/",
+      "category": "算数",
+      "visible": true
+    },
+    {
       "id": "ondoku",
       "name": "おんどく れんしゅう",
       "description": "おはなしを よみあげよう",
