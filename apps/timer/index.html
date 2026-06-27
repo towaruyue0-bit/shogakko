@@ -345,13 +345,41 @@
   //  効果音（ファイル不要のかんたんな音）
   // ════════════════════════════════════════════════════════════════
   let audioCtx = null;
+
+  /**
+   * 音を出すための「オーディオコンテキスト」を用意して返す。
+   * スマホ・タブレット（とくに iPhone/iPad）では、最初は音が
+   * 「ねむった状態（suspended）」になっていて、resume() で
+   * 起こしてあげないと音が鳴らない。そこで毎回 resume() を呼ぶ。
+   */
   function ac() {
     if (!audioCtx) {
       try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
       catch (e) { audioCtx = null; }
     }
+    // ねむっていたら起こす（これをしないとスマホで無音になる）
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
     return audioCtx;
   }
+
+  /**
+   * 画面を最初にさわった/クリックした時点で、音のロックを解除しておく。
+   * ブラウザは「ユーザーがさわった瞬間」でないと音を許可しないため、
+   * ここで一度 ac() を呼んで音を鳴らせる状態にしておく（保険）。
+   * 一度やれば十分なので、終わったらこの仕掛けは外す。
+   */
+  function unlockAudio() {
+    ac();
+    window.removeEventListener('pointerdown', unlockAudio);
+    window.removeEventListener('touchstart', unlockAudio);
+    window.removeEventListener('click', unlockAudio);
+  }
+  window.addEventListener('pointerdown', unlockAudio);
+  window.addEventListener('touchstart', unlockAudio);
+  window.addEventListener('click', unlockAudio);
+
   function beep(freq, dur, type = 'sine', vol = 0.18) {
     if (!soundOn) return;
     const ctx = ac();
@@ -368,9 +396,22 @@
   }
   function playStart()  { beep(523, 0.1, 'sine'); setTimeout(() => beep(784, 0.18, 'sine'), 100); }
   function playStop()   { beep(440, 0.12, 'triangle'); }
+
+  /**
+   * 時間切れの「じかんだよ！」アラーム。
+   * 子どもが気づけるように、少し大きめの音を3回くりかえして鳴らす。
+   * （ピンポン♪ を3セット）
+   */
   function playFinish() {
-    [784, 659, 523].forEach((f, i) => setTimeout(() => beep(f, 0.2, 'sine', 0.2), i * 140));
+    const ding = (start) => {
+      [880, 660].forEach((f, i) =>
+        setTimeout(() => beep(f, 0.35, 'sine', 0.32), start + i * 180));
+    };
+    ding(0);      // 1回目
+    ding(900);    // 2回目
+    ding(1800);   // 3回目
   }
+
   function toggleSound() {
     soundOn = !soundOn;
     document.getElementById('sound-btn').textContent = soundOn ? '🔊' : '🔇';
