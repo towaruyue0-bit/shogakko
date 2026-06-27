@@ -493,14 +493,6 @@
   </div>
 
   <div class="setup-section">
-    <h2>🎮 モードを えらんでね</h2>
-    <div class="chip-row" id="mode-chips">
-      <div class="chip active" data-value="time">タイムアタック<small>60びょうで なんこ？</small></div>
-      <div class="chip"        data-value="relax">のんびり<small>じかん むせいげん</small></div>
-    </div>
-  </div>
-
-  <div class="setup-section">
     <h2>➕ つくりかた</h2>
     <div class="chip-row" id="pair-chips">
       <div class="chip active" data-value="pair">2まいで 10<small>10のあわせ</small></div>
@@ -596,7 +588,6 @@
   };
 
   // ─── 状態変数 ──────────────────────────────────────────────────
-  let mode      = 'time';     // 'time' | 'relax'
   let level     = 'easy';     // 'easy' | 'normal' | 'hard'
   let pairMode  = true;       // true=2まいで10 / false=なんまいでもOK
   let board     = [];         // カードの配列 [{id, value}]
@@ -612,15 +603,6 @@
   let soundOn   = true;       // 効果音 ON/OFF
 
   // ─── セットアップ画面の操作 ────────────────────────────────────
-
-  // モード選択チップ
-  document.getElementById('mode-chips').addEventListener('click', e => {
-    const chip = e.target.closest('.chip');
-    if (!chip) return;
-    mode = chip.dataset.value;
-    setActive('mode-chips', chip);
-    updateBestLine();
-  });
 
   // むずかしさ選択チップ
   document.getElementById('level-chips').addEventListener('click', e => {
@@ -646,15 +628,11 @@
       .forEach(c => c.classList.toggle('active', c === chip));
   }
 
-  /** いまのモード・むずかしさのハイスコアを表示する */
+  /** いまのむずかしさのハイスコアを表示する */
   function updateBestLine() {
     const el = document.getElementById('best-line');
-    if (mode === 'time') {
-      const best = loadBest();
-      el.textContent = best > 0 ? `🏆 ハイスコア：${best}こ` : '🏆 はじめての ちょうせん！';
-    } else {
-      el.textContent = 'すきなだけ あそべるよ 🌿';
-    }
+    const best = loadBest();
+    el.textContent = best > 0 ? `🏆 ハイスコア：${best}こ` : '🏆 はじめての ちょうせん！';
   }
 
   /** ハイスコアの保存キー（つくりかた＋むずかしさごと） */
@@ -680,18 +658,10 @@
     document.getElementById('screen-result').style.display = 'none';
     document.getElementById('screen-game').style.display   = 'flex';
 
-    // タイムアタックだけ タイマーとバーを出す
-    const timeBox = document.getElementById('stat-time-box');
-    const barWrap = document.getElementById('time-bar-wrap');
-    if (mode === 'time') {
-      timeBox.style.display = '';
-      barWrap.style.display = '';
-      startTimer();
-    } else {
-      // のんびりモードは「のこり」のかわりに「おわる」ボタンの役割を時間欄に
-      timeBox.style.display = 'none';
-      barWrap.style.display = 'none';
-    }
+    // タイマーとバーを出してカウントダウン開始
+    document.getElementById('stat-time-box').style.display = '';
+    document.getElementById('time-bar-wrap').style.display = '';
+    startTimer();
 
     updateStats();
     updateSumPanel();
@@ -1080,9 +1050,6 @@
     document.getElementById('screen-setup').style.display  = 'flex';
     updateBestLine();
   }
-
-  // のんびりモードは「もどる」リンクで終わるので、ここでは
-  // タイマーを止めるだけにしておく（画面遷移はヘッダーのリンク）。
 
   // ════════════════════════════════════════════════════════════════
   //  効果音（Web Audio … ファイル不要のかんたんな音）

@@ -462,17 +462,21 @@
       $("resultMsg").textContent = "すごい！ぜんもん せいかい！";
       soundWin();
       launchConfetti();
-      // ぜんもんクリアのごほうびに 3ポイント（どうがタイマーで使える）
-      // points.js は const で定義されており window には乗らないため typeof で判定する。
-      // （points.js を読み込まずに単体でブラウザ起動しても落ちないようにするための安全策）
-      if (typeof Points !== "undefined" && typeof Points.reward === "function"){
-        setTimeout(function(){ Points.reward(3); }, 700);
-      }
     } else {
       $("resultEmoji").textContent = "⏰";
       $("resultTitle").textContent = "じかんぎれ！";
       $("resultMsg").textContent = "おしい！もういちど ちょうせん しよう！";
     }
+
+    // ごほうびに 3ポイント（どうがタイマーで使える）。
+    // 目標の3分はあくまで「タイムアタック」なので、時間切れでも
+    // ちょうせんしたこと自体は えらい。勝ち負けに関わらず +3 する。
+    // points.js は const で定義されており window には乗らないため typeof で判定する。
+    // （points.js を読み込まずに単体でブラウザ起動しても落ちないようにするための安全策）
+    if (typeof Points !== "undefined" && typeof Points.reward === "function"){
+      setTimeout(function(){ Points.reward(3); }, 700);
+    }
+
     show("result");
   }
 
