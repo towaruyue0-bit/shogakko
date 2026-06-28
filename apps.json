@@ -53,6 +53,16 @@
       "visible": true
     },
     {
+      "id": "hikitimetrial",
+      "name": "ひきざん タイムトライアル",
+      "description": "3ぷんで くりさがりなしの ひきざんを ぜんもん とこう",
+      "icon": "⏱️",
+      "color": "#34c3a0",
+      "url": "apps/hikitimetrial/",
+      "category": "算数",
+      "visible": true
+    },
+    {
       "id": "ondoku",
       "name": "おんどく れんしゅう",
       "description": "おはなしを よみあげよう",
