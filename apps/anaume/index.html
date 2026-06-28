@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>あなうめ れんしゅう</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(135deg, #E0F7FA 0%, #E8F0FF 100%);
+      min-height: 100dvh;
+      color: #2d3748;
+    }
+
+    /* ─── ヘッダー ─────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%);
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 3px 12px rgba(6,182,212,0.35);
+    }
+    .back-btn {
+      background: rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: white;
+      font-size: 0.9rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .back-btn:active { opacity: 0.7; }
+    .header h1 { font-size: 1.2rem; font-weight: 900; }
+
+    /* ─── おはなし えらび画面 ───────────────── */
+    #screen-list { padding: 22px 16px 44px; }
+    .lead {
+      background: white;
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: #475569;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+    .lead b { color: #0891b2; }
+
+    .story-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .story-card {
+      background: white;
+      border-radius: 20px;
+      padding: 22px 14px 18px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      transition: transform 0.13s;
+      border-top: 5px solid var(--c, #06B6D4);
+    }
+    .story-card:active { transform: scale(0.97); }
+    .story-emoji { font-size: 2.8rem; display: block; margin-bottom: 10px; }
+    .story-title { font-size: 0.95rem; font-weight: 800; line-height: 1.4; }
+    .story-sub { font-size: 0.72rem; color: #a0aec0; margin-top: 5px; }
+
+    /* ─── もんだい画面 ─────────────────────── */
+    #screen-quiz {
+      display: none;
+      flex-direction: column;
+      height: 100dvh;
+    }
+    .progress-wrap { background: #d6e4ee; height: 7px; flex-shrink: 0; }
+    .progress-bar {
+      background: linear-gradient(90deg, #06B6D4, #3B82F6);
+      height: 100%;
+      transition: width 0.4s ease;
+    }
+
+    /* おはなし（ずっと見える本文ボックス） */
+    .passage {
+      flex-shrink: 0;
+      max-height: 34dvh;
+      overflow-y: auto;
+      margin: 12px 14px 0;
+      padding: 16px 16px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+      line-height: 2.2;
+      font-size: 1.18rem;
+      font-weight: 700;
+    }
+    .passage-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #0891b2;
+      background: #E0F7FA;
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    .pline { display: block; border-radius: 6px; padding: 1px 3px; transition: background 0.3s; }
+    /* 答えのもとになった一文を光らせる */
+    .pline.hl {
+      background: #FFF3B0;
+      box-shadow: 0 0 0 2px #FFD54F;
+    }
+
+    /* もんだい部分 */
+    .quiz-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 24px;
+    }
+    .q-prompt {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+    .q-prompt .qnum {
+      color: #06B6D4;
+      margin-right: 6px;
+    }
+
+    /* あなあき文（フレーム） */
+    .frame {
+      background: white;
+      border-radius: 14px;
+      padding: 16px 14px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 2.4;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+      margin-bottom: 18px;
+    }
+    .ftext { color: #334155; }
+    /* あなのまえ・あとの「ヒントことば」を強調するとき */
+    .ftext.hint {
+      background: #FEF08A;
+      border-radius: 5px;
+      padding: 1px 3px;
+    }
+    .blank {
+      display: inline-block;
+      min-width: 78px;
+      padding: 4px 10px;
+      margin: 0 2px;
+      border-bottom: 3px dashed #94a3b8;
+      text-align: center;
+      color: #0f172a;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+    .blank.empty { color: #cbd5e0; }
+    .blank.filled { border-bottom: 3px solid #06B6D4; background: #ECFEFF; border-radius: 6px 6px 0 0; }
+    .blank.ok  { border-bottom: 3px solid #16a34a; background: #DCFCE7; color: #15803d; }
+    .blank.ng  { border-bottom: 3px solid #dc2626; background: #FEE2E2; color: #b91c1c; animation: shake 0.4s; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* ことばタイル */
+    .tiles-label { font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 8px; }
+    .tiles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .tile {
+      background: white;
+      border: 2.5px solid #06B6D4;
+      color: #0e7490;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 3px 8px rgba(6,182,212,0.18);
+      transition: transform 0.1s, opacity 0.15s;
+    }
+    .tile:active { transform: scale(0.94); }
+    .tile.used { opacity: 0; pointer-events: none; }
+
+    /* フィードバック */
+    .feedback {
+      min-height: 28px;
+      font-size: 1rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+    .feedback.ok { color: #16a34a; }
+    .feedback.ng { color: #dc2626; }
+
+    .check-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #06B6D4, #3B82F6);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 1.15rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .check-btn:active { opacity: 0.82; }
+    .check-btn:disabled { background: #cbd5e0; cursor: default; }
+
+    /* ─── かんりょう画面 ───────────────────── */
+    #screen-done {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 84dvh;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .done-star { font-size: 5rem; margin-bottom: 16px; animation: pop 0.4s ease; }
+    @keyframes pop {
+      0% { transform: scale(0.4); } 70% { transform: scale(1.2); } 100% { transform: scale(1); }
+    }
+    .done-title { font-size: 2rem; font-weight: 900; color: #0891b2; margin-bottom: 6px; }
+    .done-sub { font-size: 1rem; color: #64748b; margin-bottom: 32px; line-height: 1.7; }
+    .done-back {
+      background: linear-gradient(135deg, #06B6D4, #3B82F6);
+      color: white; border: none; border-radius: 14px;
+      padding: 16px 36px; font-size: 1.1rem; font-weight: 900;
+      cursor: pointer; font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ヘッダー（全画面共通） -->
+<div class="header">
+  <button class="back-btn" onclick="handleBack()">‹ もどる</button>
+  <h1>🔍 あなうめ れんしゅう</h1>
+</div>
+
+<!-- ① おはなし えらび画面 -->
+<div id="screen-list">
+  <div class="lead">
+    おはなしを <b>よく よんで</b>、あなに あう ことばを<br>
+    おはなしの なかから <b>そのまま さがして</b> いれよう。<br>
+    あなの <b>まえと あとの ことば</b>が ヒントだよ！
+  </div>
+  <div class="story-grid" id="story-grid"></div>
+</div>
+
+<!-- ② もんだい画面 -->
+<div id="screen-quiz">
+  <div class="progress-wrap"><div class="progress-bar" id="prog-bar" style="width:0%"></div></div>
+
+  <!-- おはなし（ずっと見える） -->
+  <div class="passage" id="passage"></div>
+
+  <!-- もんだい -->
+  <div class="quiz-body">
+    <div class="q-prompt" id="q-prompt"></div>
+    <div class="frame" id="frame"></div>
+    <div class="tiles-label">⬇️ ことばを タップして あなに いれてね</div>
+    <div class="tiles" id="tiles"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="check-btn" id="check-btn" onclick="onCheck()">こたえあわせ ✓</button>
+  </div>
+</div>
+
+<!-- ③ かんりょう画面 -->
+<div id="screen-done">
+  <div class="done-star">🌟</div>
+  <div class="done-title">よく できました！</div>
+  <div class="done-sub" id="done-sub"></div>
+  <button class="done-back" onclick="showScreen('list')">もどる</button>
+</div>
+
+<script>
+  // ======================================================
+  //  もんだいデータ
+  //  ----------------------------------------------------
+  //  各おはなしは text（本文・改行で1文ずつ）と questions を持つ。
+  //  questions の各問は：
+  //   q      … 設問のことば
+  //   parts  … あなあき文の組み立て。文字列＝固定の文字、
+  //            { b: n } ＝ n番目の あな（0からはじまる）
+  //   answers… 各あなに入る「正解のことば」（本文と同じことば）
+  //   tiles  … 画面に出す ことばタイル（正解＋まちがえやすいダミー）
+  //   source … 答えのもとになる本文の一文（正解時に光らせる）
+  //
+  //  ねらい：意味だけで答えず、「あなの前後のことば」をヒントに
+  //          本文の言葉を“そのまま”当てはめる作法を身につける。
+  // ======================================================
+  const STORIES = [
+    {
+      id: 'suzume',
+      title: 'すずめの くらし',
+      emoji: '🐦',
+      color: '#3B82F6',
+      // ※「おんどく れんしゅう」にも入っている説明文。
+      //   テストで出た文章なので、同じ内容で練習できる。
+      text:
+        'のはらに、ちゃいろの ことりが います。\n' +
+        'すずめです。\n' +
+        'なにを して いるのでしょう。\n' +
+        'すずめは、たべものを さがして いるのです。\n' +
+        'じめんを つついて、くさの たねを たべて います。\n' +
+        'すずめが、みずたまりに います。\n' +
+        'なにを して いるのでしょう。\n' +
+        'すずめは、みずあびを して いるのです。\n' +
+        'つばさを うごかして、からだに ついた よごれを おとして います。\n' +
+        'すずめは、わたしたちの ちかくで くらす とりです。',
+      questions: [
+        {
+          q: 'すずめは、なにを たべて いますか。',
+          parts: ['', { b: 0 }, 'を たべて います。'],
+          answers: ['くさの たね'],
+          tiles: ['くさの たね', 'たべもの', 'みず', 'よごれ'],
+          source: 'じめんを つついて、くさの たねを たべて います。'
+        },
+        {
+          // テストで まちがえた問題と同じ形。
+          q: 'みずあびを して、なにを して いますか。',
+          parts: ['', { b: 0 }, 'に ついた ', { b: 1 }, ' います。'],
+          answers: ['からだ', 'よごれを おとして'],
+          tiles: ['からだ', 'よごれを おとして', 'よごれを', 'おとして', 'つばさ'],
+          source: 'つばさを うごかして、からだに ついた よごれを おとして います。'
+        }
+      ]
+    },
+    {
+      id: 'asagao',
+      title: 'あさがおの そだてかた',
+      emoji: '🌱',
+      color: '#16A34A',
+      text:
+        'あさがおの たねを まきましょう。\n' +
+        'まず、つちに あなを あけます。\n' +
+        'つぎに、あなに たねを いれます。\n' +
+        'それから、うえから つちを かけます。\n' +
+        'さいごに、みずを たっぷり あげます。\n' +
+        'まいにち みずを あげると、めが でて きます。',
+      questions: [
+        {
+          q: 'まず、なにを しますか。',
+          parts: ['つちに ', { b: 0 }, 'を あけます。'],
+          answers: ['あな'],
+          tiles: ['あな', 'たね', 'みず', 'つち'],
+          source: 'まず、つちに あなを あけます。'
+        },
+        {
+          q: 'たねを いれた あと、なにを しますか。',
+          parts: ['うえから ', { b: 0 }, 'を かけます。'],
+          answers: ['つち'],
+          tiles: ['つち', 'たね', 'みず', 'あな'],
+          source: 'それから、うえから つちを かけます。'
+        },
+        {
+          q: 'さいごに、なにを しますか。',
+          parts: ['', { b: 0 }, 'を たっぷり あげます。'],
+          answers: ['みず'],
+          tiles: ['みず', 'つち', 'たね', 'あな'],
+          source: 'さいごに、みずを たっぷり あげます。'
+        }
+      ]
+    },
+    {
+      id: 'tearai',
+      title: 'ただしい てあらい',
+      emoji: '🧼',
+      color: '#06B6D4',
+      text:
+        'ただしい てあらいを おぼえましょう。\n' +
+        'まず、てを みずで ぬらします。\n' +
+        'つぎに、せっけんを つけます。\n' +
+        'それから、てのひらを よく こすります。\n' +
+        'さいごに、みずで あわを ながします。\n' +
+        'きれいな ハンカチで てを ふきます。',
+      questions: [
+        {
+          q: 'まず、なにで てを ぬらしますか。',
+          parts: ['てを ', { b: 0 }, 'で ぬらします。'],
+          answers: ['みず'],
+          tiles: ['みず', 'せっけん', 'あわ', 'ハンカチ'],
+          source: 'まず、てを みずで ぬらします。'
+        },
+        {
+          q: 'せっけんの あと、なにを よく こすりますか。',
+          parts: ['', { b: 0 }, 'を よく こすります。'],
+          answers: ['てのひら'],
+          tiles: ['てのひら', 'せっけん', 'みず', 'あわ'],
+          source: 'それから、てのひらを よく こすります。'
+        },
+        {
+          q: 'さいごに、なにを ながしますか。',
+          parts: ['みずで ', { b: 0 }, ' ながします。'],
+          answers: ['あわを'],
+          tiles: ['あわを', 'みずを', 'せっけんを', 'てを'],
+          source: 'さいごに、みずで あわを ながします。'
+        }
+      ]
+    }
+  ];
+
+  // ======================================================
+  //  状態（いまどのおはなし・どの問題・あなの中身）
+  // ======================================================
+  let curStory = null;   // いま選んでいるおはなし
+  let qIndex = 0;        // いま何問目か
+  let blanks = [];       // 各あなに入れたタイル（{idx,text} または null）
+  let solved = false;    // この問題が正解済みか
+
+  // ======================================================
+  //  おはなし えらび画面
+  // ======================================================
+  function renderList() {
+    document.getElementById('story-grid').innerHTML = STORIES.map((s, i) =>
+      `<div class="story-card" style="--c:${s.color}" onclick="openStory(${i})">
+        <span class="story-emoji">${s.emoji}</span>
+        <div class="story-title">${esc(s.title)}</div>
+        <div class="story-sub">${s.questions.length}もん</div>
+      </div>`
+    ).join('');
+  }
+
+  // ======================================================
+  //  もんだい画面
+  // ======================================================
+  /** おはなしを開いて1問目を表示する */
+  function openStory(idx) {
+    curStory = STORIES[idx];
+    qIndex = 0;
+    renderPassage();
+    showQuestion();
+    showScreen('quiz');
+  }
+
+  /** 本文を1文ずつ span にして表示（あとで光らせるため id をつける） */
+  function renderPassage() {
+    const lines = curStory.text.split('\n');
+    document.getElementById('passage').innerHTML =
+      `<span class="passage-label">📖 おはなし</span>` +
+      lines.map((l, i) => `<span class="pline" id="pl${i}">${esc(l)}</span>`).join('');
+  }
+
+  /** いまの問題を表示する */
+  function showQuestion() {
+    const q = curStory.questions[qIndex];
+    solved = false;
+
+    // あなの数だけ「空っぽ」を用意
+    const blankCount = q.parts.filter(p => typeof p === 'object').length;
+    blanks = new Array(blankCount).fill(null);
+
+    // 進みぐあいバー
+    const total = curStory.questions.length;
+    document.getElementById('prog-bar').style.width = (qIndex / total * 100) + '%';
+
+    // 設問のことば
+    document.getElementById('q-prompt').innerHTML =
+      `<span class="qnum">だい${qIndex + 1}もん</span>${esc(q.q)}`;
+
+    // 本文のハイライトを消す
+    clearPassageHighlight();
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('feedback').className = 'feedback';
+
+    renderFrame();
+    renderTiles();
+    updateCheckButton();
+  }
+
+  /** あなあき文を描画する */
+  function renderFrame(opts) {
+    opts = opts || {};
+    const q = curStory.questions[qIndex];
+    let html = '';
+    q.parts.forEach(p => {
+      if (typeof p === 'string') {
+        // 固定の文字。まちがえたときは前後のことばをヒントとして光らせる
+        if (p) html += `<span class="ftext${opts.hintWords ? ' hint' : ''}">${esc(p)}</span>`;
+      } else {
+        const i = p.b;
+        const filled = blanks[i];
+        let cls = 'blank ' + (filled ? 'filled' : 'empty');
+        // 答えあわせ後は 正解=ok / まちがい=ng の色をつける
+        if (opts.judge && filled) {
+          cls = 'blank ' + (filled.text === q.answers[i] ? 'ok' : 'ng');
+        }
+        const label = filled ? esc(filled.text) : '？';
+        html += `<span class="${cls}" onclick="clearBlank(${i})">${label}</span>`;
+      }
+    });
+    document.getElementById('frame').innerHTML = html;
+  }
+
+  /** ことばタイルを描画する（使ったタイルは消える） */
+  function renderTiles() {
+    const q = curStory.questions[qIndex];
+    const usedIdx = blanks.filter(b => b).map(b => b.idx);
+    document.getElementById('tiles').innerHTML = q.tiles.map((t, i) =>
+      `<button class="tile ${usedIdx.includes(i) ? 'used' : ''}" onclick="placeTile(${i})">${esc(t)}</button>`
+    ).join('');
+  }
+
+  /** タイルをタップ → いちばん左の空いている あな に入れる */
+  function placeTile(tileIdx) {
+    if (solved) return;
+    const q = curStory.questions[qIndex];
+    // すでに使っているタイルなら何もしない
+    if (blanks.some(b => b && b.idx === tileIdx)) return;
+    // 空いている最初の あな を探す
+    const empty = blanks.findIndex(b => b === null);
+    if (empty === -1) return;  // 全部うまっている
+    blanks[empty] = { idx: tileIdx, text: q.tiles[tileIdx] };
+    // やり直しに備えて、判定の色や本文ハイライトは消しておく
+    clearPassageHighlight();
+    setFeedback('', '');
+    renderFrame();
+    renderTiles();
+    updateCheckButton();
+  }
+
+  /** あなをタップ → 中のタイルを戻す（空っぽにする） */
+  function clearBlank(i) {
+    if (solved) return;
+    if (!blanks[i]) return;
+    blanks[i] = null;
+    clearPassageHighlight();
+    setFeedback('', '');
+    renderFrame();
+    renderTiles();
+    updateCheckButton();
+  }
+
+  /** 「こたえあわせ」ボタンの 文字・有効/無効を切りかえる */
+  function updateCheckButton() {
+    const btn = document.getElementById('check-btn');
+    if (solved) {
+      const last = qIndex >= curStory.questions.length - 1;
+      btn.textContent = last ? 'できた！ 🎉' : 'つぎへ →';
+      btn.disabled = false;
+    } else {
+      const allFilled = blanks.every(b => b !== null);
+      btn.textContent = 'こたえあわせ ✓';
+      btn.disabled = !allFilled;
+    }
+  }
+
+  /** ボタンを押したとき */
+  function onCheck() {
+    if (solved) { nextQuestion(); return; }
+
+    const q = curStory.questions[qIndex];
+    const allOk = blanks.every((b, i) => b && b.text === q.answers[i]);
+
+    if (allOk) {
+      // 正解：あなを緑にして、本文の もとの一文を光らせる
+      solved = true;
+      renderFrame({ judge: true });
+      highlightSource(q.source);
+      setFeedback('せいかい！ ここに かいて あったね 👀', 'ok');
+      updateCheckButton();
+    } else {
+      // まちがい：あなの前後のことば（ヒント）と 本文を光らせて 気づかせる
+      renderFrame({ judge: true, hintWords: true });
+      highlightSource(q.source);
+      setFeedback('おしい！ あなの まえと あとの ことばを みて、<br>おはなしの ことばを そのまま いれてね', 'ng');
+      // まちがえた あな だけ もどして、もう一度ためせるようにする
+      setTimeout(() => {
+        const q2 = curStory.questions[qIndex];
+        blanks = blanks.map((b, i) => (b && b.text === q2.answers[i]) ? b : null);
+        renderFrame();
+        renderTiles();
+        updateCheckButton();
+      }, 1600);
+    }
+  }
+
+  /** つぎの問題へ。最後ならクリア画面へ */
+  function nextQuestion() {
+    qIndex++;
+    if (qIndex >= curStory.questions.length) {
+      finishStory();
+    } else {
+      showQuestion();
+    }
+  }
+
+  /** おはなしを全問クリアしたとき */
+  function finishStory() {
+    document.getElementById('prog-bar').style.width = '100%';
+    document.getElementById('done-sub').innerHTML =
+      `「${esc(curStory.title)}」の あなうめ、ぜんぶ せいかい！<br>おはなしから ことばを さがせたね 🎯`;
+    showScreen('done');
+    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
+    Points.reward(3);
+  }
+
+  // ======================================================
+  //  本文ハイライト
+  // ======================================================
+  /** source（本文の一文）と同じ行を光らせて、その場所までスクロール */
+  function highlightSource(source) {
+    const lines = curStory.text.split('\n');
+    const i = lines.indexOf(source);
+    if (i === -1) return;
+    const el = document.getElementById('pl' + i);
+    if (el) {
+      el.classList.add('hl');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function clearPassageHighlight() {
+    document.querySelectorAll('.pline.hl').forEach(el => el.classList.remove('hl'));
+  }
+
+  function setFeedback(html, type) {
+    const el = document.getElementById('feedback');
+    el.innerHTML = html;
+    el.className = 'feedback' + (type ? ' ' + type : '');
+  }
+
+  // ======================================================
+  //  画面切り替え・もどる
+  // ======================================================
+  function showScreen(name) {
+    document.getElementById('screen-list').style.display = name === 'list' ? 'block' : 'none';
+    const quiz = document.getElementById('screen-quiz');
+    quiz.style.display = name === 'quiz' ? 'flex' : 'none';
+    const done = document.getElementById('screen-done');
+    done.style.display = name === 'done' ? 'flex' : 'none';
+  }
+
+  /** ヘッダーの「もどる」：問題中ならリストへ、リストならランチャーへ */
+  function handleBack() {
+    const quizVisible = document.getElementById('screen-quiz').style.display === 'flex';
+    const doneVisible = document.getElementById('screen-done').style.display === 'flex';
+    if (quizVisible || doneVisible) showScreen('list');
+    else location.href = '../../index.html';
+  }
+
+  /** XSS 対策：HTML 特殊文字をエスケープ */
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // 起動
+  renderList();
+  showScreen('list');
+</script>
+<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
+<script src="../../shared/points.js"></script>
+</body>
+</html>

@@ -63,6 +63,16 @@
       "visible": true
     },
     {
+      "id": "anaume",
+      "name": "あなうめ れんしゅう",
+      "description": "おはなしから ことばを さがして あなを うめよう",
+      "icon": "🔍",
+      "color": "#06B6D4",
+      "url": "apps/anaume/",
+      "category": "こくご",
+      "visible": true
+    },
+    {
       "id": "joshi",
       "name": "は・へ・を れんしゅう",
       "description": "は と わ・へ と え・を と お の つかいかた",
