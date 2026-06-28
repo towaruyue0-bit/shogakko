@@ -130,6 +130,45 @@
     .big-btn:active { transform: scale(0.97); }
     .big-btn:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: none; }
 
+    /* ─── べつタイマー用：もちじかんを 手で へらす ──────── */
+    .reduce-card {
+      width: 100%;
+      background: white;
+      border-radius: 20px;
+      padding: 16px 16px 18px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    }
+    .reduce-label {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #64748b;
+      text-align: center;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .reduce-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .reduce-btn {
+      flex: 1 1 auto;
+      min-width: 60px;
+      padding: 12px 4px;
+      border-radius: 12px;
+      border: 2px solid #f59e0b;
+      background: #fff7ed;
+      color: #c2410c;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.1s, background 0.15s;
+    }
+    .reduce-btn:hover  { background: #ffedd5; }
+    .reduce-btn:active { transform: scale(0.94); }
+
     /* ─── ホームにもどるリンク ──────────────────────── */
     .home-link {
       color: #64748b;
@@ -202,6 +241,18 @@
     まだ ポイントが ないよ。<br>
     <b>ゲームで あそんで</b> ポイントを あつめてね！🎮
   </div>
+
+  <!-- べつのタイマーで あそんだぶんを 手で へらす（ポイントがあるときだけ表示） -->
+  <div class="reduce-card" id="reduce-card" style="display:none">
+    <div class="reduce-label">🎮 べつの タイマーで あそんだぶんを へらす</div>
+    <div class="reduce-row">
+      <button class="reduce-btn" onclick="reduceMinutes(1)">−1ふん</button>
+      <button class="reduce-btn" onclick="reduceMinutes(5)">−5ふん</button>
+      <button class="reduce-btn" onclick="reduceMinutes(10)">−10ふん</button>
+      <button class="reduce-btn" onclick="reduceMinutes(15)">−15ふん</button>
+      <button class="reduce-btn" onclick="reduceMinutes(30)">−30ふん</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ カウントダウン画面 ═══════════════════════════════ -->
@@ -247,6 +298,26 @@
     const hasPoints = p > 0;
     document.getElementById('start-btn').style.display = hasPoints ? 'block' : 'none';
     document.getElementById('empty-note').style.display = hasPoints ? 'none' : 'block';
+    // 「手でへらす」パネルは、へらせるポイントがあるときだけ出す
+    document.getElementById('reduce-card').style.display = hasPoints ? 'block' : 'none';
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  べつのタイマーで あそんだぶんを 手で へらす
+  //  ・スマホのべつタイマーでゲーム時間を測ったとき、その分(=分数)を
+  //    親が手で減らせるようにするためのボタン。
+  //  ・1ポイント＝1分なので、n分 へらす ＝ n ポイント へらす。
+  //  ・まちがって押しても確認が出る。0より下がらない。
+  // ════════════════════════════════════════════════════════════════
+  function reduceMinutes(n) {
+    const cur = Points.get();
+    if (cur <= 0) return;                 // へらすポイントが無ければ何もしない
+    const dec   = Math.min(n, cur);       // 持っている以上は へらさない
+    const after = cur - dec;
+    if (!confirm(`${n}ふん へらしますか？\n（⭐ ${cur} → ${after} ポイント）`)) return;
+    Points.set(after);
+    refreshHome();
+    beep(440, 0.12, 'triangle');          // へらしたことが分かる かるい音
   }
 
   // ════════════════════════════════════════════════════════════════
