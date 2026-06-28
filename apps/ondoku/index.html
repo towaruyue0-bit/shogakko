@@ -540,8 +540,8 @@
   function nextSentence() {
     const total = sentences.length;
     if (curIdx >= total - 1) {
-      // さいごまで読めたごほうびに 3ポイント（どうがタイマーで使える）
-      Points.reward(3);
+      // さいごまで読めたごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
+      Points.rewardFor(3);
       showScreen('done');
       return;
     }

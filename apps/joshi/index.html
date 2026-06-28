@@ -684,8 +684,8 @@ function showResult() {
 
   // 利用記録に「正解数 / 問題数」をためる（記録ページ用）
   Stats.record(scoreOk, total);
-  // クリアのごほうびに 3ポイント（どうがタイマーで使える）
-  Points.reward(3);
+  // クリアのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
+  Points.rewardFor(3);
 }
 
 /* 起動時はホーム画面を表示 */

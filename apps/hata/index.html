@@ -694,8 +694,8 @@
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     // 利用記録に「正解数 / 問題数」をためる（記録ページ用）
     Stats.record(score, TOTAL_Q);
-    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
-    Points.reward(3);
+    // クリアのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
+    Points.rewardFor(3);
     showScreen('done');
   }
 

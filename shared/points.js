@@ -17,6 +17,11 @@
 // 保存箱のなまえ（キー）。全アプリでこの名前をそろえることが大事。
 const POINTS_KEY = 'kids_points';
 
+// アプリごとの「もらえるポイント数」の設定をしまう箱（キー）。
+// { アプリID: ポイント数 } の形で入る。管理ツールの「ポイント設定」で変える。
+// ※この設定は この端末（ブラウザ）の中だけに残る。
+const POINTS_CONFIG_KEY = 'kids_point_config';
+
 const Points = {
   /** いまのポイントを数（整数）で返す。まだ無いときは 0。 */
   get() {
@@ -66,6 +71,59 @@ const Points = {
     const total = this.add(n);
     showRewardPopup(n, total);
     return total;
+  },
+
+  /* ──────────────────────────────────────────────────────────
+   *  アプリごとの「もらえるポイント数」の設定
+   *  （管理ツールの「ポイント設定」で変える。端末ごとに保存）
+   * ────────────────────────────────────────────────────────── */
+
+  /** いまのURLから アプリID（apps/◯◯/ の ◯◯）を推測する。 */
+  _appId() {
+    const m = location.pathname.match(/\/apps\/([^\/]+)\//);
+    return m ? m[1] : null;
+  },
+
+  /** ポイント設定を まるごと読みこむ（無ければ空っぽ {}）。 */
+  getConfig() {
+    try {
+      return JSON.parse(localStorage.getItem(POINTS_CONFIG_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  },
+
+  /** ポイント設定を まるごと保存する。 */
+  setConfig(cfg) {
+    localStorage.setItem(POINTS_CONFIG_KEY, JSON.stringify(cfg || {}));
+  },
+
+  /**
+   * 指定アプリで もらえるポイント数を返す。
+   * 設定があればその数を、無ければ fallback（各アプリの初期値）を返す。
+   * @param {string} appId アプリID
+   * @param {number} fallback 設定が無いときの数（各アプリの初期値）
+   */
+  pointsFor(appId, fallback) {
+    const cfg = this.getConfig();
+    const v = cfg[appId];
+    // 0 もちゃんと「0ポイント」として有効にする（設定で0にできる）
+    if (typeof v === 'number' && !isNaN(v)) return Math.max(0, Math.floor(v));
+    return fallback;
+  },
+
+  /**
+   * 設定にしたがって ポイントをふやし、お祝いを出す。
+   * 各アプリの結果画面では Points.reward(3) のかわりに
+   * Points.rewardFor(3) と書く（3はそのアプリの初期値）。
+   * アプリIDはURLから自動で判定する。
+   * @param {number} fallback 設定が無いときの数（各アプリの初期値）
+   */
+  rewardFor(fallback) {
+    const appId = this._appId();
+    const n = appId ? this.pointsFor(appId, fallback) : fallback;
+    if (n <= 0) return this.get();  // 0ポイント設定なら 何も足さない（お祝いも出さない）
+    return this.reward(n);
   },
 };
 

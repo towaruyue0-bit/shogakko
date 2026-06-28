@@ -620,8 +620,8 @@
     // 一発で当てられた割合を正答率として記録する。
     const qTotal = curStory.questions.length;
     Stats.record(qTotal, qTotal + mistakes);
-    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
-    Points.reward(3);
+    // クリアのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
+    Points.rewardFor(3);
   }
 
   // ======================================================

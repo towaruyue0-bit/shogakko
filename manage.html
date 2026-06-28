@@ -325,6 +325,23 @@
     💾 すべての変更を保存してランチャーに反映する
   </button>
 
+  <!-- ── ポイント設定 ───────────────────────────────────── -->
+  <div class="card" style="margin-top:32px">
+    <h2 style="color:#b7791f">⭐ ポイント設定 — アプリごとに もらえるポイント</h2>
+    <p style="font-size:0.83rem;color:#718096;line-height:1.7;margin-bottom:16px">
+      各アプリを 1回 クリアしたときに もらえるポイント数を きめられます。0 にすると もらえません。<br>
+      ※ この設定は <b>いま使っている この端末（ブラウザ）だけ</b> に保存されます。
+      お子さんのタブレットなど ほかの端末でも変えたいときは、その端末で同じように設定してください。
+    </p>
+
+    <div id="points-list" class="app-list"></div>
+
+    <div class="btn-row" style="margin-top:18px">
+      <button class="btn btn-primary" onclick="savePoints()">💾 ポイント設定を保存する</button>
+      <button class="btn btn-cancel" onclick="resetPoints()">初期値にもどす</button>
+    </div>
+  </div>
+
   <!-- ── おんどく おはなし管理 ──────────────────────────── -->
   <div class="card" style="margin-top:32px">
     <h2 style="color:#d53f8c">📖 おんどく れんしゅう — おはなし管理</h2>
@@ -418,7 +435,8 @@
 <!-- ── トースト通知 ─────────────────────────────────────── -->
 <div id="toast"></div>
 
-
+<!-- ポイント共通ライブラリ（ポイント設定の読み書きに使う） -->
+<script src="shared/points.js"></script>
 <script>
   // ─── プリセットカラー ─────────────────────────────────────────────────────────
   const PRESET_COLORS = [
@@ -435,6 +453,7 @@
     buildColorPresets('color-presets', 'f-color');
     await loadData();
     renderList();
+    renderPointsList();
     renderOndokuList();
   });
 
@@ -604,6 +623,79 @@
   document.getElementById('edit-modal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
   });
+
+  // ─── ポイント設定 ─────────────────────────────────────────────────────────────
+  // 各アプリの「初期値（コードに書いてあるポイント数）」。
+  // ここに無いアプリ（timer など）は ポイントをもらわないので一覧に出さない。
+  const DEFAULT_POINTS = {
+    sansu: 3, bunsho: 3, ikutsutoikutsu: 6, maketen: 3, timetrial: 3,
+    ondoku: 3, anaume: 3, joshi: 3, keyboard: 3, hata: 3,
+  };
+
+  /** ポイント設定の対象アプリ（apps.json の並び順）を返す */
+  function pointApps() {
+    return siteData.apps.filter(a => Object.prototype.hasOwnProperty.call(DEFAULT_POINTS, a.id));
+  }
+
+  /** ポイント設定の一覧を描画する */
+  function renderPointsList() {
+    const list = document.getElementById('points-list');
+    const cfg  = (typeof Points !== 'undefined') ? Points.getConfig() : {};
+    const apps = pointApps();
+
+    if (apps.length === 0) {
+      list.innerHTML = '<p style="color:#a0aec0;text-align:center;padding:20px">対象のアプリがありません</p>';
+      return;
+    }
+
+    list.innerHTML = apps.map(app => {
+      const def = DEFAULT_POINTS[app.id];
+      // 設定があればその数、無ければ初期値を初期表示にする
+      const val = (typeof cfg[app.id] === 'number' && !isNaN(cfg[app.id])) ? cfg[app.id] : def;
+      return `
+        <div class="app-item">
+          <div class="app-item-icon" style="background:${app.color||'#eee'}22">
+            ${escHtml(app.icon || '📖')}
+          </div>
+          <div class="app-item-info">
+            <div class="app-item-name">${escHtml(app.name)}</div>
+            <div class="app-item-desc">初期値 ${def} ポイント</div>
+          </div>
+          <div class="app-item-actions" style="align-items:center">
+            <input type="number" min="0" max="99" id="pt-${escHtml(app.id)}" value="${val}"
+              style="width:72px;padding:8px;border:2px solid #e2e8f0;border-radius:8px;
+                     font-size:1rem;text-align:center;font-family:inherit;outline:none">
+            <span style="font-size:0.85rem;color:#718096;font-weight:700">ポイント</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  /** ポイント設定を保存する（この端末のブラウザに保存） */
+  function savePoints() {
+    const cfg = {};
+    pointApps().forEach(app => {
+      const inp = document.getElementById('pt-' + app.id);
+      if (!inp) return;
+      let v = parseInt(inp.value, 10);
+      if (isNaN(v) || v < 0) v = 0;
+      if (v > 99) v = 99;
+      cfg[app.id] = v;
+    });
+    if (typeof Points !== 'undefined') Points.setConfig(cfg);
+    else localStorage.setItem('kids_point_config', JSON.stringify(cfg));
+    renderPointsList();
+    showToast('🎉 ポイント設定を保存しました！この端末ですぐに反映されます。');
+  }
+
+  /** ポイント設定を初期値にもどす */
+  function resetPoints() {
+    if (!confirm('ポイント設定を 初期値にもどしますか？')) return;
+    if (typeof Points !== 'undefined') Points.setConfig({});
+    else localStorage.removeItem('kids_point_config');
+    renderPointsList();
+    showToast('↩️ 初期値にもどしました。');
+  }
 
   // ─── おんどく おはなし管理 ────────────────────────────────────────────────────
   const ONDOKU_KEY = 'ondoku_v1';

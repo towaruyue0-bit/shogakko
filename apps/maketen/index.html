@@ -1040,8 +1040,8 @@
     document.getElementById('screen-result').style.display = 'block';
     playFanfare();
 
-    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
-    Points.reward(3);
+    // クリアのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
+    Points.rewardFor(3);
   }
 
   /** セットアップ画面にもどる */
