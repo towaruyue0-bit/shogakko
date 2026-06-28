@@ -817,6 +817,8 @@
     document.getElementById('result-score').textContent  = `${correctCount} / ${questions.length}`;
     document.getElementById('result-detail').textContent = `せいかいりつ ${pct}%`;
 
+    // 利用記録に「正解数 / 問題数」をためる（記録ページ用）
+    Stats.record(correctCount, questions.length);
     // クリアのごほうびに 3ポイント（どうがタイマーで使える）
     Points.reward(3);
   }

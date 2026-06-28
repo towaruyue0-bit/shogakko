@@ -682,6 +682,8 @@ function showResult() {
 
   showScreen('screen-result');
 
+  // 利用記録に「正解数 / 問題数」をためる（記録ページ用）
+  Stats.record(scoreOk, total);
   // クリアのごほうびに 3ポイント（どうがタイマーで使える）
   Points.reward(3);
 }

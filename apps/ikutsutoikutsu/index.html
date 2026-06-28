@@ -407,6 +407,7 @@
   let allQueue = [];        // 出題リスト（5〜10のすべての組み合わせ）
   let target = 10;          // いま出題中の対象数
   let score = 0;            // 正解数
+  let mistakes = 0;         // まちがえた回数（正答率の計算に使う）
   let qNum = 0;             // 現在の問題番号（0始まり）
   let correctAns = 0;       // 現在の問題の正解
   let givenNum = 0;         // 提示している数（given）
@@ -419,6 +420,7 @@
    */
   function startGame() {
     score = 0;
+    mistakes = 0;
     qNum = 0;
     buildAllQueue();          // 5〜10のすべての組み合わせのリストを作る
     showScreen('game');
@@ -544,6 +546,7 @@
       setTimeout(nextQuestion, 1000);
     } else {
       // ─ 不正解 ─
+      mistakes++;   // まちがえた回数を1ふやす（正答率の計算用）
       blank.classList.add('wrong');
       btn.classList.add('wrong-ans');
 
@@ -566,8 +569,12 @@
     document.getElementById('final-total').textContent = allQueue.length;
     document.getElementById('final-total-wrap').style.display = '';
     document.getElementById('done-score-label').textContent = 'せいかい';
-    // クリアのごほうびに 3ポイント（どうがタイマーで使える）
-    Points.reward(3);
+    // 利用記録に正答率をためる（記録ページ用）。
+    // 正解するまで進む形式なので「正解数 ÷ (正解数＋まちがえた回数)」で
+    // 一発で当てられた割合を正答率として記録する。
+    Stats.record(score, score + mistakes);
+    // クリアのごほうびに 6ポイント（どうがタイマーで使える）
+    Points.reward(6);
     showScreen('done');
   }
 

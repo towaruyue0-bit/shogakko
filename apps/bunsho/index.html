@@ -701,6 +701,8 @@
   function showDone() {
     document.getElementById('final-score').textContent = score;
     document.getElementById('final-total').textContent = TOTAL_Q;
+    // 利用記録に「いっぱつせいかい数 / 問題数」をためる（記録ページ用）
+    Stats.record(score, TOTAL_Q);
     // クリアのごほうびに 3ポイント（どうがタイマーで使える）
     Points.reward(3);
     showScreen('done');

@@ -127,3 +127,107 @@ function showRewardPopup(n, total) {
   overlay.addEventListener('click', remove);
   setTimeout(remove, 2200);
 }
+
+/* ════════════════════════════════════════════════════════════════
+ *  利用記録ライブラリ  (Stats)
+ *  ----------------------------------------------------------------
+ *  「どのアプリを 何回ひらいたか」「正答率はどれくらいか」を
+ *  ブラウザの中（localStorage）に ためていく しくみです。
+ *
+ *  ・アプリを ひらくと、自動で「ひらいた回数」を1ふやします。
+ *    （各アプリは points.js を読みこむだけで、書くことはありません）
+ *  ・クイズ型のアプリは、結果画面で次のように1行よぶと
+ *    「正解数 / 問題数」を ためられます:
+ *        Stats.record(correctCount, total);
+ *
+ *  ためたデータは kiroku.html（記録ページ）で見られます。
+ *  データはこの端末の中だけに残ります（その端末で遊んだぶんだけ）。
+ * ════════════════════════════════════════════════════════════════ */
+
+// 保存箱のなまえ（キー）。
+const STATS_KEY = 'kids_stats';
+
+const Stats = {
+  /** 保存箱を読みこむ。こわれていても空っぽとして扱う。 */
+  _read() {
+    try {
+      return JSON.parse(localStorage.getItem(STATS_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  },
+
+  /** 保存箱に書きこむ。 */
+  _write(data) {
+    localStorage.setItem(STATS_KEY, JSON.stringify(data));
+  },
+
+  /** 指定アプリの記録欄を取り出す（無ければ新しく作る）。 */
+  _entry(data, appId) {
+    if (!data[appId]) {
+      data[appId] = {
+        opens: 0,       // ひらいた回数
+        plays: 0,       // 結果まで遊んだ回数（クイズ型のみ）
+        correct: 0,     // 正解の合計
+        total: 0,       // 問題の合計
+        lastUsed: null  // 最後に使った日時（ISO文字列）
+      };
+    }
+    return data[appId];
+  },
+
+  /** いまのURLから アプリID（apps/◯◯/ の ◯◯）を推測する。 */
+  _detectId() {
+    const m = location.pathname.match(/\/apps\/([^\/]+)\//);
+    return m ? m[1] : null;
+  },
+
+  /**
+   * アプリを ひらいたことを記録する（読みこみ時に自動でよばれる）。
+   * @param {string} [appId] 省略時はURLから自動判定
+   */
+  open(appId) {
+    appId = appId || this._detectId();
+    if (!appId) return;
+    const data = this._read();
+    const e = this._entry(data, appId);
+    e.opens++;
+    e.lastUsed = new Date().toISOString();
+    this._write(data);
+  },
+
+  /**
+   * 1回ぶんの結果（正解数・問題数）を記録する。
+   * クイズ型アプリの結果画面で1行よぶ。
+   * @param {number} correct 正解の数
+   * @param {number} total   問題の数
+   * @param {string} [appId] 省略時はURLから自動判定
+   */
+  record(correct, total, appId) {
+    appId = appId || this._detectId();
+    if (!appId) return;
+    const data = this._read();
+    const e = this._entry(data, appId);
+    e.plays++;
+    e.correct += Math.max(0, Math.floor(correct) || 0);
+    e.total   += Math.max(0, Math.floor(total) || 0);
+    e.lastUsed = new Date().toISOString();
+    this._write(data);
+  },
+
+  /** すべての記録を まとめて返す（記録ページ用）。 */
+  all() {
+    return this._read();
+  },
+
+  /** 記録をぜんぶ消す（記録ページの「リセット」用）。 */
+  reset() {
+    localStorage.removeItem(STATS_KEY);
+  }
+};
+
+// apps/◯◯/ 配下のアプリを ひらいたときだけ、自動で「ひらいた回数」を1ふやす。
+// （index.html や kiroku.html など apps の外では何もしない）
+if (Stats._detectId()) {
+  Stats.open();
+}

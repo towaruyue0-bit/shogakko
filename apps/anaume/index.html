@@ -428,6 +428,7 @@
   let qIndex = 0;        // いま何問目か
   let blanks = [];       // 各あなに入れたタイル（{idx,text} または null）
   let solved = false;    // この問題が正解済みか
+  let mistakes = 0;      // このおはなしで まちがえた回数（正答率の計算用）
 
   // ======================================================
   //  おはなし えらび画面
@@ -449,6 +450,7 @@
   function openStory(idx) {
     curStory = STORIES[idx];
     qIndex = 0;
+    mistakes = 0;
     renderPassage();
     showQuestion();
     showScreen('quiz');
@@ -582,6 +584,7 @@
       updateCheckButton();
     } else {
       // まちがい：あなの前後のことば（ヒント）と 本文を光らせて 気づかせる
+      mistakes++;   // まちがえた回数を1ふやす（正答率の計算用）
       renderFrame({ judge: true, hintWords: true });
       highlightSource(q.source);
       setFeedback('おしい！ あなの まえと あとの ことばを みて、<br>おはなしの ことばを そのまま いれてね', 'ng');
@@ -612,6 +615,11 @@
     document.getElementById('done-sub').innerHTML =
       `「${esc(curStory.title)}」の あなうめ、ぜんぶ せいかい！<br>おはなしから ことばを さがせたね 🎯`;
     showScreen('done');
+    // 利用記録に正答率をためる（記録ページ用）。
+    // 正解するまで進む形式なので「問題数 ÷ (問題数＋まちがえた回数)」で
+    // 一発で当てられた割合を正答率として記録する。
+    const qTotal = curStory.questions.length;
+    Stats.record(qTotal, qTotal + mistakes);
     // クリアのごほうびに 3ポイント（どうがタイマーで使える）
     Points.reward(3);
   }

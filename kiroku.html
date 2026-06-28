@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>つかった きろく</title>
+  <style>
+    /* ─── 全体リセット ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(135deg, #e0f0ff 0%, #fce4ff 100%);
+      min-height: 100dvh;
+      color: #2d3748;
+      padding-bottom: 40px;
+    }
+
+    /* ─── ヘッダー ─────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+      padding: 26px 16px 20px;
+      position: relative;
+      box-shadow: 0 4px 16px rgba(102,126,234,0.4);
+    }
+    .header-icon { font-size: 2.4rem; display: block; margin-bottom: 2px; }
+    .header h1 { font-size: 1.45rem; font-weight: 900; letter-spacing: 0.04em; }
+    .header p  { font-size: 0.82rem; opacity: 0.9; margin-top: 4px; }
+    .home-btn {
+      position: absolute;
+      top: 14px; left: 14px;
+      background: rgba(255,255,255,0.22);
+      color: white;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .home-btn:hover { background: rgba(255,255,255,0.35); }
+
+    /* ─── まとめカード（合計） ──────────────────────────── */
+    .container { max-width: 760px; margin: 0 auto; padding: 0 14px; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 18px 0 8px;
+    }
+    .sum-card {
+      background: white;
+      border-radius: 16px;
+      padding: 14px 8px;
+      text-align: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+    }
+    .sum-card .sum-num { font-size: 1.7rem; font-weight: 900; color: #667eea; }
+    .sum-card .sum-label { font-size: 0.72rem; color: #718096; margin-top: 2px; font-weight: 700; }
+
+    /* ─── 並びかえボタン ────────────────────────────────── */
+    .sort-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 16px 2px 10px;
+      font-size: 0.78rem;
+      color: #6b7a99;
+      flex-wrap: wrap;
+    }
+    .sort-row .sort-label { font-weight: 700; }
+    .sort-btn {
+      background: white;
+      border: 1.5px solid #d7def0;
+      color: #5a6b8c;
+      border-radius: 16px;
+      padding: 5px 12px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sort-btn.active { background: #667eea; border-color: #667eea; color: white; }
+
+    /* ─── アプリごとの行 ────────────────────────────────── */
+    .rows { display: flex; flex-direction: column; gap: 10px; }
+    .row {
+      background: white;
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+      border-left: 6px solid var(--c, #667eea);
+    }
+    .row-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .row-icon { font-size: 1.7rem; }
+    .row-name { font-weight: 800; font-size: 0.98rem; flex: 1; line-height: 1.3; }
+    .row-cat {
+      font-size: 0.66rem;
+      color: #8a97b0;
+      background: #eef2fb;
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* 数値の3列 */
+    .row-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.4fr;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: end;
+    }
+    .stat { text-align: center; }
+    .stat .v { font-size: 1.25rem; font-weight: 900; color: #2d3748; }
+    .stat .v small { font-size: 0.72rem; font-weight: 700; color: #a0aec0; }
+    .stat .l { font-size: 0.66rem; color: #8a97b0; font-weight: 700; margin-top: 1px; }
+
+    /* 正答率のバー */
+    .acc-wrap { text-align: center; }
+    .acc-pct { font-size: 1.25rem; font-weight: 900; }
+    .acc-pct small { font-size: 0.72rem; font-weight: 700; color: #a0aec0; }
+    .acc-bar {
+      height: 8px;
+      background: #eef2fb;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .acc-bar > span { display: block; height: 100%; border-radius: 6px; }
+    .acc-none { color: #c0c8d8; font-size: 0.8rem; font-weight: 700; }
+
+    /* 正答率の色分け */
+    .good  { color: #38a169; } .good-bg  { background: #48bb78; }
+    .mid   { color: #d69e2e; } .mid-bg   { background: #ecc94b; }
+    .low   { color: #e53e3e; } .low-bg   { background: #fc8181; }
+
+    .last-used { font-size: 0.68rem; color: #a0aec0; margin-top: 10px; text-align: right; }
+
+    /* ─── 空・注意・リセット ───────────────────────────── */
+    .empty-msg {
+      text-align: center; padding: 48px 24px;
+      color: #a0aec0; font-size: 0.95rem; line-height: 1.8;
+    }
+    .empty-msg span { font-size: 2.5rem; display: block; margin-bottom: 12px; }
+    .note {
+      font-size: 0.72rem; color: #8a97b0; line-height: 1.7;
+      margin: 18px 4px; text-align: center;
+    }
+    .reset-btn {
+      display: block;
+      margin: 24px auto 0;
+      background: white;
+      border: 1.5px solid #f0b3b3;
+      color: #e06464;
+      border-radius: 20px;
+      padding: 9px 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .reset-btn:hover { background: #fff0f0; }
+
+    #loading { text-align: center; padding: 48px; font-size: 1.5rem; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a class="home-btn" href="index.html">← もどる</a>
+    <span class="header-icon">📊</span>
+    <h1>つかった きろく</h1>
+    <p>どのアプリを どれくらい つかったかな？</p>
+  </div>
+
+  <div class="container">
+    <div id="loading">⏳</div>
+    <div id="content" style="display:none">
+      <!-- 合計まとめ -->
+      <div class="summary">
+        <div class="sum-card"><div class="sum-num" id="sum-opens">0</div><div class="sum-label">ひらいた回数</div></div>
+        <div class="sum-card"><div class="sum-num" id="sum-plays">0</div><div class="sum-label">あそんだ回数</div></div>
+        <div class="sum-card"><div class="sum-num" id="sum-acc">—</div><div class="sum-label">ぜんたい正答率</div></div>
+      </div>
+
+      <!-- 並びかえ -->
+      <div class="sort-row">
+        <span class="sort-label">ならびかえ：</span>
+        <button class="sort-btn active" data-sort="opens">よく つかった じゅん</button>
+        <button class="sort-btn" data-sort="acc">正答率の じゅん</button>
+        <button class="sort-btn" data-sort="recent">さいきん つかった じゅん</button>
+      </div>
+
+      <div class="rows" id="rows"></div>
+
+      <p class="note">
+        ※ この きろくは いま使っている この機器（ブラウザ）の中だけに のこります。<br>
+        ※ 正答率は クイズ型のアプリだけ 出ます（タイマーなどは「—」になります）。
+      </p>
+
+      <button class="reset-btn" id="reset-btn">🗑 きろくを ぜんぶ けす</button>
+    </div>
+  </div>
+
+  <!-- 共通ライブラリ（Stats をつかう） -->
+  <script src="shared/points.js"></script>
+  <script>
+    let appList = [];   // apps.json のアプリ定義
+    let statData = {};  // Stats.all() の中身
+    let curSort = 'opens';
+
+    /** XSS 対策：HTML 特殊文字をエスケープする */
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /** 「2026/6/28」のような短い日付に変換する。無ければ空文字。 */
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d)) return '';
+      return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+    }
+
+    /** 正答率(%)に応じて 色のクラス名を返す。 */
+    function accClass(pct) {
+      if (pct >= 80) return 'good';
+      if (pct >= 50) return 'mid';
+      return 'low';
+    }
+
+    /** ページを読み込んで apps.json と 記録を合わせて表示する。 */
+    async function init() {
+      statData = Stats.all();
+
+      // apps.json を読む（無ければ 記録にあるIDだけで表示する）
+      try {
+        const res = await fetch('apps.json?t=' + Date.now());
+        const data = await res.json();
+        appList = (data.apps || []);
+      } catch (e) {
+        appList = [];
+      }
+
+      // apps.json に無いけれど記録だけある ID も拾っておく
+      const knownIds = new Set(appList.map(a => a.id));
+      Object.keys(statData).forEach(id => {
+        if (!knownIds.has(id)) {
+          appList.push({ id, name: id, icon: '📦', color: '#a0aec0', category: 'その他' });
+        }
+      });
+
+      render();
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+    }
+
+    /** いまの並び順で 一覧を描画する。 */
+    function render() {
+      // 各アプリに 記録をくっつけた配列を作る
+      const items = appList.map(app => {
+        const s = statData[app.id] || { opens: 0, plays: 0, correct: 0, total: 0, lastUsed: null };
+        const pct = s.total > 0 ? Math.round(s.correct / s.total * 100) : null;
+        return { app, s, pct };
+      });
+
+      // 並びかえ
+      if (curSort === 'opens') {
+        items.sort((a, b) => b.s.opens - a.s.opens);
+      } else if (curSort === 'acc') {
+        // 正答率の高い順。記録の無いもの(null)は うしろへ
+        items.sort((a, b) => (b.pct === null ? -1 : b.pct) - (a.pct === null ? -1 : a.pct));
+      } else if (curSort === 'recent') {
+        items.sort((a, b) => (b.s.lastUsed || '').localeCompare(a.s.lastUsed || ''));
+      }
+
+      // 合計まとめ
+      let totalOpens = 0, totalPlays = 0, totalCorrect = 0, totalQ = 0;
+      items.forEach(({ s }) => {
+        totalOpens += s.opens; totalPlays += s.plays;
+        totalCorrect += s.correct; totalQ += s.total;
+      });
+      document.getElementById('sum-opens').textContent = totalOpens;
+      document.getElementById('sum-plays').textContent = totalPlays;
+      document.getElementById('sum-acc').textContent =
+        totalQ > 0 ? Math.round(totalCorrect / totalQ * 100) + '%' : '—';
+
+      // まだ1回も使っていないとき
+      if (totalOpens === 0) {
+        document.getElementById('rows').innerHTML = `
+          <div class="empty-msg">
+            <span>🎒</span>
+            まだ きろくが ありません。<br>
+            アプリで あそぶと ここに たまります！
+          </div>`;
+        return;
+      }
+
+      // 各行を作る
+      const html = items.map(({ app, s, pct }) => {
+        let accHtml;
+        if (pct === null) {
+          accHtml = `<div class="acc-none">—</div>
+                     <div class="acc-bar"><span style="width:0"></span></div>`;
+        } else {
+          const cls = accClass(pct);
+          accHtml = `<div class="acc-pct ${cls}">${pct}<small>%</small></div>
+                     <div class="acc-bar"><span class="${cls}-bg" style="width:${pct}%"></span></div>`;
+        }
+        const last = fmtDate(s.lastUsed);
+        return `
+          <div class="row" style="--c:${escHtml(app.color || '#667eea')}">
+            <div class="row-top">
+              <span class="row-icon">${escHtml(app.icon || '📖')}</span>
+              <span class="row-name">${escHtml(app.name)}</span>
+              <span class="row-cat">${escHtml(app.category || 'その他')}</span>
+            </div>
+            <div class="row-stats">
+              <div class="stat"><div class="v">${s.opens}<small>回</small></div><div class="l">ひらいた</div></div>
+              <div class="stat"><div class="v">${s.plays}<small>回</small></div><div class="l">あそんだ</div></div>
+              <div class="acc-wrap">${accHtml}<div class="l">正答率</div></div>
+            </div>
+            ${last ? `<div class="last-used">さいごに つかった日：${last}</div>` : ''}
+          </div>`;
+      }).join('');
+
+      document.getElementById('rows').innerHTML = html;
+    }
+
+    // 並びかえボタン
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        curSort = btn.dataset.sort;
+        render();
+      });
+    });
+
+    // リセット
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      if (confirm('つかった きろくを ぜんぶ けします。よろしいですか？')) {
+        Stats.reset();
+        statData = {};
+        render();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

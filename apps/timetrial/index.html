@@ -477,6 +477,11 @@
       setTimeout(function(){ Points.reward(3); }, 700);
     }
 
+    // 利用記録に「とけた数 / 問題数」をためる（記録ページ用）
+    if (typeof Stats !== "undefined" && typeof Stats.record === "function"){
+      Stats.record(solved, problems.length);
+    }
+
     show("result");
   }
 
