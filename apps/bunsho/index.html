@@ -306,6 +306,8 @@
     }
     .home-btn { background: white; color: #718096; border: 2px solid #e2e8f0; }
   </style>
+  <!-- ポイント共通ライブラリ（各アプリで共通のポイント/記録機能） -->
+  <script src="../../shared/points.js"></script>
 </head>
 <body>
 
@@ -412,6 +414,7 @@
   let current = null;   // 現在の問題データ
   let firstTry = true;  // この問題を まだ まちがえていないか
   let solved = false;   // この問題が せいかい済みか（連打・二重加算ぼうし）
+  let advanceTimer = null;  // せいかい後に じどうで つぎへ すすむ タイマー
 
   // ======================================================
   // 問題テンプレート
@@ -533,6 +536,7 @@
   // ゲーム
   // ======================================================
   function nextQuestion() {
+    clearTimeout(advanceTimer);  // 予約ずみの じどうすすみを取り消す（二重すすみ防止）
     qNum++;
     if (qNum > TOTAL_Q) { showDone(); return; }
 
@@ -676,6 +680,9 @@
     // 絵のヒントを ぜんぶ あかるくする（へらした分も見せる）
     document.querySelectorAll('#pic-area .pic-emoji.gone')
       .forEach(el => el.classList.remove('gone'));
+    // せいかいなら、すこし見せてから じどうで つぎの問題へ。
+    // （「つぎへ」ボタンは押さなくてOK。早く進みたい子はタップ/Enterでもすすめる）
+    advanceTimer = setTimeout(nextQuestion, 1400);
   }
 
   /** まちがいの ときの ひょうじ */
@@ -731,7 +738,5 @@
     }
   }
 </script>
-<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
-<script src="../../shared/points.js"></script>
 </body>
 </html>

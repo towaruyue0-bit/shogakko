@@ -249,6 +249,8 @@
       cursor: pointer; font-family: inherit;
     }
   </style>
+  <!-- ポイント共通ライブラリ（各アプリで共通のポイント/記録機能） -->
+  <script src="../../shared/points.js"></script>
 </head>
 <body>
 
@@ -568,6 +570,9 @@
     }
   }
 
+  // せいかい後に じどうで つぎへ すすむ タイマー
+  let advanceTimer = null;
+
   /** ボタンを押したとき */
   function onCheck() {
     if (solved) { nextQuestion(); return; }
@@ -582,6 +587,9 @@
       highlightSource(q.source);
       setFeedback('せいかい！ ここに かいて あったね 👀', 'ok');
       updateCheckButton();
+      // 本文の「答えのあった一文」が光るのを すこし見せてから じどうで つぎへ。
+      // （「つぎへ」ボタンは押さなくてOK。早く進みたい子はタップでもすすめる）
+      advanceTimer = setTimeout(nextQuestion, 2000);
     } else {
       // まちがい：あなの前後のことば（ヒント）と 本文を光らせて 気づかせる
       mistakes++;   // まちがえた回数を1ふやす（正答率の計算用）
@@ -601,6 +609,7 @@
 
   /** つぎの問題へ。最後ならクリア画面へ */
   function nextQuestion() {
+    clearTimeout(advanceTimer);  // 予約ずみの じどうすすみを取り消す（二重すすみ防止）
     qIndex++;
     if (qIndex >= curStory.questions.length) {
       finishStory();
@@ -679,7 +688,5 @@
   renderList();
   showScreen('list');
 </script>
-<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
-<script src="../../shared/points.js"></script>
 </body>
 </html>

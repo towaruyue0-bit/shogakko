@@ -341,6 +341,8 @@
       border: 2px solid #e2e8f0;
     }
   </style>
+  <!-- ポイント共通ライブラリ（各アプリで共通のポイント/記録機能） -->
+  <script src="../../shared/points.js"></script>
 </head>
 <body>
 
@@ -350,12 +352,21 @@
   <h1>🔢 いくつと いくつ</h1>
 </div>
 
-<!-- ① スタート画面 -->
+<!-- ① スタート画面（あそびかたえらび） -->
 <div id="screen-start">
   <div class="start-icon">🎯</div>
   <div class="start-title">いくつと いくつ？</div>
-  <div class="start-sub" style="margin-bottom:16px">5〜10の くみあわせを ぜんぶ 1かいずつ やってみよう！</div>
-  <button class="start-go-btn alt" onclick="startGame()">⭐ スタート ▶</button>
+  <div class="start-sub">あそびかたを えらんでね</div>
+
+  <div class="num-select-label">① すきな かずで れんしゅう</div>
+  <div class="num-grid" id="num-grid"></div>
+  <button class="start-go-btn" onclick="startGame('endless')">🔁 ランダムで ずっと ▶</button>
+
+  <div class="mode-divider">＿＿＿ または ＿＿＿</div>
+
+  <div class="num-select-label">② ぜんぶ チャレンジ！</div>
+  <div class="start-sub" style="margin-bottom:16px">5〜10の くみあわせを ぜんぶ 1かいずつ</div>
+  <button class="start-go-btn alt" onclick="startGame('all')">⭐ ぜんぶ いちどずつ ▶</button>
 </div>
 
 <!-- ② ゲーム画面 -->
@@ -381,6 +392,9 @@
 
   <!-- 答えボタン -->
   <div class="answer-grid" id="answer-grid"></div>
+
+  <!-- 「ランダムで ずっと」モードのときだけ出す おしまいボタン -->
+  <button class="end-btn" id="end-btn" onclick="showDone()" style="display:none">おしまい・けっかを みる ▶</button>
 </div>
 
 <!-- ③ かんりょう画面 -->
@@ -404,7 +418,19 @@
   // ======================================================
   const NUM_CHOICES = 4;    // 答えの選択肢数
 
-  let allQueue = [];        // 出題リスト（5〜10のすべての組み合わせ）
+  // 選択できる対象数（1年生の学習範囲：5〜10）
+  const TARGET_NUMS = [
+    { n: 5,  label: '5' },
+    { n: 6,  label: '6' },
+    { n: 7,  label: '7' },
+    { n: 8,  label: '8' },
+    { n: 9,  label: '9' },
+    { n: 10, label: '10' },
+  ];
+
+  let gameMode = 'endless'; // 'endless'=ランダムでずっと / 'all'=5〜10ぜんぶ一通り
+  let selectedTarget = 10;  // 「すきな かず」で選んだ対象数（endlessモードで使う）
+  let allQueue = [];        // 'all'モードの出題リスト（すべての組み合わせ）
   let target = 10;          // いま出題中の対象数
   let score = 0;            // 正解数
   let mistakes = 0;         // まちがえた回数（正答率の計算に使う）
@@ -412,23 +438,55 @@
   let correctAns = 0;       // 現在の問題の正解
   let givenNum = 0;         // 提示している数（given）
   let waiting = false;      // 答え判定中フラグ（連打防止）
+  let usedGivens = [];      // 同じ問題が続かないよう管理（endlessモード用）
   let blankFirst = false;   // □が左側かどうか（「□とAでB」or「Aと□でB」）
 
   /**
    * ゲームを開始する。
    * 5〜10の組み合わせを すべて 1つずつ 出題する（ぜんぶチャレンジ）。
    */
-  function startGame() {
+  // ======================================================
+  // スタート画面
+  // ======================================================
+  function initStartScreen() {
+    document.getElementById('num-grid').innerHTML = TARGET_NUMS.map(t =>
+      `<button class="num-btn ${t.n === selectedTarget ? 'sel' : ''}"
+               onclick="selectTarget(${t.n})">
+        ${t.n}
+        <span class="num-label">${'⭐'.repeat(t.n <= 6 ? 1 : t.n <= 8 ? 2 : 3)}</span>
+      </button>`
+    ).join('');
+  }
+
+  function selectTarget(n) {
+    selectedTarget = n;
+    initStartScreen();
+  }
+
+  /**
+   * ゲームを開始する。
+   * @param {string} mode 'endless'=選んだ数でランダムにずっと / 'all'=5〜10ぜんぶ一通り
+   */
+  function startGame(mode) {
+    gameMode = mode;
     score = 0;
     mistakes = 0;
     qNum = 0;
-    buildAllQueue();          // 5〜10のすべての組み合わせのリストを作る
+    usedGivens = [];
+
+    // 'all'モードのときは、5〜10のすべての組み合わせのリストを作る
+    if (gameMode === 'all') buildAllQueue();
+
+    // 「おしまい」ボタンは endless モードのときだけ表示する
+    document.getElementById('end-btn').style.display =
+      gameMode === 'endless' ? 'block' : 'none';
+
     showScreen('game');
     nextQuestion();
   }
 
   function retryGame() {
-    startGame();
+    startGame(gameMode);
   }
 
   /**
@@ -453,16 +511,32 @@
     waiting = false;
     qNum++;
 
-    // リストを最後まで出したら終了
-    if (qNum > allQueue.length) {
-      showDone();
-      return;
+    if (gameMode === 'all') {
+      // ─ ぜんぶ一通りモード ─
+      // リストを最後まで出したら終了
+      if (qNum > allQueue.length) {
+        showDone();
+        return;
+      }
+      const item = allQueue[qNum - 1];
+      target = item.target;
+      givenNum = item.given;
+      blankFirst = item.blankFirst;
+      document.getElementById('qtotal-disp').textContent = allQueue.length;
+    } else {
+      // ─ ランダムでずっとモード ─
+      // 選んだ数を対象に、given をランダムに決める（直前と同じ値は避ける）
+      target = selectedTarget;
+      const all = Array.from({ length: target - 1 }, (_, i) => i + 1);
+      // 使ったgivensが全部埋まったらリセット
+      if (usedGivens.length >= all.length) usedGivens = [];
+      const available = all.filter(n => !usedGivens.includes(n));
+      givenNum = available[Math.floor(Math.random() * available.length)];
+      usedGivens.push(givenNum);
+      blankFirst = Math.random() < 0.5;
+      // ずっと続くので「もんめ」の分母は ∞ にする
+      document.getElementById('qtotal-disp').textContent = '∞';
     }
-    const item = allQueue[qNum - 1];
-    target = item.target;
-    givenNum = item.given;
-    blankFirst = item.blankFirst;
-    document.getElementById('qtotal-disp').textContent = allQueue.length;
 
     correctAns = target - givenNum;
 
@@ -564,17 +638,27 @@
   // 結果画面
   // ======================================================
   function showDone() {
-    // 「せいかい / ぜんぶの数」を見せる
     document.getElementById('final-score').textContent = score;
-    document.getElementById('final-total').textContent = allQueue.length;
-    document.getElementById('final-total-wrap').style.display = '';
-    document.getElementById('done-score-label').textContent = 'せいかい';
+    if (gameMode === 'all') {
+      // ぜんぶ一通り：「せいかい / ぜんぶの数」を見せる
+      document.getElementById('final-total').textContent = allQueue.length;
+      document.getElementById('final-total-wrap').style.display = '';
+      document.getElementById('done-score-label').textContent = 'せいかい';
+    } else {
+      // ランダムでずっと：解いた数だけを見せる
+      document.getElementById('final-total-wrap').style.display = 'none';
+      document.getElementById('done-score-label').textContent = 'もん せいかい！';
+    }
     // 利用記録に正答率をためる（記録ページ用）。
     // 正解するまで進む形式なので「正解数 ÷ (正解数＋まちがえた回数)」で
     // 一発で当てられた割合を正答率として記録する。
     Stats.record(score, score + mistakes);
     // クリアのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値6）
-    Points.rewardFor(6);
+    // ※ランダムでずっとモードで 1もんも解かずに「おしまい」を押したときは加点しない
+    //   （すぐ終わってポイントだけ集める、を ふせぐため）
+    if (gameMode === 'all' || score > 0) {
+      Points.rewardFor(6);
+    }
     showScreen('done');
   }
 
@@ -617,9 +701,8 @@
   // ======================================================
   // 起動
   // ======================================================
+  initStartScreen();
   showScreen('start');
 </script>
-<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
-<script src="../../shared/points.js"></script>
 </body>
 </html>

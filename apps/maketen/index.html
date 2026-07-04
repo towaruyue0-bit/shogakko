@@ -379,6 +379,7 @@
     .action-btn:active { transform: scale(0.96); }
     .action-btn.reset { background: white; color: #64748b; }
     .action-btn.hint  { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+    .action-btn.end   { background: linear-gradient(135deg, #34d399, #10b981); color: white; }
     .action-btn:disabled { opacity: 0.45; cursor: default; }
 
     /* コンボのふきだし（画面中央に出る） */
@@ -467,6 +468,8 @@
       font-weight: 700;
     }
   </style>
+  <!-- ポイント共通ライブラリ（各アプリで共通のポイント/記録機能） -->
+  <script src="../../shared/points.js"></script>
 </head>
 <body>
 
@@ -489,6 +492,14 @@
       <div class="mini-card">7</div>
       <span>＝</span>
       <div class="mini-card" style="border-color:#f59e0b;color:#b45309">10</div>
+    </div>
+  </div>
+
+  <div class="setup-section">
+    <h2>🎮 モードを えらんでね</h2>
+    <div class="chip-row" id="mode-chips">
+      <div class="chip active" data-value="time">タイムアタック<small>60びょうで なんこ？</small></div>
+      <div class="chip"        data-value="relax">のんびり<small>じかん むせいげん</small></div>
     </div>
   </div>
 
@@ -550,6 +561,7 @@
   <div class="action-row">
     <button class="action-btn reset" onclick="clearSelection()">↩ えらびなおし</button>
     <button class="action-btn hint" id="hint-btn" onclick="showHint()">💡 ヒント</button>
+    <button class="action-btn end" id="end-btn" onclick="endGame()" style="display:none">🏁 おわる</button>
   </div>
 </div>
 
@@ -569,8 +581,6 @@
 <!-- コンボのふきだし -->
 <div id="combo-pop"></div>
 
-<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
-<script src="../../shared/points.js"></script>
 <script>
   // ════════════════════════════════════════════════════════════════
   //  メイクテン … たして10になるカードを消していくカードゲーム
@@ -601,8 +611,18 @@
   let busy      = false;      // アニメーション中の入力ロック
   let nextId    = 0;          // カードに付ける通し番号
   let soundOn   = true;       // 効果音 ON/OFF
+  let mode      = 'time';     // 'time'=タイムアタック / 'relax'=のんびり（じかんむせいげん）
 
   // ─── セットアップ画面の操作 ────────────────────────────────────
+
+  // モード選択チップ（タイムアタック / のんびり）
+  document.getElementById('mode-chips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    mode = chip.dataset.value;
+    setActive('mode-chips', chip);
+    updateBestLine();
+  });
 
   // むずかしさ選択チップ
   document.getElementById('level-chips').addEventListener('click', e => {
@@ -628,11 +648,15 @@
       .forEach(c => c.classList.toggle('active', c === chip));
   }
 
-  /** いまのむずかしさのハイスコアを表示する */
+  /** いまのモード・むずかしさのハイスコアを表示する */
   function updateBestLine() {
     const el = document.getElementById('best-line');
-    const best = loadBest();
-    el.textContent = best > 0 ? `🏆 ハイスコア：${best}こ` : '🏆 はじめての ちょうせん！';
+    if (mode === 'time') {
+      const best = loadBest();
+      el.textContent = best > 0 ? `🏆 ハイスコア：${best}こ` : '🏆 はじめての ちょうせん！';
+    } else {
+      el.textContent = 'すきなだけ あそべるよ 🌿（おわると ポイントが もらえるよ）';
+    }
   }
 
   /** ハイスコアの保存キー（つくりかた＋むずかしさごと） */
@@ -658,10 +682,23 @@
     document.getElementById('screen-result').style.display = 'none';
     document.getElementById('screen-game').style.display   = 'flex';
 
-    // タイマーとバーを出してカウントダウン開始
-    document.getElementById('stat-time-box').style.display = '';
-    document.getElementById('time-bar-wrap').style.display = '';
-    startTimer();
+    // モードによって タイマー表示と「おわる」ボタンを出し分ける
+    const timeBox = document.getElementById('stat-time-box');
+    const barWrap = document.getElementById('time-bar-wrap');
+    const endBtn  = document.getElementById('end-btn');
+    if (mode === 'time') {
+      // タイムアタック：タイマーとバーを出してカウントダウン開始
+      timeBox.style.display = '';
+      barWrap.style.display = '';
+      endBtn.style.display  = 'none';
+      startTimer();
+    } else {
+      // のんびり：タイマーは出さず、「おわる」ボタンで結果へ
+      timeBox.style.display = 'none';
+      barWrap.style.display = 'none';
+      endBtn.style.display  = '';
+      clearInterval(timerId);
+    }
 
     updateStats();
     updateSumPanel();
@@ -1014,9 +1051,8 @@
     clearInterval(timerId);
     busy = true;
 
-    // ハイスコア更新チェック
-    const best = loadBest();
-    const isNewBest = score > best;
+    // ハイスコア更新チェック（タイムアタックのみ。のんびりは記録しない）
+    const isNewBest = (mode === 'time') && score > loadBest();
     if (isNewBest) saveBest(score);
 
     // 点数によってメッセージをかえる
@@ -1029,8 +1065,11 @@
     document.getElementById('result-emoji').textContent = emoji;
     document.getElementById('result-title').textContent = title;
     document.getElementById('result-score').textContent = score;
+    // のんびりモードは ハイスコアを出さず、れんさだけ見せる
     document.getElementById('result-sub').textContent =
-      `さいだい ${bestCombo} れんさ ／ ハイスコア ${loadBest()}こ`;
+      mode === 'time'
+        ? `さいだい ${bestCombo} れんさ ／ ハイスコア ${loadBest()}こ`
+        : `さいだい ${bestCombo} れんさ`;
 
     const banner = document.getElementById('best-banner');
     banner.style.display = isNewBest && score > 0 ? 'block' : 'none';
@@ -1041,7 +1080,11 @@
     playFanfare();
 
     // クリアのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
-    Points.rewardFor(3);
+    // ※のんびりモードで 1つも作らずに「おわる」を押したときは加点しない
+    //   （すぐ終わってポイントだけ集める、を ふせぐため）
+    if (mode === 'time' || score > 0) {
+      Points.rewardFor(3);
+    }
   }
 
   /** セットアップ画面にもどる */

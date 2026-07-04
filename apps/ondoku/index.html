@@ -288,6 +288,8 @@
     }
     .save-btn:active { opacity: 0.85; }
   </style>
+  <!-- ポイント共通ライブラリ（各アプリで共通のポイント/記録機能） -->
+  <script src="../../shared/points.js"></script>
 </head>
 <body>
 
@@ -323,9 +325,9 @@
 
 <!-- ③ かんりょう画面 -->
 <div id="screen-done">
-  <div class="done-star">🌟</div>
-  <div class="done-title">よく できました！</div>
-  <div class="done-sub">おんどく かんりょう！ すごいね！</div>
+  <div class="done-star"  id="done-star">🌟</div>
+  <div class="done-title" id="done-title">よく できました！</div>
+  <div class="done-sub"   id="done-sub">おんどく かんりょう！ すごいね！</div>
   <button class="done-back" onclick="showScreen('list')">もどる</button>
 </div>
 
@@ -361,9 +363,18 @@
   let selEmoji = EMOJIS[0];
   let sentences = [];
   let curIdx = 0;
+  let sentenceShownAt = 0;      // いまの文を画面に出した時刻（はやよみ判定用）
+  let rushedCount = 0;          // はやすぎて「よみとばした」文の数
+  const READ_MS_PER_CHAR = 90;  // 1文字あたり これくらいは読む、という目安（ミリ秒）
 
   // アプリに最初から入れておくおはなし一覧
   const PRESET_STORIES = [
+    {
+      id: 'ookina_kabu',
+      title: 'おおきな かぶ',
+      emoji: '🥬',
+      text: 'おじいさんが、かぶの たねを まきました。\n「あまい あまい かぶに なれ。おおきな おおきな かぶに なれ。」\nあまそうな、おおきな おおきな かぶが できました。\nおじいさんは、かぶを ぬこうと しました。\n「うんとこしょ、どっこいしょ。」\nところが、かぶは ぬけません。\nおじいさんは、おばあさんを よんで きました。\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nそれでも、かぶは ぬけません。\nおばあさんが、まごを よんで きました。\nまごが おばあさんを ひっぱって、\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nまだまだ、かぶは ぬけません。\nまごが、いぬを よんで きました。\nいぬが まごを ひっぱって、\nまごが おばあさんを ひっぱって、\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nそれでも、かぶは ぬけません。\nいぬが、ねこを よんで きました。\nねこが いぬを ひっぱって、\nいぬが まごを ひっぱって、\nまごが おばあさんを ひっぱって、\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nまだまだ、かぶは ぬけません。\nねこが、ねずみを よんで きました。\nねずみが ねこを ひっぱって、\nねこが いぬを ひっぱって、\nいぬが まごを ひっぱって、\nまごが おばあさんを ひっぱって、\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nとうとう、かぶは ぬけました。'
+    },
     {
       id: 'sample1',
       title: 'サンプル：はるの いちにち',
@@ -517,6 +528,7 @@
     if (sentences.length === 0) return;
 
     curIdx = 0;
+    rushedCount = 0;   // はやよみカウントをリセット
 
     // 全文を span で描画
     document.getElementById('read-body').innerHTML =
@@ -527,6 +539,7 @@
     updateReadUI();
     showScreen('read');
     scrollToCur();
+    sentenceShownAt = Date.now();   // さいしょの文を見せた時刻をおぼえる
   }
 
   function updateReadUI() {
@@ -539,17 +552,52 @@
 
   function nextSentence() {
     const total = sentences.length;
+
+    // いま読んでいた文に かけた時間をみる。
+    // 文の長さ（文字数）にくらべて はやすぎるときは「よみとばし」として数える。
+    // ・minGap … その文を読むのに さいていこれくらいはかかる、という目安
+    // ・放置してから最後だけ連打…にも強いよう、文ごとに1つずつ判定する
+    const gap = Date.now() - sentenceShownAt;
+    const minGap = Math.max(600, sentences[curIdx].length * READ_MS_PER_CHAR);
+    if (gap < minGap) rushedCount++;
+
     if (curIdx >= total - 1) {
-      // さいごまで読めたごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
-      Points.rewardFor(3);
+      // さいごまで来た。ちゃんと よんだ ときだけ ごほうびを出す。
+      // 文の 4わり より多くを よみとばして いたら「はやよみ（連打）」とみなして加点しない。
+      const readProperly = (rushedCount / total) <= 0.4;
+      if (readProperly) {
+        // もらえる数は管理ツールの「ポイント設定」で変えられる（初期値3）
+        Points.rewardFor(3);
+        setDoneScreen(true);
+      } else {
+        setDoneScreen(false);
+      }
       showScreen('done');
       return;
     }
     document.getElementById(`s${curIdx}`).className = 'sen done';
     curIdx++;
     document.getElementById(`s${curIdx}`).className = 'sen current';
+    sentenceShownAt = Date.now();   // つぎの文を見せた時刻をおぼえる
     updateReadUI();
     scrollToCur();
+  }
+
+  /**
+   * かんりょう画面の文言を セットする。
+   * @param {boolean} rewarded ちゃんと読めて ポイントをあげたか
+   */
+  function setDoneScreen(rewarded) {
+    if (rewarded) {
+      document.getElementById('done-star').textContent  = '🌟';
+      document.getElementById('done-title').textContent = 'よく できました！';
+      document.getElementById('done-sub').textContent   = 'おんどく かんりょう！ すごいね！';
+    } else {
+      // はやよみ（連打）のとき：しからず、やさしく さそう。ポイントは無し。
+      document.getElementById('done-star').textContent  = '🐢';
+      document.getElementById('done-title').textContent = 'ゆっくり よもう';
+      document.getElementById('done-sub').textContent   = 'こえに だして よむと ⭐ポイントが もらえるよ';
+    }
   }
 
   function scrollToCur() {
@@ -638,7 +686,5 @@
 
   init();
 </script>
-<!-- ポイント共通ライブラリ（クリアで3ポイントもらうため） -->
-<script src="../../shared/points.js"></script>
 </body>
 </html>
