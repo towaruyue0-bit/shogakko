@@ -361,6 +361,7 @@
   <div class="num-select-label">① すきな かずで れんしゅう</div>
   <div class="num-grid" id="num-grid"></div>
   <button class="start-go-btn" onclick="startGame('endless')">🔁 ランダムで ずっと ▶</button>
+  <div class="start-sub" style="margin-top:10px">10もん せいかいするごとに ⭐1ポイント</div>
 
   <div class="mode-divider">＿＿＿ または ＿＿＿</div>
 
@@ -653,11 +654,16 @@
     // 正解するまで進む形式なので「正解数 ÷ (正解数＋まちがえた回数)」で
     // 一発で当てられた割合を正答率として記録する。
     Stats.record(score, score + mistakes);
-    // クリアのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値6）
-    // ※ランダムでずっとモードで 1もんも解かずに「おしまい」を押したときは加点しない
-    //   （すぐ終わってポイントだけ集める、を ふせぐため）
-    if (gameMode === 'all' || score > 0) {
-      Points.rewardFor(6);
+    if (gameMode === 'all') {
+      // ぜんぶチャレンジのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
+      // ※ポイントアップ週間（6ポイント）は終了したので 3ポイントにもどした
+      Points.rewardFor(3);
+    } else {
+      // ランダムでずっとモードは「10もん せいかいするごとに 1ポイント」。
+      // 1もんだけ解いてすぐ「おしまい」→ポイントだけ集める、という ズルを ふせぐため、
+      // 正解数を10で割った数（切り捨て）をそのまま加点する。9もん以下なら 0ポイント。
+      const pts = Math.floor(score / 10);
+      if (pts > 0) Points.reward(pts);
     }
     showScreen('done');
   }

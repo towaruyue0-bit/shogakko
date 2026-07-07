@@ -655,7 +655,7 @@
       const best = loadBest();
       el.textContent = best > 0 ? `🏆 ハイスコア：${best}こ` : '🏆 はじめての ちょうせん！';
     } else {
-      el.textContent = 'すきなだけ あそべるよ 🌿（おわると ポイントが もらえるよ）';
+      el.textContent = 'すきなだけ あそべるよ 🌿（10こ つくるごとに ⭐1ポイント）';
     }
   }
 
@@ -1079,11 +1079,15 @@
     document.getElementById('screen-result').style.display = 'block';
     playFanfare();
 
-    // クリアのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
-    // ※のんびりモードで 1つも作らずに「おわる」を押したときは加点しない
-    //   （すぐ終わってポイントだけ集める、を ふせぐため）
-    if (mode === 'time' || score > 0) {
+    if (mode === 'time') {
+      // タイムアタックのごほうび（もらえる数は管理ツールの「ポイント設定」で変えられる。初期値3）
       Points.rewardFor(3);
+    } else {
+      // のんびりモード（ずっと続くタイプ）は「10こ つくるごとに 1ポイント」。
+      // 1つだけ作ってすぐ「おわる」→ポイントだけ集める、という ズルを ふせぐため、
+      // 作った数を10で割った数（切り捨て）をそのまま加点する。9こ以下なら 0ポイント。
+      const pts = Math.floor(score / 10);
+      if (pts > 0) Points.reward(pts);
     }
   }
 

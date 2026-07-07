@@ -363,6 +363,7 @@
   let selEmoji = EMOJIS[0];
   let sentences = [];
   let curIdx = 0;
+  let curStoryPoints = 0;       // いま読んでいるおはなしの「とくべつポイント」（0なら ふつうの設定どおり）
   let sentenceShownAt = 0;      // いまの文を画面に出した時刻（はやよみ判定用）
   let rushedCount = 0;          // はやすぎて「よみとばした」文の数
   const READ_MS_PER_CHAR = 90;  // 1文字あたり これくらいは読む、という目安（ミリ秒）
@@ -373,6 +374,7 @@
       id: 'ookina_kabu',
       title: 'おおきな かぶ',
       emoji: '🥬',
+      points: 6,   // ながい おはなしなので、とくべつに 6ポイント（ふつうは 3）
       text: 'おじいさんが、かぶの たねを まきました。\n「あまい あまい かぶに なれ。おおきな おおきな かぶに なれ。」\nあまそうな、おおきな おおきな かぶが できました。\nおじいさんは、かぶを ぬこうと しました。\n「うんとこしょ、どっこいしょ。」\nところが、かぶは ぬけません。\nおじいさんは、おばあさんを よんで きました。\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nそれでも、かぶは ぬけません。\nおばあさんが、まごを よんで きました。\nまごが おばあさんを ひっぱって、\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nまだまだ、かぶは ぬけません。\nまごが、いぬを よんで きました。\nいぬが まごを ひっぱって、\nまごが おばあさんを ひっぱって、\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nそれでも、かぶは ぬけません。\nいぬが、ねこを よんで きました。\nねこが いぬを ひっぱって、\nいぬが まごを ひっぱって、\nまごが おばあさんを ひっぱって、\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nまだまだ、かぶは ぬけません。\nねこが、ねずみを よんで きました。\nねずみが ねこを ひっぱって、\nねこが いぬを ひっぱって、\nいぬが まごを ひっぱって、\nまごが おばあさんを ひっぱって、\nおばあさんが おじいさんを ひっぱって、\nおじいさんが かぶを ひっぱって、\n「うんとこしょ、どっこいしょ。」\nとうとう、かぶは ぬけました。'
     },
     {
@@ -467,10 +469,12 @@
       if (existing) {
         if (existing.title !== preset.title ||
             existing.emoji !== preset.emoji ||
-            existing.text  !== preset.text) {
+            existing.text  !== preset.text ||
+            existing.points !== preset.points) {
           existing.title = preset.title;
           existing.emoji = preset.emoji;
           existing.text  = preset.text;
+          existing.points = preset.points;   // とくべつポイント（無いおはなしは undefined のまま）
           changed = true;
         }
       } else {
@@ -509,7 +513,7 @@
           <button class="del-btn" onclick="delStory(event,${i})">✕</button>
           <span class="story-emoji">${esc(s.emoji)}</span>
           <div class="story-title">${esc(s.title)}</div>
-          <div class="story-lines">${lines}ぶん</div>
+          <div class="story-lines">${lines}ぶん${s.points ? ' ・⭐' + s.points + 'ポイント' : ''}</div>
         </div>`;
       }).join('')
     }</div>`;
@@ -529,6 +533,7 @@
 
     curIdx = 0;
     rushedCount = 0;   // はやよみカウントをリセット
+    curStoryPoints = story.points || 0;   // とくべつポイント付きのおはなしか おぼえておく
 
     // 全文を span で描画
     document.getElementById('read-body').innerHTML =
@@ -566,8 +571,10 @@
       // 文の 4わり より多くを よみとばして いたら「はやよみ（連打）」とみなして加点しない。
       const readProperly = (rushedCount / total) <= 0.4;
       if (readProperly) {
-        // もらえる数は管理ツールの「ポイント設定」で変えられる（初期値3）
-        Points.rewardFor(3);
+        // ごほうび：とくべつポイント付きのおはなし（おおきな かぶ＝6）はその数をそのまま、
+        // それ以外は管理ツールの「ポイント設定」にしたがう（初期値3）
+        if (curStoryPoints > 0) Points.reward(curStoryPoints);
+        else Points.rewardFor(3);
         setDoneScreen(true);
       } else {
         setDoneScreen(false);
