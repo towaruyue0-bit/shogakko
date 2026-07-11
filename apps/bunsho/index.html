@@ -241,6 +241,46 @@
     }
     .next-btn:active { opacity: 0.85; }
 
+    /* ─── よみあげボタン（もんだいを こえで よんでもらう） ─── */
+    .speak-btn {
+      margin-top: 8px;
+      background: #FFF3E0;
+      border: 2px solid #FFD2B0;
+      color: #E65100;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .speak-btn:active { opacity: 0.7; }
+
+    /* ─── 3たくボタン（レベル1・2） ─── */
+    .choice-box {
+      background: white;
+      border-radius: 16px;
+      padding: 10px 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .choices { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .choices.answers { grid-template-columns: repeat(3, 1fr); }
+    .choice-btn {
+      background: #FFF8F0;
+      border: 3px solid #FFD2B0;
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #E65100;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.1s;
+    }
+    .choice-btn:active { transform: scale(0.96); }
+    .choice-btn.right { background: #E8FFE8; border-color: #43A047; color: #2E7D32; }
+    .choice-btn.wrong { background: #FFE9E9; border-color: #FF6B6B; color: #C62828; animation: shake 0.3s ease; }
+
     /* ─── せのひくい（みじかい）がめん向け：もっとコンパクトに ─── */
     /* スクロールせずに「もんだい」と「テンキー」が同時に見えるようにする */
     @media (max-height: 740px) {
@@ -260,6 +300,9 @@
       .key.del       { font-size: 0.92rem; }
       .check-btn,
       .next-btn      { padding: 9px; font-size: 0.98rem; border-radius: 12px; }
+      .speak-btn     { margin-top: 5px; padding: 4px 12px; font-size: 0.78rem; }
+      .choice-box    { padding: 7px 10px; }
+      .choice-btn    { padding: 8px; font-size: 1.2rem; }
     }
 
     /* ─── かんりょう画面 ────────────────────── */
@@ -320,8 +363,15 @@
 <!-- ① スタート画面 -->
 <div id="screen-start">
   <div class="start-icon">📝</div>
-  <div class="start-title">しきを かいて こたえよう</div>
-  <div class="start-sub">ぶんを よんで「しき」を うとう！</div>
+  <div class="start-title">ぶんを よんで こたえよう</div>
+  <div class="start-sub">🔊ボタンを おすと もんだいを よんでもらえるよ</div>
+
+  <div class="opt-label">むずかしさ</div>
+  <div class="opt-row" id="level-row">
+    <button class="opt-btn sel" data-level="1" onclick="selectLevel(1)">① しきを えらぶ</button>
+    <button class="opt-btn" data-level="2" onclick="selectLevel(2)">② しきと こたえ</button>
+    <button class="opt-btn" data-level="3" onclick="selectLevel(3)">③ じぶんで かく</button>
+  </div>
 
   <div class="opt-label">どんな けいさん？</div>
   <div class="opt-row" id="mode-row">
@@ -349,7 +399,14 @@
   <!-- 問題文 + 絵のヒント -->
   <div class="question-box">
     <div class="q-text" id="q-text"></div>
+    <button class="speak-btn" onclick="speakQuestion()">🔊 よんで もらう</button>
     <div class="pic-area" id="pic-area"></div>
+  </div>
+
+  <!-- しき・こたえの 3たく（レベル1・2で つかう） -->
+  <div class="choice-box" id="choice-box" style="display:none;">
+    <div class="formula-label" id="choice-label">どの しきに なるかな？</div>
+    <div class="choices" id="choices"></div>
   </div>
 
   <!-- しき入力 -->
@@ -360,12 +417,12 @@
 
   <div class="msg" id="msg"></div>
 
-  <!-- テンキー -->
-  <div class="pad-op-row">
+  <!-- テンキー（レベル3で つかう） -->
+  <div class="pad-op-row" id="pad-op-row">
     <button class="key op" onclick="tap('+')">＋</button>
     <button class="key op" onclick="tap('-')">−</button>
   </div>
-  <div class="pad">
+  <div class="pad" id="pad">
     <button class="key num" onclick="tap('1')">1</button>
     <button class="key num" onclick="tap('2')">2</button>
     <button class="key num" onclick="tap('3')">3</button>
@@ -407,6 +464,7 @@
 
   let mode = 'add';     // 'add'=たしざん / 'sub'=ひきざん / 'mix'=まぜまぜ
   let maxNum = 10;      // こたえ（や もとの数）の上限
+  let level = 1;        // 1=しきを3たくで えらぶ / 2=しきと こたえを えらぶ / 3=じぶんで しきを 打つ
 
   let score = 0;        // いっぱつ せいかいの数
   let qNum = 0;         // 現在の問題番号（0始まり）
@@ -472,6 +530,11 @@
   // ======================================================
   // スタート画面
   // ======================================================
+  function selectLevel(l) {
+    level = l;
+    document.querySelectorAll('#level-row .opt-btn').forEach(b =>
+      b.classList.toggle('sel', Number(b.dataset.level) === l));
+  }
   function selectMode(m) {
     mode = m;
     document.querySelectorAll('#mode-row .opt-btn').forEach(b =>
@@ -552,12 +615,168 @@
     document.getElementById('msg').textContent = '';
     document.getElementById('msg').className = 'msg';
 
-    document.getElementById('check-btn').style.display = 'block';
-    document.getElementById('check-btn').disabled = false;
     document.getElementById('next-btn').style.display = 'none';
+
+    // 前の問題の よみあげが のこっていたら 止める
+    try { speechSynthesis.cancel(); } catch (e) {}
+
+    // レベルごとに つかう部品を切り替える
+    //   レベル1・2 … 3たくボタンで えらぶ（テンキーは かくす）
+    //   レベル3   … いままでどおり テンキーで しきを 打つ
+    const isType = (level === 3);
+    document.getElementById('pad-op-row').style.display = isType ? 'grid' : 'none';
+    document.getElementById('pad').style.display = isType ? 'grid' : 'none';
+    document.getElementById('check-btn').style.display = isType ? 'block' : 'none';
+    document.getElementById('check-btn').disabled = false;
+    document.getElementById('choice-box').style.display = isType ? 'none' : 'block';
 
     renderPicture();
     renderFormula();
+    if (!isType) renderShikiChoices();
+  }
+
+  // ======================================================
+  // よみあげ（もんだいを こえで よんでもらう）
+  // ======================================================
+  // スマホ・パソコンに入っている「読み上げ機能」を使うので、
+  // 音声ファイルは いらない。日本語の声で ゆっくりめに 読む。
+  function speakQuestion() {
+    if (!current) return;
+    try {
+      // <br> は「、」に置きかえ、そのほかのタグは とりのぞいて 文だけにする
+      const text = current.text.replace(/<br\s*\/?>/g, '、').replace(/<[^>]+>/g, '');
+      speechSynthesis.cancel();   // 前の よみあげが のこっていたら 止める
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ja-JP';
+      u.rate = 0.85;              // すこし ゆっくり
+      speechSynthesis.speak(u);
+    } catch (e) { /* 読み上げに対応していない端末では 何もしない */ }
+  }
+
+  // ======================================================
+  // レベル1・2：3たくモード
+  // ======================================================
+  /** しきを「5 ＋ 3」のような 見やすい文字列にする */
+  function fmtShiki(x, op, y) {
+    return x + (op === '+' ? ' ＋ ' : ' − ') + y;
+  }
+
+  /** 配列の中身を ランダムに ならべかえる */
+  function shuffleArr(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  /**
+   * しきの 3たくを作って表示する。
+   * まちがいの選択肢は「読みとばした子が えらんでしまうもの」にする：
+   *   ダミー1 … たす・ひくが 逆（「のこりは？」を読みとばすと ひっかかる）
+   *   ダミー2 … かずが 1つ ちがう（かずの 拾いまちがい）
+   */
+  function renderShikiChoices() {
+    const { op, a, b } = current;
+    const items = shuffleArr([
+      { x: a, op: op,                      y: b,     ok: true  },
+      { x: a, op: op === '+' ? '-' : '+',  y: b,     ok: false },
+      { x: a, op: op,                      y: b + 1, ok: false },
+    ]);
+    const wrap = document.getElementById('choices');
+    document.getElementById('choice-label').textContent = 'どの しきに なるかな？';
+    wrap.className = 'choices';
+    wrap.innerHTML = '';
+    items.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = fmtShiki(c.x, c.op, c.y);
+      btn.onclick = () => chooseShiki(c, btn);
+      wrap.appendChild(btn);
+    });
+  }
+
+  /** しきの選択肢が タップされたとき */
+  function chooseShiki(c, btn) {
+    if (solved) return;
+    const msg = document.getElementById('msg');
+    if (!c.ok) {
+      firstTry = false;
+      btn.classList.add('wrong');
+      setTimeout(() => btn.classList.remove('wrong'), 500);
+      // まちがいの種類に合わせて ヒントを変える
+      msg.textContent = (c.op !== current.op)
+        ? '❌ たすのかな？ ひくのかな？ もういちど よんでみよう'
+        : '❌ ぶんに でてくる かずを よくみてみよう';
+      msg.className = 'msg ng';
+      return;
+    }
+    // しきは せいかい
+    btn.classList.add('right');
+    if (level === 1) {
+      // レベル1は しきが えらべたら クリア。こたえは 見せてあげる
+      finishCorrect();
+    } else {
+      // レベル2は つづけて こたえを えらぶ
+      msg.textContent = 'しきは せいかい！つぎは こたえ！';
+      msg.className = 'msg ok';
+      document.getElementById('formula-disp').textContent =
+        fmtShiki(current.a, current.op, current.b) + ' ＝ ？';
+      renderAnswerChoices();
+    }
+  }
+
+  /** こたえの 3たくを作って表示する（レベル2） */
+  function renderAnswerChoices() {
+    const ans = current.answer;
+    // 正解の 前後の数を ダミーにする（よく数えないと ひっかかる）
+    let opts = ans >= 1 ? [ans, ans + 1, ans - 1] : [ans, ans + 1, ans + 2];
+    shuffleArr(opts);
+    const wrap = document.getElementById('choices');
+    document.getElementById('choice-label').textContent = 'こたえは いくつかな？';
+    wrap.className = 'choices answers';
+    wrap.innerHTML = '';
+    opts.forEach(v => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = v;
+      btn.onclick = () => chooseAnswer(v === ans, btn);
+      wrap.appendChild(btn);
+    });
+  }
+
+  /** こたえの選択肢が タップされたとき（レベル2） */
+  function chooseAnswer(ok, btn) {
+    if (solved) return;
+    if (!ok) {
+      firstTry = false;
+      btn.classList.add('wrong');
+      setTimeout(() => btn.classList.remove('wrong'), 500);
+      const msg = document.getElementById('msg');
+      msg.textContent = '❌ えを かぞえて たしかめてみよう';
+      msg.className = 'msg ng';
+      return;
+    }
+    btn.classList.add('right');
+    finishCorrect();
+  }
+
+  /** レベル1・2の せいかい処理（しき全体を見せて、じどうで つぎへ） */
+  function finishCorrect() {
+    solved = true;
+    if (firstTry) score++;
+    const disp = document.getElementById('formula-disp');
+    disp.textContent = fmtShiki(current.a, current.op, current.b) + ' ＝ ' + current.answer;
+    disp.className = 'formula-disp correct';
+    const msg = document.getElementById('msg');
+    msg.textContent = firstTry ? 'せいかい！🎉' : 'できたね！🎉';
+    msg.className = 'msg ok';
+    document.getElementById('score-disp').textContent = score;
+    document.getElementById('next-btn').style.display = 'block';
+    // 絵のヒントを ぜんぶ あかるくする（へらした分も見せる）
+    document.querySelectorAll('#pic-area .pic-emoji.gone')
+      .forEach(el => el.classList.remove('gone'));
+    advanceTimer = setTimeout(nextQuestion, 1400);
   }
 
   /** 絵のヒントを描画する */
@@ -612,6 +831,7 @@
   // パソコンの キーボードでも 打てるようにする
   document.addEventListener('keydown', (e) => {
     if (document.getElementById('screen-game').style.display !== 'flex') return;
+    if (level !== 3) return;   // 3たくモードでは キーボード入力は つかわない
     if (e.key >= '0' && e.key <= '9') tap(e.key);
     else if (e.key === '+' || e.key === '-' || e.key === '=') tap(e.key);
     else if (e.key === 'Backspace') { e.preventDefault(); tapDel(); }
@@ -625,6 +845,7 @@
   // ======================================================
   function checkAnswer() {
     if (solved) return;
+    if (level !== 3) return;   // 3たくモードでは この関数は つかわない
 
     const disp = document.getElementById('formula-disp');
     const msg = document.getElementById('msg');
