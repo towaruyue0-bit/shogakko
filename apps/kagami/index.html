@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>どっちが ほんもの？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Klee One … 学校の教科書の手書きに近い形のフォント。字の形を覚える練習に使う -->
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600&family=M+PLUS+Rounded+1c:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#fbe7ff;
+    --bg-2:#fff3fa;
+    --ink:#6d2a8a;        /* 文字のこい色 */
+    --ink-soft:#a06bb8;
+    --main:#b453e6;       /* メインのむらさき */
+    --main-press:#9a3bcc;
+    --good:#5ec97a;       /* 正解 */
+    --bad:#ff7a7a;        /* まちがい */
+    --card:#ffffff;
+    --shadow:rgba(109,42,138,.2);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:"M PLUS Rounded 1c",system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #ffffff 0%, rgba(255,255,255,0) 60%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 55%, #ffffff 100%);
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    overflow:hidden;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+
+  /* ---------- もどるボタン（トップ一覧へ戻る・全画面で表示） ---------- */
+  .home-btn{
+    position:fixed;top:14px;left:14px;z-index:5;
+    background:#fff;border:none;border-radius:999px;
+    font-family:inherit;font-weight:800;color:var(--ink-soft);
+    font-size:.95rem;padding:10px 16px;cursor:pointer;
+    box-shadow:0 5px 0 var(--shadow);text-decoration:none;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .home-btn:active{transform:translateY(2px);box-shadow:0 3px 0 var(--shadow);}
+
+  .app{width:100%;max-width:480px;}
+
+  .screen{display:none;}
+  .screen.active{display:block;animation:pop .35s cubic-bezier(.2,.9,.3,1.3);}
+  @keyframes pop{from{transform:scale(.96);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  /* ---------- START ---------- */
+  .start{text-align:center;padding:8px 4px;}
+  h1{
+    font-weight:900;
+    font-size:clamp(1.7rem,8vw,2.4rem);
+    line-height:1.15;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  h1 .accent{color:var(--main);}
+  .tagline{font-weight:800;color:var(--ink-soft);font-size:1rem;margin-bottom:22px;}
+
+  .demo-row{
+    display:flex;gap:14px;justify-content:center;margin-bottom:22px;
+  }
+  .demo-card{
+    width:92px;height:92px;background:#fff;border-radius:20px;
+    box-shadow:0 6px 0 var(--shadow);
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Klee One",serif;font-weight:600;font-size:3.2rem;color:var(--ink);
+  }
+  .demo-card.flip{transform:scaleX(-1);opacity:.75;}
+
+  .pick-label{font-weight:800;color:var(--ink-soft);font-size:.95rem;margin-bottom:10px;}
+  .picker{display:flex;gap:10px;justify-content:center;margin-bottom:24px;}
+  .pill{
+    flex:1;max-width:140px;
+    background:#fff;border:3px solid transparent;border-radius:18px;
+    padding:12px 8px;cursor:pointer;
+    box-shadow:0 5px 0 var(--shadow);
+    font-family:inherit;color:var(--ink);font-weight:900;font-size:1.02rem;
+    transition:transform .12s,border-color .12s,box-shadow .12s;
+  }
+  .pill .small{display:block;font-weight:800;color:var(--ink-soft);font-size:.75rem;margin-top:2px;}
+  .pill[aria-pressed="true"]{border-color:var(--main);box-shadow:0 5px 0 var(--main-press);transform:translateY(-2px);}
+  .pill:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow);}
+
+  .toggles{display:flex;justify-content:center;margin-bottom:22px;}
+  .sound-toggle{
+    background:#fff;border:none;border-radius:999px;cursor:pointer;
+    font-family:inherit;font-weight:800;color:var(--ink-soft);
+    padding:10px 18px;box-shadow:0 5px 0 var(--shadow);font-size:.95rem;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .sound-toggle:active{transform:translateY(2px);box-shadow:0 3px 0 var(--shadow);}
+
+  .btn-go{
+    width:100%;
+    background:var(--main);
+    color:#fff;border:none;border-radius:24px;
+    font-family:inherit;font-weight:900;
+    font-size:1.5rem;letter-spacing:.04em;
+    padding:19px;cursor:pointer;
+    box-shadow:0 8px 0 var(--main-press);
+    transition:transform .1s,box-shadow .1s;
+  }
+  .btn-go:active{transform:translateY(5px);box-shadow:0 3px 0 var(--main-press);}
+
+  /* ---------- GAME ---------- */
+  .hud{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:#fff;border-radius:999px;padding:9px 16px;
+    box-shadow:0 5px 0 var(--shadow);
+    font-weight:900;color:var(--ink-soft);font-size:.95rem;
+  }
+  .count{font-weight:900;color:var(--ink-soft);font-size:1rem;}
+  .count b{color:var(--ink);font-size:1.4rem;}
+
+  /* おだい（ことばと 絵文字） */
+  .prompt{
+    background:#fff;border-radius:24px;
+    box-shadow:0 8px 0 var(--shadow);
+    padding:18px 16px;margin-bottom:18px;
+    text-align:center;
+  }
+  .prompt .word{
+    font-weight:900;font-size:clamp(1.3rem,6vw,1.7rem);color:var(--ink);
+  }
+  .prompt .word .target{color:var(--main);font-size:1.25em;}
+  .prompt .sub{font-weight:800;color:var(--ink-soft);font-size:.95rem;margin-top:4px;}
+
+  /* ほんもの と かがみもじ の 2まいのカード */
+  .cards{display:flex;gap:16px;justify-content:center;}
+  .char-card{
+    flex:1;max-width:200px;aspect-ratio:1;
+    background:#fff;border:4px solid transparent;border-radius:28px;
+    box-shadow:0 9px 0 var(--shadow);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .12s,border-color .15s,box-shadow .15s,background .15s;
+    padding:0;
+  }
+  .char-card:active{transform:translateY(3px);box-shadow:0 4px 0 var(--shadow);}
+  /* 字の部分。かがみもじ側は scaleX(-1) で左右を うらがえす */
+  .char-card .glyph{
+    font-family:"Klee One",serif;font-weight:600;
+    font-size:clamp(4.2rem,24vw,6.5rem);
+    color:var(--ink);line-height:1;
+    display:block;
+  }
+  .char-card.flip .glyph{transform:scaleX(-1);}
+  .char-card.right{border-color:var(--good);background:#eafaef;animation:yatta .5s cubic-bezier(.2,.9,.3,1.3);}
+  .char-card.reveal{border-color:var(--good);background:#eafaef;animation:pulse 0.6s ease-in-out 2;}
+  .char-card.wrong{border-color:var(--bad);background:#fff0f0;animation:shake .4s;}
+  @keyframes yatta{30%{transform:scale(1.07);}100%{transform:scale(1);}}
+  @keyframes pulse{50%{transform:scale(1.05);}}
+  @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-10px);}40%{transform:translateX(10px);}60%{transform:translateX(-7px);}80%{transform:translateX(7px);}}
+
+  .feedback{
+    min-height:30px;text-align:center;
+    font-weight:900;font-size:1.05rem;margin-top:14px;
+  }
+  .feedback.ok{color:var(--good);}
+  .feedback.ng{color:var(--bad);}
+
+  /* ---------- RESULT ---------- */
+  .result{text-align:center;padding:8px 4px;position:relative;z-index:2;}
+  .result .emoji{font-size:4.5rem;line-height:1;margin-bottom:8px;animation:bob 1.4s ease-in-out infinite;}
+  @keyframes bob{50%{transform:translateY(-10px);}}
+  .result h2{
+    font-weight:900;
+    font-size:clamp(2.2rem,11vw,3.2rem);line-height:1.1;margin-bottom:18px;
+    color:var(--main);
+  }
+  .stat-card{
+    background:#fff;border-radius:24px;box-shadow:0 8px 0 var(--shadow);
+    padding:22px;margin:0 auto 26px;max-width:320px;
+  }
+  .stat-row{display:flex;align-items:baseline;justify-content:center;gap:10px;}
+  .stat-row .label{font-weight:800;color:var(--ink-soft);font-size:1rem;}
+  .stat-row .value{font-weight:900;font-size:2.2rem;color:var(--ink);}
+  .stat-row .value small{font-size:1rem;font-weight:800;color:var(--ink-soft);}
+  .msg{font-weight:800;color:var(--ink-soft);font-size:1.05rem;margin-bottom:24px;}
+
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:1;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+
+  :focus-visible{outline:4px solid var(--main);outline-offset:3px;}
+</style>
+  <!-- ポイント共通ライブラリ（各アプリで共通のポイント/記録機能） -->
+  <script src="../../shared/points.js"></script>
+</head>
+<body>
+<!-- トップのアプリ一覧へもどるボタン（他のアプリと共通） -->
+<a class="home-btn" href="../../index.html">← もどる</a>
+<canvas id="confetti"></canvas>
+<div class="app">
+
+  <!-- ============ START ============ -->
+  <section class="screen active" id="screen-start">
+    <div class="start">
+      <h1>🪞 どっちが <span class="accent">ほんもの</span>？</h1>
+      <p class="tagline">かがみもじに だまされるな！</p>
+
+      <!-- 見本：ほんものの「さ」と かがみもじの「さ」 -->
+      <div class="demo-row" aria-hidden="true">
+        <div class="demo-card">さ</div>
+        <div class="demo-card flip">さ</div>
+      </div>
+
+      <p class="pick-label">どの じを れんしゅうする？</p>
+      <div class="picker" role="group" aria-label="文字の種類">
+        <button class="pill" data-mode="hira" aria-pressed="true">ひらがな</button>
+        <button class="pill" data-mode="num" aria-pressed="false">すうじ</button>
+        <button class="pill" data-mode="mix" aria-pressed="false">ミックス</button>
+      </div>
+
+      <div class="toggles">
+        <button class="sound-toggle" id="soundToggle" aria-pressed="true">
+          <span id="soundIcon">🔊</span> おと あり
+        </button>
+      </div>
+
+      <button class="btn-go" id="startBtn">スタート</button>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section class="screen" id="screen-game">
+    <div class="hud">
+      <span class="badge">🕵️ ほんものを さがせ！</span>
+      <div class="count"><b id="qNum">1</b> / <span id="qTotal">10</span></div>
+    </div>
+
+    <div class="prompt">
+      <div class="word" id="promptWord">🐟 さかなの <span class="target">「さ」</span></div>
+      <div class="sub">ほんものは どっち？</div>
+    </div>
+
+    <div class="cards">
+      <button class="char-card" id="card0"><span class="glyph">さ</span></button>
+      <button class="char-card" id="card1"><span class="glyph">さ</span></button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section class="screen" id="screen-result">
+    <div class="result">
+      <div class="emoji" id="resultEmoji">🕵️</div>
+      <h2>おつかれさま！</h2>
+      <div class="stat-card">
+        <div class="stat-row">
+          <span class="label">いっぱつで みやぶった</span>
+          <span class="value"><span id="resScore">10</span><small> / <span id="resTotal">10</span></small></span>
+        </div>
+      </div>
+      <p class="msg" id="resultMsg">すごい めだね！</p>
+      <button class="btn-go" id="againBtn">もういちど</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- 設定 ----------
+  var TOTAL_Q = 10;   // 1ゲームの問題数
+
+  // ---------- 文字ずかん ----------
+  // かがみもじに なりやすい ひらがなを えらんである。
+  // w … その字で はじまる（またはよく出る）ことば、e … 絵文字
+  var HIRA = [
+    { c:"さ", w:"さかな",     e:"🐟" },
+    { c:"き", w:"きのこ",     e:"🍄" },
+    { c:"し", w:"しんかんせん", e:"🚅" },
+    { c:"つ", w:"つき",       e:"🌙" },
+    { c:"く", w:"くるま",     e:"🚗" },
+    { c:"ち", w:"ちょうちょ",  e:"🦋" },
+    { c:"そ", w:"そら",       e:"⛅" },
+    { c:"と", w:"とけい",     e:"⏰" },
+    { c:"や", w:"やま",       e:"⛰️" },
+    { c:"よ", w:"よっと",     e:"⛵" },
+    { c:"わ", w:"わに",       e:"🐊" },
+    { c:"ぬ", w:"ぬいぐるみ",  e:"🧸" },
+    { c:"ね", w:"ねこ",       e:"🐱" },
+    { c:"る", w:"るすばん",    e:"🏠" },
+    { c:"ろ", w:"ろけっと",    e:"🚀" },
+    { c:"え", w:"えんぴつ",    e:"✏️" },
+    { c:"ふ", w:"ふね",       e:"🚢" },
+    { c:"す", w:"すいか",     e:"🍉" },
+    { c:"せ", w:"せんべい",    e:"🍘" },
+    { c:"か", w:"かさ",       e:"☂️" },
+    { c:"た", w:"たこ",       e:"🐙" },
+    { c:"な", w:"なす",       e:"🍆" },
+    { c:"に", w:"にじ",       e:"🌈" },
+    { c:"ほ", w:"ほし",       e:"⭐" },
+    { c:"は", w:"はな",       e:"🌸" },
+    { c:"へ", w:"へび",       e:"🐍" },
+    { c:"も", w:"もも",       e:"🍑" },
+    { c:"ん", w:"ぱん",       e:"🍞" }
+  ];
+  // 左右をうらがえすと ちがう形になる すうじ（0・1・8は 対称なので入れない）
+  var NUM = [
+    { c:"2", w:"すうじ",  e:"🔢" },
+    { c:"3", w:"すうじ",  e:"🔢" },
+    { c:"4", w:"すうじ",  e:"🔢" },
+    { c:"5", w:"すうじ",  e:"🔢" },
+    { c:"6", w:"すうじ",  e:"🔢" },
+    { c:"7", w:"すうじ",  e:"🔢" },
+    { c:"9", w:"すうじ",  e:"🔢" }
+  ];
+
+  // ---------- 状態 ----------
+  var mode = "hira";       // "hira" / "num" / "mix"
+  var soundOn = true;
+  var quiz = [];           // 今回 出す文字のリスト
+  var index = 0;           // いま何問目か（0始まり）
+  var score = 0;           // いっぱつで 見破れた数
+  var firstTry = true;     // この問題を まだ まちがえていないか
+  var locked = false;      // 連打・二重回答よけ
+
+  // ---------- DOM ----------
+  var $ = function(id){ return document.getElementById(id); };
+  var screens = {
+    start: $("screen-start"),
+    game: $("screen-game"),
+    result: $("screen-result")
+  };
+  function show(name){
+    Object.keys(screens).forEach(function(k){
+      screens[k].classList.toggle("active", k === name);
+    });
+  }
+
+  // ---------- サウンド（Web Audio・ファイル不要） ----------
+  var ac = null;
+  function beep(freq, dur, type){
+    if (!soundOn) return;
+    try{
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || "sine"; o.frequency.value = freq;
+      o.connect(g); g.connect(ac.destination);
+      var now = ac.currentTime;
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      o.start(now); o.stop(now + dur);
+    }catch(e){}
+  }
+  function soundCorrect(){ beep(660,0.10,"triangle"); setTimeout(function(){beep(990,0.14,"triangle");},90); }
+  function soundWrong(){ beep(180,0.18,"square"); }
+  function soundWin(){ [523,659,784,1046].forEach(function(f,i){ setTimeout(function(){beep(f,0.16,"triangle");}, i*120); }); }
+
+  // ---------- 問題づくり ----------
+  function shuffle(arr){
+    for (var i = arr.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  /** えらんだモードの文字リストから、今回出す TOTAL_Q 文字をえらぶ */
+  function buildQuiz(){
+    var pool;
+    if (mode === "hira") pool = HIRA.slice();
+    else if (mode === "num") pool = NUM.slice();
+    else pool = HIRA.slice().concat(NUM.slice());
+    shuffle(pool);
+    // すうじだけモードは 7文字しかないので、たりない分は もういちど まぜて足す
+    while (pool.length < TOTAL_Q){
+      pool = pool.concat(shuffle(pool.slice(0, TOTAL_Q - pool.length)));
+    }
+    return pool.slice(0, TOTAL_Q);
+  }
+
+  // ---------- ゲーム進行 ----------
+  function startGame(){
+    if (ac && ac.state === "suspended") ac.resume();
+    quiz = buildQuiz();
+    index = 0; score = 0;
+    $("qTotal").textContent = TOTAL_Q;
+    renderQuestion();
+    show("game");
+  }
+
+  /** いまの問題を画面に出す。ほんものを 左右どちらに置くかは ランダム */
+  function renderQuestion(){
+    var q = quiz[index];
+    firstTry = true;
+    locked = false;
+    $("qNum").textContent = index + 1;
+    // おだい：「🐟 さかなの 『さ』」／すうじは「🔢 すうじの 『5』」
+    $("promptWord").innerHTML =
+      q.e + " " + q.w + "の <span class='target'>「" + q.c + "」</span>";
+    $("feedback").textContent = "";
+    $("feedback").className = "feedback";
+    // ほんものの場所を ランダムにきめる（0=ひだり / 1=みぎ）
+    var realSide = Math.random() < 0.5 ? 0 : 1;
+    [0, 1].forEach(function(side){
+      var card = $("card" + side);
+      card.querySelector(".glyph").textContent = q.c;
+      card.classList.remove("right", "wrong", "reveal", "flip");
+      if (side !== realSide) card.classList.add("flip");   // こちらが かがみもじ
+      card.dataset.real = (side === realSide) ? "1" : "0";
+    });
+  }
+
+  /** カードがタップされたとき */
+  function tapCard(card){
+    if (locked) return;
+    var isReal = card.dataset.real === "1";
+    var fb = $("feedback");
+    if (isReal){
+      // ---- ほんものを 見破った！ ----
+      locked = true;
+      if (firstTry) score++;
+      card.classList.add("right");
+      fb.textContent = firstTry ? "そう！それが ほんもの！🕵️" : "みつけたね！";
+      fb.className = "feedback ok";
+      soundCorrect();
+      setTimeout(nextQuestion, 900);
+    } else {
+      // ---- かがみもじに だまされた ----
+      // 正しい方を 光らせて「ほんものの形」を しっかり見せる。
+      // （かがみもじは 注意ではなく「形の記憶」の問題なので、
+      //   正解の形を 見せて おぼえなおすのが 大事）
+      locked = true;
+      firstTry = false;
+      card.classList.add("wrong");
+      var real = $("card0").dataset.real === "1" ? $("card0") : $("card1");
+      real.classList.add("reveal");
+      fb.textContent = "おしい！ひかっているのが ほんものだよ";
+      fb.className = "feedback ng";
+      soundWrong();
+      // 正しい形を 見せてから、同じ問題に もういちど挑戦
+      setTimeout(function(){
+        card.classList.remove("wrong");
+        real.classList.remove("reveal");
+        fb.textContent = "もういちど！ほんものは どっち？";
+        fb.className = "feedback";
+        locked = false;
+      }, 1600);
+    }
+  }
+
+  function nextQuestion(){
+    index++;
+    if (index >= TOTAL_Q){ finish(); return; }
+    renderQuestion();
+  }
+
+  function finish(){
+    $("resScore").textContent = score;
+    $("resTotal").textContent = TOTAL_Q;
+    var perfect = score >= TOTAL_Q;
+    $("resultEmoji").textContent = perfect ? "🏆" : "🕵️";
+    $("resultMsg").textContent = perfect
+      ? "パーフェクト！かがみもじマスターだ！"
+      : "よく がんばったね！つぎも みやぶろう！";
+    soundWin();
+    if (perfect) launchConfetti();
+
+    // ごほうびポイント（どうがタイマーで使える）。
+    // ちょうせんしたこと自体が えらいので、点数に関係なく あげる。
+    // もらえる数は 管理ツールの「ポイント設定」で変えられる（初期値2）。
+    if (typeof Points !== "undefined" && typeof Points.rewardFor === "function"){
+      setTimeout(function(){ Points.rewardFor(2); }, 700);
+    }
+    // 利用記録（記録ページ用）：いっぱつで見破れた数 / 問題数
+    if (typeof Stats !== "undefined" && typeof Stats.record === "function"){
+      Stats.record(score, TOTAL_Q);
+    }
+    show("result");
+  }
+
+  // ---------- 紙吹雪 ----------
+  var cv = $("confetti"), ctx = cv.getContext("2d"), pieces = [], rafId = null;
+  function sizeCanvas(){ cv.width = innerWidth; cv.height = innerHeight; }
+  addEventListener("resize", sizeCanvas); sizeCanvas();
+  function launchConfetti(){
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var colors = ["#b453e6","#5ec97a","#ffc03a","#ff7a7a","#4db1ff","#ff9ad5"];
+    pieces = [];
+    for (var i = 0; i < 130; i++){
+      pieces.push({
+        x: Math.random()*cv.width,
+        y: -20 - Math.random()*cv.height*0.5,
+        s: 6 + Math.random()*8,
+        c: colors[i % colors.length],
+        vy: 2 + Math.random()*3,
+        vx: -1.5 + Math.random()*3,
+        rot: Math.random()*Math.PI,
+        vr: -0.2 + Math.random()*0.4
+      });
+    }
+    cancelAnimationFrame(rafId);
+    var frames = 0;
+    (function loop(){
+      ctx.clearRect(0,0,cv.width,cv.height);
+      pieces.forEach(function(p){
+        p.y += p.vy; p.x += p.vx; p.rot += p.vr;
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6);
+        ctx.restore();
+      });
+      frames++;
+      if (frames < 260) rafId = requestAnimationFrame(loop);
+      else ctx.clearRect(0,0,cv.width,cv.height);
+    })();
+  }
+
+  // ---------- UI操作 ----------
+  $("card0").addEventListener("click", function(){ tapCard(this); });
+  $("card1").addEventListener("click", function(){ tapCard(this); });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".pill"), function(pill){
+    pill.addEventListener("click", function(){
+      mode = pill.dataset.mode;
+      document.querySelectorAll(".pill").forEach(function(p){
+        p.setAttribute("aria-pressed", p === pill ? "true" : "false");
+      });
+    });
+  });
+  $("soundToggle").addEventListener("click", function(){
+    soundOn = !soundOn;
+    this.setAttribute("aria-pressed", soundOn ? "true" : "false");
+    $("soundIcon").textContent = soundOn ? "🔊" : "🔇";
+    this.lastChild.textContent = soundOn ? " おと あり" : " おと なし";
+    if (soundOn){ try{ if(!ac) ac = new (window.AudioContext||window.webkitAudioContext)(); ac.resume(); beep(660,0.1,"triangle"); }catch(e){} }
+  });
+  $("startBtn").addEventListener("click", startGame);
+  $("againBtn").addEventListener("click", function(){ show("start"); });
+
+})();
+</script>
+</body>
+</html>

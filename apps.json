@@ -103,6 +103,16 @@
       "visible": true
     },
     {
+      "id": "kagami",
+      "name": "どっちが ほんもの？",
+      "description": "かがみもじに だまされず ただしい じを みつけよう",
+      "icon": "🪞",
+      "color": "#b453e6",
+      "url": "apps/kagami/",
+      "category": "こくご",
+      "visible": true
+    },
+    {
       "id": "keyboard",
       "name": "キーボード れんしゅう",
       "description": "アルファベットを キーボードで うとう",
