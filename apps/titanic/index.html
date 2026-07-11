@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>タイタニックごうを つくろう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=M+PLUS+Rounded+1c:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-1:#bfe3ff;
+    --sky-2:#e9f6ff;
+    --ink:#244a8a;        /* 文字のこい色 */
+    --ink-soft:#5a78b0;
+    --sun:#ffc03a;        /* 数字パッド */
+    --sun-press:#ff9e2c;
+    --good:#5ec97a;       /* 正解 */
+    --bad:#ff7a7a;        /* まちがい */
+    --grape:#7c5cff;      /* メインのボタン */
+    --grape-press:#6747e6;
+    --navy:#1d5fbf;       /* タイタニックの青 */
+    --navy-press:#164a99;
+    --card:#ffffff;
+    --shadow:rgba(36,74,138,.22);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:"M PLUS Rounded 1c",system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #ffffff 0%, rgba(255,255,255,0) 60%),
+      linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 55%, #ffffff 100%);
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    overflow:hidden;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+
+  /* ---------- もどるボタン（トップ一覧へ戻る・全画面で表示） ---------- */
+  .home-btn{
+    position:fixed;top:12px;left:12px;z-index:5;
+    background:#fff;border:none;border-radius:999px;
+    font-family:inherit;font-weight:800;color:var(--ink-soft);
+    font-size:.9rem;padding:9px 15px;cursor:pointer;
+    box-shadow:0 5px 0 var(--shadow);text-decoration:none;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .home-btn:active{transform:translateY(2px);box-shadow:0 3px 0 var(--shadow);}
+
+  .app{width:100%;max-width:520px;}
+
+  .screen{display:none;}
+  .screen.active{display:block;animation:pop .35s cubic-bezier(.2,.9,.3,1.3);}
+  @keyframes pop{from{transform:scale(.96);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  /* ================= ドック（メイン画面） ================= */
+  .dock{text-align:center;}
+  h1{
+    font-family:"Fredoka",sans-serif;font-weight:700;
+    font-size:clamp(1.5rem,6.5vw,2.1rem);line-height:1.1;
+    color:var(--ink);margin-bottom:10px;
+  }
+  h1 .accent{color:var(--navy);}
+
+  /* 船を表示するカード */
+  .shipyard{
+    background:linear-gradient(180deg,#cfe9ff 0%,#eaf6ff 70%,#dff0fd 100%);
+    border-radius:26px;overflow:hidden;
+    box-shadow:0 10px 0 var(--shadow);
+    margin-bottom:14px;position:relative;
+  }
+  .shipyard svg{display:block;width:100%;height:auto;}
+
+  /* 出航回数のバッジ（左上にちいさく） */
+  .launch-badge{
+    position:absolute;top:10px;left:12px;
+    background:rgba(255,255,255,.9);border-radius:999px;
+    font-weight:900;color:var(--navy);font-size:.85rem;
+    padding:5px 12px;box-shadow:0 3px 8px rgba(36,74,138,.18);
+  }
+
+  /* できあがりバー */
+  .build-meter{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .build-meter .label{font-weight:900;color:var(--ink-soft);font-size:.95rem;white-space:nowrap;}
+  .build-meter .label b{font-family:"Fredoka",sans-serif;color:var(--navy);font-size:1.3rem;}
+  .track{
+    flex:1;height:16px;background:#fff;border-radius:999px;overflow:hidden;
+    box-shadow:inset 0 2px 4px rgba(36,74,138,.15);
+  }
+  .fill{height:100%;width:0%;border-radius:999px;
+    background:linear-gradient(90deg,var(--navy),#4db1ff);
+    transition:width .5s cubic-bezier(.2,.9,.3,1.3);}
+
+  .pick-label{font-weight:800;color:var(--ink-soft);font-size:.9rem;margin-bottom:8px;}
+  .picker{display:flex;gap:10px;justify-content:center;margin-bottom:14px;}
+  .pill{
+    flex:1;max-width:150px;
+    background:#fff;border:3px solid transparent;border-radius:18px;
+    padding:10px 6px;cursor:pointer;
+    box-shadow:0 5px 0 var(--shadow);
+    font-family:inherit;color:var(--ink);font-weight:900;font-size:1rem;
+    transition:transform .12s,border-color .12s,box-shadow .12s;
+  }
+  .pill .small{display:block;font-weight:800;color:var(--ink-soft);font-size:.75rem;margin-top:2px;}
+  .pill[aria-pressed="true"]{border-color:var(--sun);box-shadow:0 5px 0 var(--sun-press);transform:translateY(-2px);}
+  .pill:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow);}
+
+  .btn-go{
+    width:100%;
+    background:var(--grape);
+    color:#fff;border:none;border-radius:22px;
+    font-family:inherit;font-weight:900;
+    font-size:1.35rem;letter-spacing:.02em;
+    padding:17px;cursor:pointer;
+    box-shadow:0 8px 0 var(--grape-press);
+    transition:transform .1s,box-shadow .1s;
+  }
+  .btn-go:active{transform:translateY(5px);box-shadow:0 3px 0 var(--grape-press);}
+  .btn-go small{display:block;font-size:.85rem;font-weight:800;opacity:.85;margin-top:2px;}
+
+  /* 出航ボタン（完成したときだけ出る） */
+  .btn-launch{
+    width:100%;
+    background:var(--navy);
+    color:#fff;border:none;border-radius:22px;
+    font-family:inherit;font-weight:900;
+    font-size:1.45rem;padding:18px;cursor:pointer;
+    box-shadow:0 8px 0 var(--navy-press);
+    animation:glow 1.6s ease-in-out infinite;
+  }
+  .btn-launch:active{transform:translateY(5px);box-shadow:0 3px 0 var(--navy-press);}
+  @keyframes glow{50%{transform:scale(1.03);}}
+
+  .dock-foot{display:flex;justify-content:center;gap:14px;margin-top:12px;align-items:center;}
+  .sound-toggle{
+    background:#fff;border:none;border-radius:999px;cursor:pointer;
+    font-family:inherit;font-weight:800;color:var(--ink-soft);
+    padding:8px 15px;box-shadow:0 4px 0 var(--shadow);font-size:.85rem;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .sound-toggle:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow);}
+  .reset-link{
+    background:none;border:none;cursor:pointer;font-family:inherit;
+    font-weight:800;color:#9db2d4;font-size:.8rem;text-decoration:underline;
+  }
+
+  /* ================= こうじ（もんだい画面） ================= */
+  .hud{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:#fff;border-radius:999px;padding:9px 16px;
+    box-shadow:0 5px 0 var(--shadow);
+    font-weight:900;color:var(--ink-soft);font-size:.95rem;
+  }
+  .count{font-weight:900;color:var(--ink-soft);font-size:1rem;text-align:right;}
+  .count b{font-family:"Fredoka",sans-serif;color:var(--ink);font-size:1.4rem;}
+
+  .problem{
+    background:var(--card);border-radius:30px;
+    box-shadow:0 12px 0 var(--shadow);
+    padding:32px 20px;margin-bottom:22px;
+    display:flex;align-items:center;justify-content:center;
+    gap:clamp(8px,3vw,18px);
+    font-family:"Fredoka",sans-serif;font-weight:700;
+    font-size:clamp(3rem,15vw,4.6rem);color:var(--ink);
+    transition:transform .12s,background .2s;
+  }
+  .problem .op{color:var(--sun);}
+  .problem .eq{color:var(--ink-soft);}
+  .slot{
+    min-width:clamp(60px,19vw,90px);height:clamp(60px,19vw,90px);
+    border-radius:22px;background:#eef5ff;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink-soft);box-shadow:inset 0 3px 6px rgba(36,74,138,.12);
+  }
+  .problem.correct{background:#eafaef;transform:translateY(-4px) scale(1.02);}
+  .problem.correct .slot{background:var(--good);color:#fff;box-shadow:none;}
+  .problem.shake{animation:shake .4s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-10px);}40%{transform:translateX(10px);}60%{transform:translateX(-7px);}80%{transform:translateX(7px);}}
+
+  .pad{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(8px,2.6vw,14px);}
+  .key{
+    aspect-ratio:1;
+    background:var(--sun);color:#fff;border:none;border-radius:20px;
+    font-family:"Fredoka",sans-serif;font-weight:700;
+    font-size:clamp(1.6rem,7vw,2.2rem);cursor:pointer;
+    box-shadow:0 6px 0 var(--sun-press);
+    transition:transform .08s,box-shadow .08s,background .08s;
+  }
+  .key:active{transform:translateY(4px);box-shadow:0 2px 0 var(--sun-press);}
+  .key.wrong{background:var(--bad);box-shadow:0 6px 0 #e25c5c;animation:shake .4s;}
+
+  /* ---------- パーツゲットのポップアップ ---------- */
+  .part-popup{
+    position:fixed;inset:0;z-index:50;
+    display:none;align-items:center;justify-content:center;
+    background:rgba(15,23,42,.4);padding:20px;
+  }
+  .part-popup.show{display:flex;animation:fadeIn .25s ease-out;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .part-card{
+    background:#fff;border-radius:28px;
+    padding:26px 24px 22px;text-align:center;
+    box-shadow:0 14px 44px rgba(0,0,0,.28);
+    max-width:360px;width:100%;
+    animation:popBig .5s cubic-bezier(.18,.9,.3,1.3);
+  }
+  @keyframes popBig{0%{transform:scale(.3);opacity:0;}60%{transform:scale(1.08);opacity:1;}100%{transform:scale(1);}}
+  .part-card .p-emoji{font-size:3.6rem;line-height:1.1;}
+  .part-card .p-get{
+    font-family:inherit;font-weight:900;color:var(--navy);
+    font-size:1.35rem;margin:6px 0 4px;
+  }
+  .part-card .p-trivia{
+    font-weight:800;color:var(--ink-soft);font-size:.98rem;line-height:1.65;
+    background:#f2f7ff;border-radius:14px;padding:12px 14px;margin:10px 0 16px;
+  }
+  .part-card .p-count{font-weight:900;color:#9db2d4;font-size:.85rem;margin-bottom:12px;}
+  .btn-next{
+    width:100%;background:var(--navy);color:#fff;border:none;border-radius:18px;
+    font-family:inherit;font-weight:900;font-size:1.2rem;padding:14px;cursor:pointer;
+    box-shadow:0 6px 0 var(--navy-press);
+  }
+  .btn-next:active{transform:translateY(4px);box-shadow:0 2px 0 var(--navy-press);}
+
+  /* ---------- 出航おわりのカード ---------- */
+  .launch-done{
+    position:fixed;inset:0;z-index:60;
+    display:none;align-items:center;justify-content:center;
+    background:rgba(15,23,42,.45);padding:20px;
+  }
+  .launch-done.show{display:flex;animation:fadeIn .3s ease-out;}
+  .ld-card{
+    background:#fff;border-radius:28px;padding:30px 26px;text-align:center;
+    box-shadow:0 14px 44px rgba(0,0,0,.3);max-width:360px;width:100%;
+    animation:popBig .5s cubic-bezier(.18,.9,.3,1.3);
+  }
+  .ld-card .ld-emoji{font-size:4rem;animation:bob 1.4s ease-in-out infinite;}
+  @keyframes bob{50%{transform:translateY(-8px);}}
+  .ld-card h2{
+    font-family:inherit;font-weight:900;color:var(--navy);
+    font-size:1.7rem;margin:8px 0 6px;
+  }
+  .ld-card .ld-msg{font-weight:800;color:var(--ink-soft);font-size:1rem;margin-bottom:18px;line-height:1.6;}
+
+  /* ================= 船のSVG：パーツの出現アニメ ================= */
+  /* まだ できていないパーツは 見えない。built が付くと ぽんっと出てくる */
+  .part{
+    opacity:0;
+    transform:scale(.25);
+    transform-box:fill-box;
+    transform-origin:50% 100%;
+    transition:opacity .45s ease-out, transform .55s cubic-bezier(.2,.9,.3,1.35);
+  }
+  .part.built{opacity:1;transform:scale(1);}
+  /* 最初の表示（ロード時）はアニメなしで即表示する */
+  svg.no-anim .part{transition:none;}
+
+  /* 船ぜんたいの ぷかぷか */
+  #ship{animation:shipbob 4.5s ease-in-out infinite;transform-origin:450px 380px;}
+  @keyframes shipbob{50%{transform:translateY(5px) rotate(.3deg);}}
+
+  /* 波のながれ */
+  .waves-front{animation:drift 8s linear infinite;}
+  .waves-back{animation:drift2 13s linear infinite;}
+  @keyframes drift{to{transform:translateX(-360px);}}
+  @keyframes drift2{to{transform:translateX(-180px);}}
+
+  /* けむり（出航のときだけ見える） */
+  .smoke{opacity:0;}
+  svg.launching .smoke{animation:puff 2.4s ease-out infinite;}
+  svg.launching .smoke.s2{animation-delay:.8s;}
+  svg.launching .smoke.s3{animation-delay:1.6s;}
+  @keyframes puff{
+    0%{opacity:0;transform:translate(0,0) scale(.5);}
+    20%{opacity:.85;}
+    100%{opacity:0;transform:translate(46px,-90px) scale(2.1);}
+  }
+
+  /* 出航：船がゆっくり すすんで 画面のそとへ */
+  svg.launching #ship{animation:sail 8s ease-in forwards;}
+  @keyframes sail{
+    0%{transform:translateX(0);}
+    100%{transform:translateX(1000px);}
+  }
+
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:55;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important;}
+    .part{opacity:1;transform:none;}
+    .part:not(.built){opacity:0;}
+  }
+
+  :focus-visible{outline:4px solid var(--grape);outline-offset:3px;}
+</style>
+  <!-- ポイント共通ライブラリ（各アプリで共通のポイント/記録機能） -->
+  <script src="../../shared/points.js"></script>
+</head>
+<body>
+<!-- トップのアプリ一覧へもどるボタン（他のアプリと共通） -->
+<a class="home-btn" href="../../index.html">← もどる</a>
+<canvas id="confetti"></canvas>
+
+<div class="app">
+
+  <!-- ============ ドック（メイン画面） ============ -->
+  <section class="screen active" id="screen-dock">
+    <div class="dock">
+      <h1>🚢 <span class="accent">タイタニックごう</span>を つくろう</h1>
+
+      <!-- 船（SVG）。パーツはJSで .built を付けると出てくる -->
+      <div class="shipyard">
+        <div class="launch-badge" id="launchBadge" style="display:none;">⚓ しゅっこう <b id="launchCount">0</b> かい</div>
+        <svg id="shipSvg" viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="タイタニックごうの絵">
+
+          <!-- そら（いつも見える） -->
+          <defs>
+            <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#a8d8ff"/>
+              <stop offset="100%" stop-color="#e6f5ff"/>
+            </linearGradient>
+            <linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8fd0f7"/>
+              <stop offset="100%" stop-color="#4a9fdc"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="900" height="520" fill="url(#skyGrad)"/>
+          <circle cx="830" cy="62" r="30" fill="#ffd86b"/>
+          <g fill="#ffffff" opacity=".92">
+            <ellipse cx="150" cy="86" rx="46" ry="16"/><ellipse cx="188" cy="76" rx="30" ry="13"/>
+            <ellipse cx="560" cy="58" rx="52" ry="17"/><ellipse cx="602" cy="48" rx="30" ry="12"/>
+          </g>
+
+          <!-- うしろの うみ（船より おく） -->
+          <rect x="0" y="442" width="900" height="78" fill="url(#seaGrad)"/>
+          <g class="waves-back" opacity=".5">
+            <path id="waveBack" fill="#bfe6ff"/>
+          </g>
+
+          <!-- ============ 船ぜんたい ============ -->
+          <g id="ship">
+
+            <!-- [1] りゅうこつ（骨組み。あとで船体にかくれる） -->
+            <g class="part" data-part="0">
+              <path d="M150,446 L780,446" stroke="#8a5a33" stroke-width="8" stroke-linecap="round" fill="none"/>
+              <path d="M190,446 C186,408 192,372 205,350" stroke="#a97142" stroke-width="6" fill="none" stroke-linecap="round"/>
+              <path d="M300,446 C296,404 300,368 308,348" stroke="#a97142" stroke-width="6" fill="none" stroke-linecap="round"/>
+              <path d="M420,446 C418,404 420,368 424,348" stroke="#a97142" stroke-width="6" fill="none" stroke-linecap="round"/>
+              <path d="M540,446 C540,404 540,368 542,348" stroke="#a97142" stroke-width="6" fill="none" stroke-linecap="round"/>
+              <path d="M660,446 C664,404 660,368 654,348" stroke="#a97142" stroke-width="6" fill="none" stroke-linecap="round"/>
+            </g>
+
+            <!-- [18] スクリューと かじ（波にすこし かくれる） -->
+            <g class="part" data-part="17">
+              <rect x="792" y="428" width="10" height="42" rx="4" fill="#2b3346" transform="rotate(8 797 449)"/>
+              <g fill="#c98f3d" stroke="#a8742c" stroke-width="2">
+                <circle cx="774" cy="458" r="6"/>
+                <ellipse cx="774" cy="442" rx="7" ry="12"/>
+                <ellipse cx="760" cy="466" rx="12" ry="7"/>
+                <ellipse cx="788" cy="466" rx="12" ry="7"/>
+              </g>
+            </g>
+
+            <!-- [2] くろい せんたい -->
+            <g class="part" data-part="1">
+              <path d="M150,345 C136,378 130,410 150,448 L740,448 C774,442 788,406 784,348 Z" fill="#23293a"/>
+              <path d="M150,345 L784,345 L783,356 L152,356 Z" fill="#f4f7fb"/>
+            </g>
+
+            <!-- [3] あかい ふねぞこ -->
+            <g class="part" data-part="2">
+              <path d="M139,420 C136,430 140,440 150,448 L740,448 C762,444 774,434 780,420 Z" fill="#c0392b"/>
+            </g>
+
+            <!-- [8] なまえ TITANIC -->
+            <g class="part" data-part="7">
+              <text x="188" y="382" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#ffffff" letter-spacing="4">TITANIC</text>
+            </g>
+
+            <!-- [7] まるまど（げんそう） -->
+            <g class="part" data-part="6" fill="#cfe6ff" stroke="#4a5670" stroke-width="1.5">
+              <circle cx="350" cy="400" r="5"/><circle cx="385" cy="400" r="5"/><circle cx="420" cy="400" r="5"/>
+              <circle cx="455" cy="400" r="5"/><circle cx="490" cy="400" r="5"/><circle cx="525" cy="400" r="5"/>
+              <circle cx="560" cy="400" r="5"/><circle cx="595" cy="400" r="5"/><circle cx="630" cy="400" r="5"/>
+              <circle cx="665" cy="400" r="5"/><circle cx="700" cy="400" r="5"/><circle cx="735" cy="400" r="5"/>
+            </g>
+
+            <!-- [17] いかり -->
+            <g class="part" data-part="16">
+              <circle cx="176" cy="372" r="4" fill="none" stroke="#d8dee9" stroke-width="3"/>
+              <path d="M176,376 L176,398 M164,388 C164,398 188,398 188,388 M168,380 L184,380" stroke="#d8dee9" stroke-width="4" fill="none" stroke-linecap="round"/>
+            </g>
+
+            <!-- [4] デッキ 1かいめ -->
+            <g class="part" data-part="3">
+              <rect x="228" y="308" width="428" height="37" rx="7" fill="#f7fafd" stroke="#d4deea" stroke-width="2"/>
+              <g fill="#37507e">
+                <rect x="248" y="320" width="10" height="12" rx="2"/><rect x="276" y="320" width="10" height="12" rx="2"/>
+                <rect x="304" y="320" width="10" height="12" rx="2"/><rect x="332" y="320" width="10" height="12" rx="2"/>
+                <rect x="360" y="320" width="10" height="12" rx="2"/><rect x="388" y="320" width="10" height="12" rx="2"/>
+                <rect x="416" y="320" width="10" height="12" rx="2"/><rect x="444" y="320" width="10" height="12" rx="2"/>
+                <rect x="472" y="320" width="10" height="12" rx="2"/><rect x="500" y="320" width="10" height="12" rx="2"/>
+                <rect x="528" y="320" width="10" height="12" rx="2"/><rect x="556" y="320" width="10" height="12" rx="2"/>
+                <rect x="584" y="320" width="10" height="12" rx="2"/><rect x="612" y="320" width="10" height="12" rx="2"/>
+                <rect x="636" y="320" width="10" height="12" rx="2"/>
+              </g>
+            </g>
+
+            <!-- [5] デッキ 2かいめ -->
+            <g class="part" data-part="4">
+              <rect x="256" y="278" width="368" height="32" rx="7" fill="#ffffff" stroke="#d4deea" stroke-width="2"/>
+              <rect x="256" y="274" width="368" height="6" rx="3" fill="#c9a06a"/>
+              <g fill="#37507e">
+                <rect x="278" y="288" width="9" height="11" rx="2"/><rect x="306" y="288" width="9" height="11" rx="2"/>
+                <rect x="334" y="288" width="9" height="11" rx="2"/><rect x="362" y="288" width="9" height="11" rx="2"/>
+                <rect x="390" y="288" width="9" height="11" rx="2"/><rect x="418" y="288" width="9" height="11" rx="2"/>
+                <rect x="446" y="288" width="9" height="11" rx="2"/><rect x="474" y="288" width="9" height="11" rx="2"/>
+                <rect x="502" y="288" width="9" height="11" rx="2"/><rect x="530" y="288" width="9" height="11" rx="2"/>
+                <rect x="558" y="288" width="9" height="11" rx="2"/><rect x="586" y="288" width="9" height="11" rx="2"/>
+              </g>
+            </g>
+
+            <!-- [6] ブリッジ（うんてんせき） -->
+            <g class="part" data-part="5">
+              <rect x="262" y="248" width="76" height="28" rx="6" fill="#ffffff" stroke="#d4deea" stroke-width="2"/>
+              <rect x="262" y="244" width="76" height="6" rx="3" fill="#c9a06a"/>
+              <rect x="272" y="256" width="12" height="12" rx="2" fill="#37507e"/>
+              <rect x="294" y="256" width="12" height="12" rx="2" fill="#37507e"/>
+              <rect x="316" y="256" width="12" height="12" rx="2" fill="#37507e"/>
+            </g>
+
+            <!-- [9]-[12] えんとつ 4ほん（うしろへ すこし かたむいている） -->
+            <g class="part" data-part="8">
+              <path d="M338,278 L348,172 L392,172 L382,278 Z" fill="#e8a33d"/>
+              <path d="M345.9,194 L348,172 L392,172 L389.9,194 Z" fill="#23293a"/>
+              <g class="smoke s1" fill="#c9d4e0">
+                <circle cx="370" cy="158" r="12"/><circle cx="384" cy="148" r="9"/><circle cx="360" cy="146" r="8"/>
+              </g>
+            </g>
+            <g class="part" data-part="9">
+              <path d="M430,278 L440,172 L484,172 L474,278 Z" fill="#e8a33d"/>
+              <path d="M437.9,194 L440,172 L484,172 L481.9,194 Z" fill="#23293a"/>
+              <g class="smoke s2" fill="#c9d4e0">
+                <circle cx="462" cy="158" r="12"/><circle cx="476" cy="148" r="9"/><circle cx="452" cy="146" r="8"/>
+              </g>
+            </g>
+            <g class="part" data-part="10">
+              <path d="M522,278 L532,172 L576,172 L566,278 Z" fill="#e8a33d"/>
+              <path d="M529.9,194 L532,172 L576,172 L573.9,194 Z" fill="#23293a"/>
+              <g class="smoke s3" fill="#c9d4e0">
+                <circle cx="554" cy="158" r="12"/><circle cx="568" cy="148" r="9"/><circle cx="544" cy="146" r="8"/>
+              </g>
+            </g>
+            <g class="part" data-part="11">
+              <path d="M614,278 L624,172 L668,172 L658,278 Z" fill="#e8a33d"/>
+              <path d="M621.9,194 L624,172 L668,172 L665.9,194 Z" fill="#23293a"/>
+              <!-- 4ほんめは かざりなので けむりは でない！ -->
+            </g>
+
+            <!-- [13] まえの マスト（みはりだい つき） -->
+            <g class="part" data-part="12">
+              <line x1="206" y1="345" x2="212" y2="128" stroke="#7a5230" stroke-width="5" stroke-linecap="round"/>
+              <rect x="202" y="200" width="17" height="14" rx="3" fill="#8a5a33"/>
+              <line x1="211" y1="150" x2="150" y2="348" stroke="#9aa7bd" stroke-width="1.5"/>
+              <line x1="212" y1="140" x2="370" y2="172" stroke="#9aa7bd" stroke-width="1.5"/>
+            </g>
+
+            <!-- [14] うしろの マストと ロープ -->
+            <g class="part" data-part="13">
+              <line x1="702" y1="345" x2="696" y2="148" stroke="#7a5230" stroke-width="5" stroke-linecap="round"/>
+              <line x1="696" y1="160" x2="782" y2="348" stroke="#9aa7bd" stroke-width="1.5"/>
+              <line x1="696" y1="158" x2="646" y2="172" stroke="#9aa7bd" stroke-width="1.5"/>
+            </g>
+
+            <!-- [15] きゅうめいボート（まえ） -->
+            <g class="part" data-part="14">
+              <g fill="#ffffff" stroke="#b9c6d6" stroke-width="2">
+                <ellipse cx="300" cy="272" rx="17" ry="7"/>
+                <ellipse cx="360" cy="272" rx="17" ry="7"/>
+                <ellipse cx="420" cy="272" rx="17" ry="7"/>
+              </g>
+            </g>
+
+            <!-- [16] きゅうめいボート（うしろ） -->
+            <g class="part" data-part="15">
+              <g fill="#ffffff" stroke="#b9c6d6" stroke-width="2">
+                <ellipse cx="490" cy="272" rx="17" ry="7"/>
+                <ellipse cx="550" cy="272" rx="17" ry="7"/>
+                <ellipse cx="610" cy="272" rx="17" ry="7"/>
+              </g>
+            </g>
+
+            <!-- [19] はた -->
+            <g class="part" data-part="18">
+              <path d="M212,128 L246,134 L212,142 Z" fill="#e63946"/>
+              <path d="M696,148 L728,154 L696,162 Z" fill="#1d5fbf"/>
+            </g>
+
+            <!-- [20] おきゃくさんと カモメ -->
+            <g class="part" data-part="19">
+              <g>
+                <circle cx="264" cy="303" r="4.5" fill="#e63946"/>
+                <circle cx="296" cy="303" r="4.5" fill="#2a9d8f"/>
+                <circle cx="452" cy="303" r="4.5" fill="#f4a261"/>
+                <circle cx="540" cy="303" r="4.5" fill="#7c5cff"/>
+                <circle cx="632" cy="303" r="4.5" fill="#1d7fd4"/>
+                <circle cx="372" cy="270" r="4" fill="#e76f51"/>
+                <circle cx="580" cy="270" r="4" fill="#457b9d"/>
+              </g>
+              <g stroke="#5a78b0" stroke-width="3" fill="none" stroke-linecap="round">
+                <path d="M120,150 q7,-9 14,0 q7,-9 14,0"/>
+                <path d="M810,180 q6,-8 12,0 q6,-8 12,0"/>
+              </g>
+            </g>
+
+          </g><!-- /#ship -->
+
+          <!-- まえの うみ（船の下を かくす波） -->
+          <g class="waves-front">
+            <path id="waveFront1" fill="#59b1ea" opacity=".85"/>
+            <path id="waveFront2" fill="#8fd0f7" opacity=".6"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- できあがりメーター -->
+      <div class="build-meter">
+        <span class="label">できあがり <b id="builtNum">0</b> / 20</span>
+        <div class="track"><div class="fill" id="buildFill"></div></div>
+      </div>
+
+      <!-- もんだいの しゅるい -->
+      <p class="pick-label">もんだいの しゅるい</p>
+      <div class="picker" role="group" aria-label="問題の種類">
+        <button class="pill" data-mode="mix" aria-pressed="true">ミックス<span class="small">＋ と −</span></button>
+        <button class="pill" data-mode="add" aria-pressed="false">たしざん<span class="small">＋ だけ</span></button>
+        <button class="pill" data-mode="sub" aria-pressed="false">ひきざん<span class="small">− だけ</span></button>
+      </div>
+
+      <!-- こうじ開始 / 出航 -->
+      <button class="btn-go" id="startBtn">⚒ こうじを はじめる<small>もんだい 5もん で パーツ 5こ</small></button>
+      <button class="btn-launch" id="launchBtn" style="display:none;">🚢 しゅっこう する！</button>
+
+      <div class="dock-foot">
+        <button class="sound-toggle" id="soundToggle" aria-pressed="true"><span id="soundIcon">🔊</span> おと あり</button>
+        <button class="reset-link" id="resetBtn" style="display:none;">さいしょから つくりなおす</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ こうじ（もんだい画面） ============ -->
+  <section class="screen" id="screen-game">
+    <div class="hud">
+      <span class="badge">⚒ こうじちゅう…</span>
+      <div class="count"><b id="sessionSolved">0</b> / <span id="sessionTotal">5</span> もん</div>
+    </div>
+
+    <div class="problem" id="problem" aria-live="polite">
+      <span id="a">3</span>
+      <span class="op" id="op">＋</span>
+      <span id="b">4</span>
+      <span class="eq">=</span>
+      <span class="slot" id="slot">?</span>
+    </div>
+
+    <div class="pad" id="pad" role="group" aria-label="数字キー"></div>
+  </section>
+
+</div>
+
+<!-- パーツゲットのポップアップ -->
+<div class="part-popup" id="partPopup">
+  <div class="part-card">
+    <div class="p-emoji" id="partEmoji">🚢</div>
+    <div class="p-get" id="partName">せんたい が できた！</div>
+    <div class="p-trivia" id="partTrivia">まめちしき</div>
+    <div class="p-count" id="partCount">パーツ 1 / 20</div>
+    <button class="btn-next" id="partNextBtn">つぎへ ▶</button>
+  </div>
+</div>
+
+<!-- 出航おわりのカード -->
+<div class="launch-done" id="launchDone">
+  <div class="ld-card">
+    <div class="ld-emoji">⚓</div>
+    <h2 id="ldTitle">しゅっこう！</h2>
+    <p class="ld-msg" id="ldMsg">タイタニックごうが ぼうけんに しゅっぱつ したよ！</p>
+    <button class="btn-next" id="rebuildBtn">あたらしい タイタニックごうを つくる</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- 設定 ----------
+  var TOTAL_PARTS = 20;    // 船のパーツの数（ぜんぶで20こ）
+  var SESSION_SIZE = 5;    // 1回の「こうじ」でとく もんだいの数
+  var SAVE_KEY = "titanic_progress";  // 進み具合の保存箱の名前
+
+  // ---------- パーツずかん ----------
+  // 順番どおりに 1こずつ できていく。trivia は正解のたびに出る まめちしき。
+  var PARTS = [
+    { emoji:"🦴", name:"りゅうこつ",           trivia:"ふねの せぼねだよ。ここから つくりはじめるんだ！" },
+    { emoji:"🚢", name:"くろい せんたい",       trivia:"タイタニックごうの ながさは 269メートル！ 25メートルプール 10こぶんより ながいんだ" },
+    { emoji:"🟥", name:"あかい ふねぞこ",       trivia:"うみに かくれる ところは あかい ペンキで ぬられていたんだよ" },
+    { emoji:"🏠", name:"デッキ 1かいめ",        trivia:"ふねの なかには プールや ジムまで あったんだよ" },
+    { emoji:"🏢", name:"デッキ 2かいめ",        trivia:"ごうかな かいだんと レストランが じまんだったんだ" },
+    { emoji:"🧭", name:"ブリッジ",             trivia:"せんちょうさんが ここで ふねを うんてんするよ" },
+    { emoji:"⭕", name:"まるまど",             trivia:"ふねの まるい まどは『げんそう』って いうんだ" },
+    { emoji:"✏️", name:"なまえ『TITANIC』",     trivia:"タイタニックは『とっても おおきい』という いみの なまえだよ" },
+    { emoji:"🏭", name:"えんとつ 1ほんめ",      trivia:"えんとつの たかさは ビルの 6かいぶんも あるんだ！" },
+    { emoji:"🏭", name:"えんとつ 2ほんめ",      trivia:"せきたんを もやした けむりが ここから でるよ" },
+    { emoji:"🏭", name:"えんとつ 3ぼんめ",      trivia:"けむりを もくもく だして ちからづよく すすむよ" },
+    { emoji:"🎩", name:"えんとつ 4ほんめ",      trivia:"じつは 4ほんめは かざり！ けむりは でないんだよ。びっくり！" },
+    { emoji:"🗼", name:"まえの マスト",         trivia:"みはりの ひとが うえの みはりだいに のぼって うみを みていたよ" },
+    { emoji:"🗼", name:"うしろの マスト",       trivia:"ロープで マストを しっかり ささえているんだ" },
+    { emoji:"🛶", name:"きゅうめいボート（まえ）",   trivia:"ちいさい ボートを ふねの うえに のせて はこぶんだ" },
+    { emoji:"🛶", name:"きゅうめいボート（うしろ）", trivia:"ボートは クレーンで うみに おろせるように なっているよ" },
+    { emoji:"⚓", name:"いかり",               trivia:"いかりの おもさは なんと ゾウ 3とうぶん！" },
+    { emoji:"🌀", name:"スクリューと かじ",     trivia:"うみの なかで おおきな スクリューが 3つ まわって すすむよ" },
+    { emoji:"🚩", name:"はた",                trivia:"マストの てっぺんで はたが ぱたぱた！ かんせいまで あとすこし！" },
+    { emoji:"👨‍👩‍👧‍👦", name:"おきゃくさんと カモメ", trivia:"おきゃくさんが のってきたよ。しゅっこうの じゅんび かんりょう！" }
+  ];
+
+  // ---------- 進み具合の保存 ----------
+  // { built: できたパーツの数, launches: 出航した回数 }
+  function loadProgress(){
+    try{
+      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}");
+      return { built: Math.min(TOTAL_PARTS, d.built || 0), launches: d.launches || 0 };
+    }catch(e){
+      return { built: 0, launches: 0 };
+    }
+  }
+  function saveProgress(){
+    localStorage.setItem(SAVE_KEY, JSON.stringify(progress));
+  }
+  var progress = loadProgress();
+
+  // ---------- 状態 ----------
+  var mode = "mix";          // もんだいの しゅるい（mix / add / sub）
+  var soundOn = true;
+  var locked = false;        // 連打よけ
+  var current = null;        // いま出ている問題
+  var lastKey = "";          // 同じ問題が つづかないようにする
+  var sessionTotal = 0;      // このこうじで とく もんだいの数
+  var sessionSolved = 0;     // このこうじで とけた数
+  var firstTryCorrect = 0;   // 1回で正解できた数（利用記録用）
+  var currentFirstTry = true;
+  var popupGuardUntil = 0;   // ポップアップの連打よけ（この時刻まで タップ無効）
+
+  // ---------- DOM ----------
+  var $ = function(id){ return document.getElementById(id); };
+  var screens = { dock: $("screen-dock"), game: $("screen-game") };
+  function show(name){
+    Object.keys(screens).forEach(function(k){
+      screens[k].classList.toggle("active", k === name);
+    });
+  }
+  var svg = $("shipSvg");
+  var partEls = svg.querySelectorAll(".part");  // data-part の番号つきグループ
+
+  // ---------- サウンド（Web Audio・ファイル不要） ----------
+  var ac = null;
+  function beep(freq, dur, type, vol){
+    if (!soundOn) return;
+    try{
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || "sine"; o.frequency.value = freq;
+      o.connect(g); g.connect(ac.destination);
+      var now = ac.currentTime;
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(vol || 0.18, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      o.start(now); o.stop(now + dur);
+    }catch(e){}
+  }
+  function soundCorrect(){ beep(660,0.10,"triangle"); setTimeout(function(){beep(990,0.14,"triangle");},90); }
+  function soundWrong(){ beep(180,0.18,"square"); }
+  function soundPart(){ [523,659,784].forEach(function(f,i){ setTimeout(function(){beep(f,0.14,"triangle");}, i*100); }); }
+  function soundPop(){ beep(880,0.08,"triangle",0.12); }
+  // 汽笛：ひくい音を ながく ならす（ボーッ）
+  function soundHorn(){
+    beep(98,1.6,"sawtooth",0.22);
+    beep(110,1.6,"square",0.10);
+    setTimeout(function(){ beep(98,1.2,"sawtooth",0.18); }, 2000);
+  }
+
+  // ---------- 波のかたちを作る ----------
+  // なみなみの線を つないだ図形（よこに ながい）を作って、CSSで よこに ながす。
+  // 1やま180pxのくりかえしなので、-360px うごかすと つなぎ目が見えない。
+  function wavePath(topY, amp, width){
+    var d = "M0," + topY;
+    for (var x = 0; x < width; x += 180){
+      d += " q45," + (-amp*2) + " 90,0 q45," + (amp*2) + " 90,0";
+    }
+    d += " L" + width + ",520 L0,520 Z";
+    return d;
+  }
+  $("waveBack").setAttribute("d", wavePath(444, 4, 1980));
+  $("waveFront1").setAttribute("d", wavePath(452, 5, 1980));
+  $("waveFront2").setAttribute("d", wavePath(462, 6, 1980));
+
+  // ---------- 船の表示を進み具合に合わせる ----------
+  // instant=true のときは アニメなしで 一気に表示（ページを開いたとき用）
+  function renderShip(instant){
+    if (instant) svg.classList.add("no-anim");
+    partEls.forEach(function(el){
+      var i = parseInt(el.getAttribute("data-part"), 10);
+      el.classList.toggle("built", i < progress.built);
+    });
+    if (instant){
+      // ブラウザに一度反映させてから アニメを元にもどす
+      void svg.getBoundingClientRect();
+      svg.classList.remove("no-anim");
+    }
+  }
+
+  // ドック画面の 数字・ボタンを更新する
+  function renderDock(){
+    $("builtNum").textContent = progress.built;
+    $("buildFill").style.width = (progress.built / TOTAL_PARTS * 100) + "%";
+    var done = progress.built >= TOTAL_PARTS;
+    $("startBtn").style.display = done ? "none" : "";
+    $("launchBtn").style.display = done ? "" : "none";
+    $("resetBtn").style.display = (progress.built > 0 && !done) ? "" : "none";
+    var lb = $("launchBadge");
+    lb.style.display = progress.launches > 0 ? "" : "none";
+    $("launchCount").textContent = progress.launches;
+  }
+
+  // ---------- 問題づくり ----------
+  // くりあがり・くりさがりのない 1けたの たしざん・ひきざん。
+  // こたえは かならず 0〜9 になるので、数字パッド1回タップでこたえられる。
+  function makeProblem(){
+    var kind = mode === "mix" ? (Math.random() < 0.5 ? "add" : "sub") : mode;
+    var a, b, ans, key;
+    var guard = 0;
+    do {
+      if (kind === "add"){
+        // たしざん：a+b が 9 いかに なる組み合わせ（くりあがりなし）
+        a = 1 + Math.floor(Math.random() * 9);          // 1〜9
+        b = Math.floor(Math.random() * (10 - a));       // 0〜(9-a)
+        ans = a + b;
+      } else {
+        // ひきざん：a >= b で こたえが マイナスに ならないように
+        a = 1 + Math.floor(Math.random() * 9);          // 1〜9
+        b = Math.floor(Math.random() * (a + 1));        // 0〜a
+        ans = a - b;
+      }
+      key = kind + a + "-" + b;
+      guard++;
+    } while (key === lastKey && guard < 10);            // 直前と同じ問題は さける
+    lastKey = key;
+    return { a:a, b:b, ans:ans, op: kind === "add" ? "＋" : "−" };
+  }
+
+  function renderProblem(){
+    current = makeProblem();
+    currentFirstTry = true;
+    $("a").textContent = current.a;
+    $("b").textContent = current.b;
+    $("op").textContent = current.op;
+    $("slot").textContent = "?";
+    $("problem").classList.remove("correct");
+  }
+
+  // ---------- 数字パッド ----------
+  var pad = $("pad");
+  for (var n = 0; n <= 9; n++){
+    var k = document.createElement("button");
+    k.className = "key"; k.textContent = n; k.dataset.n = n;
+    k.setAttribute("aria-label", n + "");
+    pad.appendChild(k);
+  }
+  pad.addEventListener("click", function(e){
+    var btn = e.target.closest(".key");
+    if (btn) answer(parseInt(btn.dataset.n, 10), btn);
+  });
+  document.addEventListener("keydown", function(e){
+    if (!screens.game.classList.contains("active")) return;
+    if ($("partPopup").classList.contains("show")) return;
+    if (e.key >= "0" && e.key <= "9"){
+      var btn = pad.querySelector('.key[data-n="' + e.key + '"]');
+      answer(parseInt(e.key, 10), btn);
+    }
+  });
+
+  // ---------- こうじ（1回 = 5もん） ----------
+  function startSession(){
+    if (ac && ac.state === "suspended") ac.resume();
+    sessionTotal = Math.min(SESSION_SIZE, TOTAL_PARTS - progress.built);
+    if (sessionTotal <= 0) return;   // もう完成している（念のため）
+    sessionSolved = 0;
+    firstTryCorrect = 0;
+    locked = false;
+    $("sessionTotal").textContent = sessionTotal;
+    $("sessionSolved").textContent = 0;
+    renderProblem();
+    show("game");
+  }
+
+  function answer(value, btn){
+    if (locked || !current) return;
+    if (value === current.ans){
+      // ---- 正解！ ----
+      locked = true;
+      sessionSolved++;
+      if (currentFirstTry) firstTryCorrect++;
+      $("slot").textContent = current.ans;
+      $("problem").classList.add("correct");
+      $("sessionSolved").textContent = sessionSolved;
+      soundCorrect();
+      // すこし間をおいて パーツゲットのポップアップを出す
+      setTimeout(showPartPopup, 450);
+    } else {
+      // ---- まちがい：バツにはせず、もういちど おなじ問題に挑戦 ----
+      currentFirstTry = false;
+      soundWrong();
+      if (btn){
+        btn.classList.add("wrong");
+        setTimeout(function(){ btn.classList.remove("wrong"); }, 400);
+      }
+      var prob = $("problem");
+      prob.classList.add("shake");
+      setTimeout(function(){ prob.classList.remove("shake"); }, 400);
+    }
+  }
+
+  // 正解のたびに：パーツを1こ ふやして まめちしきを見せる
+  function showPartPopup(){
+    var part = PARTS[progress.built];   // つぎに できるパーツ
+    progress.built++;
+    saveProgress();
+    $("partEmoji").textContent = part.emoji;
+    $("partName").textContent = part.name + " が できた！";
+    $("partTrivia").textContent = part.trivia;
+    $("partCount").textContent = "パーツ " + progress.built + " / " + TOTAL_PARTS;
+    $("partNextBtn").textContent = (sessionSolved >= sessionTotal) ? "ふねを みる 🚢" : "つぎへ ▶";
+    $("partPopup").classList.add("show");
+    popupGuardUntil = Date.now() + 700;   // 出た直後の連打で とじないように
+    soundPart();
+  }
+
+  $("partNextBtn").addEventListener("click", function(){
+    if (Date.now() < popupGuardUntil) return;
+    $("partPopup").classList.remove("show");
+    if (sessionSolved >= sessionTotal){
+      endSession();
+    } else {
+      renderProblem();
+      locked = false;
+    }
+  });
+
+  // こうじ終了：ドックにもどって 新しいパーツを 順番に ぽんぽん出す
+  function endSession(){
+    show("dock");
+    renderDock();
+    // 前から built されているパーツは表示済みなので、
+    // 今回ふえたぶん（sessionTotal こ）だけ アニメで出す
+    var startIdx = progress.built - sessionTotal;
+    for (var i = 0; i < sessionTotal; i++){
+      (function(idx, delay){
+        setTimeout(function(){
+          var el = svg.querySelector('.part[data-part="' + idx + '"]');
+          if (el){ el.classList.add("built"); soundPop(); }
+        }, delay);
+      })(startIdx + i, 400 + i * 450);
+    }
+
+    var afterReveal = 400 + sessionTotal * 450 + 300;
+
+    // ごほうびポイント（どうがタイマーで使える）。
+    // 「こうじ1回 がんばった」ことへのごほうびなので、まちがえた数に関係なく あげる。
+    // もらえる数は 管理ツールの「ポイント設定」で変えられる（初期値2）。
+    // points.js を読みこまずに開いても落ちないよう typeof で確認する。
+    if (typeof Points !== "undefined" && typeof Points.rewardFor === "function"){
+      setTimeout(function(){ Points.rewardFor(2); }, afterReveal);
+    }
+
+    // 利用記録（記録ページ用）：1回で正解できた数 / 問題数
+    if (typeof Stats !== "undefined" && typeof Stats.record === "function"){
+      Stats.record(firstTryCorrect, sessionTotal);
+    }
+  }
+
+  // ---------- 出航セレモニー ----------
+  var launching = false;
+  function launch(){
+    if (launching) return;
+    launching = true;
+    if (ac && ac.state === "suspended") ac.resume();
+    $("launchBtn").style.display = "none";
+    svg.classList.add("launching");   // けむり＋船がすすむ アニメ開始
+    soundHorn();
+    launchConfetti();
+    progress.launches++;
+    saveProgress();
+    // 船が画面のそとへ出たころに おわりのカードを出す
+    setTimeout(function(){
+      $("ldTitle").textContent = "しゅっこう " + progress.launches + " かいめ！";
+      $("launchDone").classList.add("show");
+    }, 6500);
+  }
+
+  // 「あたらしいタイタニックごうをつくる」：パーツ0にもどす（出航回数はのこる）
+  $("rebuildBtn").addEventListener("click", function(){
+    progress.built = 0;
+    saveProgress();
+    launching = false;
+    $("launchDone").classList.remove("show");
+    svg.classList.remove("launching");
+    renderShip(true);
+    renderDock();
+  });
+
+  // ---------- 紙吹雪 ----------
+  var cv = $("confetti"), ctx = cv.getContext("2d"), pieces = [], rafId = null;
+  function sizeCanvas(){ cv.width = innerWidth; cv.height = innerHeight; }
+  addEventListener("resize", sizeCanvas); sizeCanvas();
+  function launchConfetti(){
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var colors = ["#ffc03a","#5ec97a","#7c5cff","#ff7a7a","#4db1ff","#ff9ad5"];
+    pieces = [];
+    for (var i = 0; i < 130; i++){
+      pieces.push({
+        x: Math.random()*cv.width,
+        y: -20 - Math.random()*cv.height*0.5,
+        s: 6 + Math.random()*8,
+        c: colors[i % colors.length],
+        vy: 2 + Math.random()*3,
+        vx: -1.5 + Math.random()*3,
+        rot: Math.random()*Math.PI,
+        vr: -0.2 + Math.random()*0.4
+      });
+    }
+    cancelAnimationFrame(rafId);
+    var frames = 0;
+    (function loop(){
+      ctx.clearRect(0,0,cv.width,cv.height);
+      pieces.forEach(function(p){
+        p.y += p.vy; p.x += p.vx; p.rot += p.vr;
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6);
+        ctx.restore();
+      });
+      frames++;
+      if (frames < 300) rafId = requestAnimationFrame(loop);
+      else ctx.clearRect(0,0,cv.width,cv.height);
+    })();
+  }
+
+  // ---------- UI操作 ----------
+  Array.prototype.forEach.call(document.querySelectorAll(".pill"), function(pill){
+    pill.addEventListener("click", function(){
+      mode = pill.dataset.mode;
+      document.querySelectorAll(".pill").forEach(function(p){
+        p.setAttribute("aria-pressed", p === pill ? "true" : "false");
+      });
+    });
+  });
+  $("soundToggle").addEventListener("click", function(){
+    soundOn = !soundOn;
+    this.setAttribute("aria-pressed", soundOn ? "true" : "false");
+    $("soundIcon").textContent = soundOn ? "🔊" : "🔇";
+    this.lastChild.textContent = soundOn ? " おと あり" : " おと なし";
+    if (soundOn){ try{ if(!ac) ac = new (window.AudioContext||window.webkitAudioContext)(); ac.resume(); beep(660,0.1,"triangle"); }catch(e){} }
+  });
+  $("startBtn").addEventListener("click", startSession);
+  $("launchBtn").addEventListener("click", launch);
+  $("resetBtn").addEventListener("click", function(){
+    if (confirm("いままで つくった パーツが きえます。さいしょから つくりなおしますか？")){
+      progress.built = 0;
+      saveProgress();
+      renderShip(true);
+      renderDock();
+    }
+  });
+
+  // ---------- 最初の表示 ----------
+  renderShip(true);
+  renderDock();
+
+})();
+</script>
+</body>
+</html>

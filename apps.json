@@ -63,6 +63,16 @@
       "visible": true
     },
     {
+      "id": "titanic",
+      "name": "タイタニックごうを つくろう",
+      "description": "もんだいに せいかいして タイタニックごうを かんせいさせよう",
+      "icon": "🚢",
+      "color": "#1d5fbf",
+      "url": "apps/titanic/",
+      "category": "算数",
+      "visible": true
+    },
+    {
       "id": "ondoku",
       "name": "おんどく れんしゅう",
       "description": "おはなしを よみあげよう",
