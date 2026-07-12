@@ -35,10 +35,9 @@
       linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 55%, #ffffff 100%);
     min-height:100dvh;
     display:flex;
-    align-items:center;
-    justify-content:center;
     padding:14px;
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;   /* えらぶ項目がふえて縦に長くなったら スクロールできるように */
     -webkit-user-select:none;
     user-select:none;
   }
@@ -54,7 +53,7 @@
   }
   .home-btn:active{transform:translateY(2px);box-shadow:0 3px 0 var(--shadow);}
 
-  .app{width:100%;max-width:520px;}
+  .app{width:100%;max-width:520px;margin:auto;}  /* margin:auto で 中央に置く（長いときは上から見られる） */
 
   .screen{display:none;}
   .screen.active{display:block;animation:pop .35s cubic-bezier(.2,.9,.3,1.3);}
@@ -98,8 +97,8 @@
     background:linear-gradient(90deg,var(--navy),#4db1ff);
     transition:width .5s cubic-bezier(.2,.9,.3,1.3);}
 
-  .pick-label{font-weight:800;color:var(--ink-soft);font-size:.9rem;margin-bottom:8px;}
-  .picker{display:flex;gap:10px;justify-content:center;margin-bottom:14px;}
+  .pick-label{font-weight:800;color:var(--ink-soft);font-size:.9rem;margin-bottom:6px;}
+  .picker{display:flex;gap:10px;justify-content:center;margin-bottom:12px;}
   .pill{
     flex:1;max-width:150px;
     background:#fff;border:3px solid transparent;border-radius:18px;
@@ -111,6 +110,8 @@
   .pill .small{display:block;font-weight:800;color:var(--ink-soft);font-size:.75rem;margin-top:2px;}
   .pill[aria-pressed="true"]{border-color:var(--sun);box-shadow:0 5px 0 var(--sun-press);transform:translateY(-2px);}
   .pill:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow);}
+  /* 船えらびのピル（名前がながいので 文字をすこし小さく） */
+  .ship-pill{font-size:.88rem;padding:9px 4px;}
 
   .btn-go{
     width:100%;
@@ -314,7 +315,7 @@
   <!-- ============ ドック（メイン画面） ============ -->
   <section class="screen active" id="screen-dock">
     <div class="dock">
-      <h1>🚢 <span class="accent">タイタニックごう</span>を つくろう</h1>
+      <h1>🚢 <span class="accent" id="shipTitle">タイタニックごう</span>を つくろう</h1>
 
       <!-- 船（SVG）。パーツはJSで .built を付けると出てくる -->
       <div class="shipyard">
@@ -369,10 +370,17 @@
               </g>
             </g>
 
-            <!-- [2] くろい せんたい -->
+            <!-- [2] せんたい（船によって 色が かわる） -->
             <g class="part" data-part="1">
-              <path d="M150,345 C136,378 130,410 150,448 L740,448 C774,442 788,406 784,348 Z" fill="#23293a"/>
-              <path d="M150,345 L784,345 L783,356 L152,356 Z" fill="#f4f7fb"/>
+              <path id="hullBody" d="M150,345 C136,378 130,410 150,448 L740,448 C774,442 788,406 784,348 Z" fill="#23293a"/>
+              <path id="hullStripe" d="M150,345 L784,345 L783,356 L152,356 Z" fill="#f4f7fb"/>
+              <!-- ブリタニックごう（びょういん船）のときだけ 見える あかい じゅうじ -->
+              <g id="redCross" style="display:none" fill="#e63946">
+                <rect x="235" y="396" width="36" height="11" rx="2"/>
+                <rect x="247.5" y="383" width="11" height="37" rx="2"/>
+                <rect x="668" y="396" width="36" height="11" rx="2"/>
+                <rect x="680.5" y="383" width="11" height="37" rx="2"/>
+              </g>
             </g>
 
             <!-- [3] あかい ふねぞこ -->
@@ -380,9 +388,9 @@
               <path d="M139,420 C136,430 140,440 150,448 L740,448 C762,444 774,434 780,420 Z" fill="#c0392b"/>
             </g>
 
-            <!-- [8] なまえ TITANIC -->
+            <!-- [8] ふねの なまえ（船によって かわる） -->
             <g class="part" data-part="7">
-              <text x="188" y="382" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#ffffff" letter-spacing="4">TITANIC</text>
+              <text id="shipNameText" x="188" y="382" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#ffffff" letter-spacing="4">TITANIC</text>
             </g>
 
             <!-- [7] まるまど（げんそう） -->
@@ -500,8 +508,8 @@
 
             <!-- [19] はた -->
             <g class="part" data-part="18">
-              <path d="M212,128 L246,134 L212,142 Z" fill="#e63946"/>
-              <path d="M696,148 L728,154 L696,162 Z" fill="#1d5fbf"/>
+              <path id="flagFront" d="M212,128 L246,134 L212,142 Z" fill="#e63946"/>
+              <path id="flagRear" d="M696,148 L728,154 L696,162 Z" fill="#1d5fbf"/>
             </g>
 
             <!-- [20] おきゃくさんと カモメ -->
@@ -537,6 +545,14 @@
         <div class="track"><div class="fill" id="buildFill"></div></div>
       </div>
 
+      <!-- つくる ふね（タイタニックと きょうだい船） -->
+      <p class="pick-label">つくる ふね</p>
+      <div class="picker" role="group" aria-label="つくる船えらび">
+        <button class="pill ship-pill" data-ship="titanic" aria-pressed="true">🚢 タイタニック<span class="small">0/20</span></button>
+        <button class="pill ship-pill" data-ship="olympic" aria-pressed="false">🛳️ オリンピック<span class="small">0/20</span></button>
+        <button class="pill ship-pill" data-ship="britannic" aria-pressed="false">🏥 ブリタニック<span class="small">0/20</span></button>
+      </div>
+
       <!-- もんだいの しゅるい -->
       <p class="pick-label">もんだいの しゅるい</p>
       <div class="picker" role="group" aria-label="問題の種類">
@@ -545,8 +561,16 @@
         <button class="pill" data-mode="sub" aria-pressed="false">ひきざん<span class="small">− だけ</span></button>
       </div>
 
+      <!-- もんだいの かず（1回のこうじで とく数） -->
+      <p class="pick-label">もんだいの かず</p>
+      <div class="picker" role="group" aria-label="問題の数">
+        <button class="pill size-pill" data-size="5" aria-pressed="true">5もん<span class="small">さくっと</span></button>
+        <button class="pill size-pill" data-size="10" aria-pressed="false">10もん<span class="small">たっぷり</span></button>
+        <button class="pill size-pill" data-size="20" aria-pressed="false">20もん<span class="small">まるごと 1せき</span></button>
+      </div>
+
       <!-- こうじ開始 / 出航 -->
-      <button class="btn-go" id="startBtn">⚒ こうじを はじめる<small>もんだい 5もん で パーツ 5こ</small></button>
+      <button class="btn-go" id="startBtn">⚒ こうじを はじめる<small id="startNote">もんだい 5もん で パーツ 5こ</small></button>
       <button class="btn-launch" id="launchBtn" style="display:none;">🚢 しゅっこう する！</button>
 
       <div class="dock-foot">
@@ -602,49 +626,171 @@
   "use strict";
 
   // ---------- 設定 ----------
-  var TOTAL_PARTS = 20;    // 船のパーツの数（ぜんぶで20こ）
-  var SESSION_SIZE = 5;    // 1回の「こうじ」でとく もんだいの数
-  var SAVE_KEY = "titanic_progress";  // 進み具合の保存箱の名前
+  var TOTAL_PARTS = 20;                // 船のパーツの数（ぜんぶで20こ）
+  var SIZE_CHOICES = [5, 10, 20];      // えらべる「1回のこうじの もんだい数」
+  var SAVE_KEY = "titanic_progress";   // 進み具合の保存箱の名前
+
+  // ---------- 船ずかん ----------
+  // タイタニックには そっくりな「きょうだい船」が 2せき いた（オリンピック級の3姉妹）。
+  // 船ごとに 見た目の色・なまえ・まめちしき（trivia 20こ）を持っている。
+  //   hull   : 船体の色       stripe   : 船体の上のラインの色
+  //   nameFill: 船の名前の文字色  cross  : 赤十字マークを見せるか（病院船だけ true）
+  var SHIPS = {
+    titanic: {
+      label: "タイタニックごう", enName: "TITANIC",
+      hullName: "くろい せんたい",
+      hull: "#23293a", hullEdge: "none", stripe: "#f4f7fb", nameFill: "#ffffff",
+      flagFront: "#e63946", flagRear: "#1d5fbf", cross: false,
+      trivia: [
+        "ふねの せぼねだよ。ここから つくりはじめるんだ！",
+        "タイタニックごうの ながさは 269メートル！ 25メートルプール 10こぶんより ながいんだ",
+        "うみに かくれる ところは あかい ペンキで ぬられていたんだよ",
+        "ふねの なかには プールや ジムまで あったんだよ",
+        "ごうかな かいだんと レストランが じまんだったんだ",
+        "せんちょうさんが ここで ふねを うんてんするよ",
+        "ふねの まるい まどは『げんそう』って いうんだ",
+        "タイタニックは『とっても おおきい』という いみの なまえだよ",
+        "えんとつの たかさは ビルの 6かいぶんも あるんだ！",
+        "せきたんを もやした けむりが ここから でるよ",
+        "けむりを もくもく だして ちからづよく すすむよ",
+        "じつは 4ほんめは かざり！ けむりは でないんだよ。びっくり！",
+        "みはりの ひとが うえの みはりだいに のぼって うみを みていたよ",
+        "ロープで マストを しっかり ささえているんだ",
+        "ちいさい ボートを ふねの うえに のせて はこぶんだ",
+        "ボートは クレーンで うみに おろせるように なっているよ",
+        "いかりの おもさは なんと ゾウ 3とうぶん！",
+        "うみの なかで おおきな スクリューが 3つ まわって すすむよ",
+        "マストの てっぺんで はたが ぱたぱた！ かんせいまで あとすこし！",
+        "おきゃくさんが のってきたよ。しゅっこうの じゅんび かんりょう！"
+      ]
+    },
+    olympic: {
+      label: "オリンピックごう", enName: "OLYMPIC",
+      hullName: "くろい せんたい",
+      hull: "#23293a", hullEdge: "none", stripe: "#f4f7fb", nameFill: "#ffffff",
+      flagFront: "#1d5fbf", flagRear: "#e63946", cross: false,
+      trivia: [
+        "オリンピックごうは タイタニックの おにいさん船。さきに うまれたんだよ！",
+        "かたちも おおきさも タイタニックと そっくりの きょうだい船なんだ",
+        "うみに かくれる ふねぞこが あかいのは きょうだい みんな おそろい！",
+        "なかには プールも おふろも あって うみに うかぶ ホテルみたいだったんだ",
+        "ごうかな かいだんも タイタニックと おそろいだったよ",
+        "スミスせんちょうは このふねの あとに タイタニックに のったんだよ",
+        "まるい まどから うみの ひかりが きらきら はいってくるよ",
+        "オリンピックは かみさまの すむ やまの なまえから つけられたんだ",
+        "えんとつは タイタニックと おなじ 4ほん あるよ",
+        "せきたんを たくさん もやして ちからづよく すすむんだ",
+        "けむりを もくもく だして うみを わたるよ",
+        "4ほんめが かざりなのも タイタニックと おんなじ！",
+        "みはりだいから とおくの うみが よーく みえるよ",
+        "ロープで マストを しっかり ささえているんだ",
+        "タイタニックの あと、ボートを まえより ずっと たくさん つんだんだよ",
+        "みんなが のれるだけの ボートを つむ きまりが できたんだ",
+        "おおきな いかりで ふねを ぴたっと とめるよ",
+        "せんそうの とき、てきの せんすいかんに たいあたりして かったことも あるんだ！",
+        "24ねんも はしりつづけて『たよりになる ふね』と よばれたよ",
+        "なんまんにんもの おきゃくさんを はこんだ にんきものの ふねだったよ"
+      ]
+    },
+    britannic: {
+      label: "ブリタニックごう", enName: "BRITANNIC",
+      hullName: "しろい せんたい",
+      hull: "#f4f7fb", hullEdge: "#b9c6d6", stripe: "#2a9d5c", nameFill: "#2a9d5c",
+      flagFront: "#e63946", flagRear: "#2a9d5c", cross: true,
+      trivia: [
+        "ブリタニックごうは 3きょうだいの すえっこ。いちばん あとに うまれたよ",
+        "しろい からだに みどりの せん。『びょういんの ふね』の しるしだよ",
+        "ふねぞこが あかいのは きょうだい おそろいだね",
+        "なかは ベッドが いっぱい。うみに うかぶ びょういんだったんだ",
+        "けがを した へいたいさんを のせて はこんだんだよ",
+        "せんちょうさんが あんぜんな みちを えらんで すすむよ",
+        "まるまどから みえる うみは こころが おちつくね",
+        "ブリタニックは『イギリスの ふね』という いみの なまえだよ",
+        "じつは 3きょうだいで いちばん おおきい ふねなんだ！",
+        "えんとつが 4ほんなのは きょうだいの しるしだね",
+        "けむりを だして ぐんぐん すすむよ",
+        "4ほんめの えんとつが かざりなのも みんな いっしょ！",
+        "みはりの ひとが うみを よーく みはっているよ",
+        "たかい マストの うえまで ロープが はってあるよ",
+        "タイタニックの ことが あったから、ボートを うーんと たくさん つんだよ",
+        "おおきな クレーンで ボートを すばやく うみに おろせたんだ",
+        "いかりの おもさは ゾウさんより ずっと おもいよ",
+        "おおきな スクリューが 3つ まわって すすむんだ",
+        "あかい じゅうじは『たすける ふね』の しるしなんだよ",
+        "おいしゃさんや かんごしさんが たくさん のっていたよ"
+      ]
+    }
+  };
+  var SHIP_IDS = ["titanic", "olympic", "britannic"];
 
   // ---------- パーツずかん ----------
-  // 順番どおりに 1こずつ できていく。trivia は正解のたびに出る まめちしき。
+  // 順番どおりに 1こずつ できていく（名前と絵文字は 3せき共通）。
+  // まめちしきは 船ごとにちがうので SHIPS の trivia から取り出す。
   var PARTS = [
-    { emoji:"🦴", name:"りゅうこつ",           trivia:"ふねの せぼねだよ。ここから つくりはじめるんだ！" },
-    { emoji:"🚢", name:"くろい せんたい",       trivia:"タイタニックごうの ながさは 269メートル！ 25メートルプール 10こぶんより ながいんだ" },
-    { emoji:"🟥", name:"あかい ふねぞこ",       trivia:"うみに かくれる ところは あかい ペンキで ぬられていたんだよ" },
-    { emoji:"🏠", name:"デッキ 1かいめ",        trivia:"ふねの なかには プールや ジムまで あったんだよ" },
-    { emoji:"🏢", name:"デッキ 2かいめ",        trivia:"ごうかな かいだんと レストランが じまんだったんだ" },
-    { emoji:"🧭", name:"ブリッジ",             trivia:"せんちょうさんが ここで ふねを うんてんするよ" },
-    { emoji:"⭕", name:"まるまど",             trivia:"ふねの まるい まどは『げんそう』って いうんだ" },
-    { emoji:"✏️", name:"なまえ『TITANIC』",     trivia:"タイタニックは『とっても おおきい』という いみの なまえだよ" },
-    { emoji:"🏭", name:"えんとつ 1ほんめ",      trivia:"えんとつの たかさは ビルの 6かいぶんも あるんだ！" },
-    { emoji:"🏭", name:"えんとつ 2ほんめ",      trivia:"せきたんを もやした けむりが ここから でるよ" },
-    { emoji:"🏭", name:"えんとつ 3ぼんめ",      trivia:"けむりを もくもく だして ちからづよく すすむよ" },
-    { emoji:"🎩", name:"えんとつ 4ほんめ",      trivia:"じつは 4ほんめは かざり！ けむりは でないんだよ。びっくり！" },
-    { emoji:"🗼", name:"まえの マスト",         trivia:"みはりの ひとが うえの みはりだいに のぼって うみを みていたよ" },
-    { emoji:"🗼", name:"うしろの マスト",       trivia:"ロープで マストを しっかり ささえているんだ" },
-    { emoji:"🛶", name:"きゅうめいボート（まえ）",   trivia:"ちいさい ボートを ふねの うえに のせて はこぶんだ" },
-    { emoji:"🛶", name:"きゅうめいボート（うしろ）", trivia:"ボートは クレーンで うみに おろせるように なっているよ" },
-    { emoji:"⚓", name:"いかり",               trivia:"いかりの おもさは なんと ゾウ 3とうぶん！" },
-    { emoji:"🌀", name:"スクリューと かじ",     trivia:"うみの なかで おおきな スクリューが 3つ まわって すすむよ" },
-    { emoji:"🚩", name:"はた",                trivia:"マストの てっぺんで はたが ぱたぱた！ かんせいまで あとすこし！" },
-    { emoji:"👨‍👩‍👧‍👦", name:"おきゃくさんと カモメ", trivia:"おきゃくさんが のってきたよ。しゅっこうの じゅんび かんりょう！" }
+    { emoji:"🦴", name:"りゅうこつ" },
+    { emoji:"🚢", name:"せんたい" },
+    { emoji:"🟥", name:"あかい ふねぞこ" },
+    { emoji:"🏠", name:"デッキ 1かいめ" },
+    { emoji:"🏢", name:"デッキ 2かいめ" },
+    { emoji:"🧭", name:"ブリッジ" },
+    { emoji:"⭕", name:"まるまど" },
+    { emoji:"✏️", name:"ふねの なまえ" },
+    { emoji:"🏭", name:"えんとつ 1ほんめ" },
+    { emoji:"🏭", name:"えんとつ 2ほんめ" },
+    { emoji:"🏭", name:"えんとつ 3ぼんめ" },
+    { emoji:"🎩", name:"えんとつ 4ほんめ" },
+    { emoji:"🗼", name:"まえの マスト" },
+    { emoji:"🗼", name:"うしろの マスト" },
+    { emoji:"🛶", name:"きゅうめいボート（まえ）" },
+    { emoji:"🛶", name:"きゅうめいボート（うしろ）" },
+    { emoji:"⚓", name:"いかり" },
+    { emoji:"🌀", name:"スクリューと かじ" },
+    { emoji:"🚩", name:"はた" },
+    { emoji:"👨‍👩‍👧‍👦", name:"おきゃくさんと カモメ" }
   ];
 
+  // パーツの表示名（船体と名前だけ 船によって変わる）
+  function partName(i){
+    var t = ship();
+    if (i === 1) return t.hullName;
+    if (i === 7) return "なまえ『" + t.enName + "』";
+    return PARTS[i].name;
+  }
+
   // ---------- 進み具合の保存 ----------
-  // { built: できたパーツの数, launches: 出航した回数 }
+  // { current: いまえらんでいる船, size: 1回のもんだい数,
+  //   ships: { 船ごとに { built: できたパーツ数, launches: 出航回数 } } }
   function loadProgress(){
+    var d;
     try{
-      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}");
-      return { built: Math.min(TOTAL_PARTS, d.built || 0), launches: d.launches || 0 };
+      d = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}");
     }catch(e){
-      return { built: 0, launches: 0 };
+      d = {};
     }
+    var ships = d.ships || {};
+    // むかしの保存（タイタニック1せきだけの形）だったら、タイタニックの記録として引っこす
+    if (!d.ships && typeof d.built !== "undefined"){
+      ships.titanic = { built: d.built || 0, launches: d.launches || 0 };
+    }
+    // 3せきぶん、足りないところは 0 でうめる
+    SHIP_IDS.forEach(function(id){
+      var s = ships[id] || {};
+      ships[id] = { built: Math.min(TOTAL_PARTS, s.built || 0), launches: s.launches || 0 };
+    });
+    return {
+      current: SHIPS[d.current] ? d.current : "titanic",
+      size: SIZE_CHOICES.indexOf(d.size) >= 0 ? d.size : 5,
+      ships: ships
+    };
   }
   function saveProgress(){
     localStorage.setItem(SAVE_KEY, JSON.stringify(progress));
   }
   var progress = loadProgress();
+
+  // いまえらんでいる船の 記録と ずかんデータを取り出す近道
+  function cur(){ return progress.ships[progress.current]; }
+  function ship(){ return SHIPS[progress.current]; }
 
   // ---------- 状態 ----------
   var mode = "mix";          // もんだいの しゅるい（mix / add / sub）
@@ -717,7 +863,7 @@
     if (instant) svg.classList.add("no-anim");
     partEls.forEach(function(el){
       var i = parseInt(el.getAttribute("data-part"), 10);
-      el.classList.toggle("built", i < progress.built);
+      el.classList.toggle("built", i < cur().built);
     });
     if (instant){
       // ブラウザに一度反映させてから アニメを元にもどす
@@ -726,17 +872,59 @@
     }
   }
 
-  // ドック画面の 数字・ボタンを更新する
+  // ---------- 船のきせかえ ----------
+  // えらんだ船に合わせて、SVGの色・名前・見出しなどを ぜんぶ切りかえる
+  function applyTheme(){
+    var t = ship();
+    $("hullBody").setAttribute("fill", t.hull);
+    // 白い船体は空にとけないよう ふちどりの線をつける（noneなら線なし）
+    if (t.hullEdge === "none"){
+      $("hullBody").removeAttribute("stroke");
+    } else {
+      $("hullBody").setAttribute("stroke", t.hullEdge);
+      $("hullBody").setAttribute("stroke-width", "3");
+    }
+    $("hullStripe").setAttribute("fill", t.stripe);
+    $("shipNameText").textContent = t.enName;
+    $("shipNameText").setAttribute("fill", t.nameFill);
+    $("flagFront").setAttribute("fill", t.flagFront);
+    $("flagRear").setAttribute("fill", t.flagRear);
+    $("redCross").style.display = t.cross ? "" : "none";
+    $("shipTitle").textContent = t.label;
+    svg.setAttribute("aria-label", t.label + "の絵");
+    document.title = t.label + "を つくろう";
+    $("ldMsg").textContent = t.label + "が ぼうけんに しゅっぱつ したよ！";
+    $("rebuildBtn").textContent = "あたらしい " + t.label + "を つくる";
+  }
+
+  // ドック画面の 数字・ボタン・えらびピルを更新する
   function renderDock(){
-    $("builtNum").textContent = progress.built;
-    $("buildFill").style.width = (progress.built / TOTAL_PARTS * 100) + "%";
-    var done = progress.built >= TOTAL_PARTS;
+    $("builtNum").textContent = cur().built;
+    $("buildFill").style.width = (cur().built / TOTAL_PARTS * 100) + "%";
+    var done = cur().built >= TOTAL_PARTS;
     $("startBtn").style.display = done ? "none" : "";
     $("launchBtn").style.display = done ? "" : "none";
-    $("resetBtn").style.display = (progress.built > 0 && !done) ? "" : "none";
+    $("resetBtn").style.display = (cur().built > 0 && !done) ? "" : "none";
     var lb = $("launchBadge");
-    lb.style.display = progress.launches > 0 ? "" : "none";
-    $("launchCount").textContent = progress.launches;
+    lb.style.display = cur().launches > 0 ? "" : "none";
+    $("launchCount").textContent = cur().launches;
+
+    // 船えらびピル：えらばれている船と、船ごとの進み具合を表示
+    document.querySelectorAll(".ship-pill").forEach(function(p){
+      var s = progress.ships[p.dataset.ship];
+      p.setAttribute("aria-pressed", p.dataset.ship === progress.current ? "true" : "false");
+      p.querySelector(".small").textContent =
+        s.built >= TOTAL_PARTS ? "かんせい！" : s.built + "/" + TOTAL_PARTS;
+    });
+
+    // もんだいの数ピル：えらばれている数を表示
+    document.querySelectorAll(".size-pill").forEach(function(p){
+      p.setAttribute("aria-pressed", parseInt(p.dataset.size, 10) === progress.size ? "true" : "false");
+    });
+
+    // 「こうじをはじめる」ボタンの説明（のこりパーツが少ないときは その数に合わせる）
+    var n = Math.min(progress.size, TOTAL_PARTS - cur().built);
+    if (n > 0) $("startNote").textContent = "もんだい " + n + "もん で パーツ " + n + "こ";
   }
 
   // ---------- 問題づくり ----------
@@ -796,10 +984,10 @@
     }
   });
 
-  // ---------- こうじ（1回 = 5もん） ----------
+  // ---------- こうじ（1回 = えらんだ もんだい数） ----------
   function startSession(){
     if (ac && ac.state === "suspended") ac.resume();
-    sessionTotal = Math.min(SESSION_SIZE, TOTAL_PARTS - progress.built);
+    sessionTotal = Math.min(progress.size, TOTAL_PARTS - cur().built);
     if (sessionTotal <= 0) return;   // もう完成している（念のため）
     sessionSolved = 0;
     firstTryCorrect = 0;
@@ -839,13 +1027,13 @@
 
   // 正解のたびに：パーツを1こ ふやして まめちしきを見せる
   function showPartPopup(){
-    var part = PARTS[progress.built];   // つぎに できるパーツ
-    progress.built++;
+    var idx = cur().built;              // つぎに できるパーツの番号
+    cur().built++;
     saveProgress();
-    $("partEmoji").textContent = part.emoji;
-    $("partName").textContent = part.name + " が できた！";
-    $("partTrivia").textContent = part.trivia;
-    $("partCount").textContent = "パーツ " + progress.built + " / " + TOTAL_PARTS;
+    $("partEmoji").textContent = PARTS[idx].emoji;
+    $("partName").textContent = partName(idx) + " が できた！";
+    $("partTrivia").textContent = ship().trivia[idx];
+    $("partCount").textContent = "パーツ " + cur().built + " / " + TOTAL_PARTS;
     $("partNextBtn").textContent = (sessionSolved >= sessionTotal) ? "ふねを みる 🚢" : "つぎへ ▶";
     $("partPopup").classList.add("show");
     popupGuardUntil = Date.now() + 700;   // 出た直後の連打で とじないように
@@ -869,7 +1057,7 @@
     renderDock();
     // 前から built されているパーツは表示済みなので、
     // 今回ふえたぶん（sessionTotal こ）だけ アニメで出す
-    var startIdx = progress.built - sessionTotal;
+    var startIdx = cur().built - sessionTotal;
     for (var i = 0; i < sessionTotal; i++){
       (function(idx, delay){
         setTimeout(function(){
@@ -883,10 +1071,12 @@
 
     // ごほうびポイント（どうがタイマーで使える）。
     // 「こうじ1回 がんばった」ことへのごほうびなので、まちがえた数に関係なく あげる。
-    // もらえる数は 管理ツールの「ポイント設定」で変えられる（初期値2）。
+    // もんだい数がえらべるようになったので、5もんにつき2ポイントの わりあいで計算する
+    // （5もん→2、10もん→4、20もん→8。ポイントかせぎにも 不利にも ならない）。
     // points.js を読みこまずに開いても落ちないよう typeof で確認する。
     if (typeof Points !== "undefined" && typeof Points.rewardFor === "function"){
-      setTimeout(function(){ Points.rewardFor(2); }, afterReveal);
+      var reward = Math.max(1, Math.round(sessionTotal * 2 / 5));
+      setTimeout(function(){ Points.rewardFor(reward); }, afterReveal);
     }
 
     // 利用記録（記録ページ用）：1回で正解できた数 / 問題数
@@ -905,18 +1095,18 @@
     svg.classList.add("launching");   // けむり＋船がすすむ アニメ開始
     soundHorn();
     launchConfetti();
-    progress.launches++;
+    cur().launches++;
     saveProgress();
     // 船が画面のそとへ出たころに おわりのカードを出す
     setTimeout(function(){
-      $("ldTitle").textContent = "しゅっこう " + progress.launches + " かいめ！";
+      $("ldTitle").textContent = "しゅっこう " + cur().launches + " かいめ！";
       $("launchDone").classList.add("show");
     }, 6500);
   }
 
-  // 「あたらしいタイタニックごうをつくる」：パーツ0にもどす（出航回数はのこる）
+  // 「あたらしい○○ごうをつくる」：えらんでいる船のパーツを0にもどす（出航回数はのこる）
   $("rebuildBtn").addEventListener("click", function(){
-    progress.built = 0;
+    cur().built = 0;
     saveProgress();
     launching = false;
     $("launchDone").classList.remove("show");
@@ -962,12 +1152,34 @@
   }
 
   // ---------- UI操作 ----------
-  Array.prototype.forEach.call(document.querySelectorAll(".pill"), function(pill){
+  // もんだいの しゅるい（data-mode のピルだけが対象）
+  Array.prototype.forEach.call(document.querySelectorAll(".pill[data-mode]"), function(pill){
     pill.addEventListener("click", function(){
       mode = pill.dataset.mode;
-      document.querySelectorAll(".pill").forEach(function(p){
+      document.querySelectorAll(".pill[data-mode]").forEach(function(p){
         p.setAttribute("aria-pressed", p === pill ? "true" : "false");
       });
+    });
+  });
+
+  // つくる ふねを えらぶ（進み具合は船ごとに べつべつに保存されている）
+  Array.prototype.forEach.call(document.querySelectorAll(".ship-pill"), function(pill){
+    pill.addEventListener("click", function(){
+      if (pill.dataset.ship === progress.current) return;
+      progress.current = pill.dataset.ship;
+      saveProgress();
+      applyTheme();
+      renderShip(true);   // えらんだ船の進み具合を アニメなしで表示
+      renderDock();
+    });
+  });
+
+  // もんだいの かずを えらぶ
+  Array.prototype.forEach.call(document.querySelectorAll(".size-pill"), function(pill){
+    pill.addEventListener("click", function(){
+      progress.size = parseInt(pill.dataset.size, 10);
+      saveProgress();
+      renderDock();
     });
   });
   $("soundToggle").addEventListener("click", function(){
@@ -981,7 +1193,7 @@
   $("launchBtn").addEventListener("click", launch);
   $("resetBtn").addEventListener("click", function(){
     if (confirm("いままで つくった パーツが きえます。さいしょから つくりなおしますか？")){
-      progress.built = 0;
+      cur().built = 0;
       saveProgress();
       renderShip(true);
       renderDock();
@@ -989,6 +1201,7 @@
   });
 
   // ---------- 最初の表示 ----------
+  applyTheme();
   renderShip(true);
   renderDock();
 
