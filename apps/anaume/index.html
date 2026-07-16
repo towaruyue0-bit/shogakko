@@ -153,50 +153,70 @@
       border-radius: 5px;
       padding: 1px 3px;
     }
-    .blank {
-      display: inline-block;
-      min-width: 78px;
-      padding: 4px 10px;
-      margin: 0 2px;
-      border-bottom: 3px dashed #94a3b8;
-      text-align: center;
-      color: #0f172a;
-      cursor: pointer;
-      vertical-align: middle;
-    }
-    .blank.empty { color: #cbd5e0; }
-    .blank.filled { border-bottom: 3px solid #06B6D4; background: #ECFEFF; border-radius: 6px 6px 0 0; }
-    .blank.ok  { border-bottom: 3px solid #16a34a; background: #DCFCE7; color: #15803d; }
-    .blank.ng  { border-bottom: 3px solid #dc2626; background: #FEE2E2; color: #b91c1c; animation: shake 0.4s; }
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       25% { transform: translateX(-4px); }
       75% { transform: translateX(4px); }
     }
 
-    /* ことばタイル */
+    /* もじボタン（9もじの中から タップして ことばを つくる） */
     .tiles-label { font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 8px; }
-    .tiles {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+    .kb {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
       margin-bottom: 18px;
     }
-    .tile {
+    .kchar {
       background: white;
       border: 2.5px solid #06B6D4;
       color: #0e7490;
       border-radius: 12px;
-      padding: 10px 16px;
-      font-size: 1.1rem;
+      padding: 12px 0;
+      font-size: 1.25rem;
       font-weight: 800;
       cursor: pointer;
       font-family: inherit;
       box-shadow: 0 3px 8px rgba(6,182,212,0.18);
       transition: transform 0.1s, opacity 0.15s;
     }
-    .tile:active { transform: scale(0.94); }
-    .tile.used { opacity: 0; pointer-events: none; }
+    .kchar:active { transform: scale(0.94); }
+    .kchar.used { opacity: 0.22; pointer-events: none; }
+    .kchar:disabled { opacity: 0.4; cursor: default; }
+    .kchar.kdel {
+      background: #fff7ed;
+      border-color: #fb923c;
+      color: #c2410c;
+      font-size: 0.95rem;
+    }
+
+    /* あなの マスめ（1もじ 1マス） */
+    .blank {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin: 0 3px;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    .cell {
+      width: 34px;
+      height: 40px;
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      background: #f8fafc;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .cell.filledc { border-style: solid; border-color: #06B6D4; background: #ECFEFF; }
+    .blank.active .cell { border-color: #06B6D4; }
+    .blank.active .cell:not(.filledc) { background: #ECFEFF; }
+    .blank.ok .cell { border-style: solid; border-color: #16a34a; background: #DCFCE7; color: #15803d; }
+    .blank.ng .cell { border-style: solid; border-color: #dc2626; background: #FEE2E2; color: #b91c1c; animation: shake 0.4s; }
 
     /* フィードバック */
     .feedback {
@@ -264,8 +284,9 @@
 <div id="screen-list">
   <div class="lead">
     おはなしを <b>よく よんで</b>、あなに あう ことばを<br>
-    おはなしの なかから <b>そのまま さがして</b> いれよう。<br>
-    あなの <b>まえと あとの ことば</b>が ヒントだよ！
+    おはなしの なかから <b>そのまま さがそう</b>。<br>
+    みつけたら、もじを <b>1もじずつ タップ</b>して<br>
+    ことばを つくって いれてね！
   </div>
   <div class="story-grid" id="story-grid"></div>
 </div>
@@ -281,8 +302,8 @@
   <div class="quiz-body">
     <div class="q-prompt" id="q-prompt"></div>
     <div class="frame" id="frame"></div>
-    <div class="tiles-label">⬇️ ことばを タップして あなに いれてね</div>
-    <div class="tiles" id="tiles"></div>
+    <div class="tiles-label">⬇️ もじを タップして、あなに はいる ことばを つくろう</div>
+    <div class="kb" id="letters"></div>
     <div class="feedback" id="feedback"></div>
     <button class="check-btn" id="check-btn" onclick="onCheck()">こたえあわせ ✓</button>
   </div>
@@ -306,11 +327,16 @@
   //   parts  … あなあき文の組み立て。文字列＝固定の文字、
   //            { b: n } ＝ n番目の あな（0からはじまる）
   //   answers… 各あなに入る「正解のことば」（本文と同じことば）
-  //   tiles  … 画面に出す ことばタイル（正解＋まちがえやすいダミー）
   //   source … 答えのもとになる本文の一文（正解時に光らせる）
   //
-  //  ねらい：意味だけで答えず、「あなの前後のことば」をヒントに
-  //          本文の言葉を“そのまま”当てはめる作法を身につける。
+  //  こたえかた：9もじの ひらがなボタンの中から、答えのことばを
+  //  1もじずつ タップして組み立てる（マスめに1もじずつ入る）。
+  //  ダミーの文字は本文から自動で選ぶので、tiles のような
+  //  選択肢データは いらない。
+  //
+  //  ねらい：ことばの選択肢を「見て選ぶ」のではなく、本文から
+  //          さがした言葉を“自分でつづる”ことで、読む力と
+  //          書く力の両方を練習する。
   // ======================================================
   const STORIES = [
     {
@@ -336,7 +362,6 @@
           q: 'すずめは、なにを たべて いますか。',
           parts: ['', { b: 0 }, 'を たべて います。'],
           answers: ['くさの たね'],
-          tiles: ['くさの たね', 'たべもの', 'みず', 'よごれ'],
           source: 'じめんを つついて、くさの たねを たべて います。'
         },
         {
@@ -344,7 +369,6 @@
           q: 'みずあびを して、なにを して いますか。',
           parts: ['', { b: 0 }, 'に ついた ', { b: 1 }, ' います。'],
           answers: ['からだ', 'よごれを おとして'],
-          tiles: ['からだ', 'よごれを おとして', 'よごれを', 'おとして', 'つばさ'],
           source: 'つばさを うごかして、からだに ついた よごれを おとして います。'
         }
       ]
@@ -366,21 +390,18 @@
           q: 'まず、なにを しますか。',
           parts: ['つちに ', { b: 0 }, 'を あけます。'],
           answers: ['あな'],
-          tiles: ['あな', 'たね', 'みず', 'つち'],
           source: 'まず、つちに あなを あけます。'
         },
         {
           q: 'たねを いれた あと、なにを しますか。',
           parts: ['うえから ', { b: 0 }, 'を かけます。'],
           answers: ['つち'],
-          tiles: ['つち', 'たね', 'みず', 'あな'],
           source: 'それから、うえから つちを かけます。'
         },
         {
           q: 'さいごに、なにを しますか。',
           parts: ['', { b: 0 }, 'を たっぷり あげます。'],
           answers: ['みず'],
-          tiles: ['みず', 'つち', 'たね', 'あな'],
           source: 'さいごに、みずを たっぷり あげます。'
         }
       ]
@@ -402,21 +423,18 @@
           q: 'まず、なにで てを ぬらしますか。',
           parts: ['てを ', { b: 0 }, 'で ぬらします。'],
           answers: ['みず'],
-          tiles: ['みず', 'せっけん', 'あわ', 'ハンカチ'],
           source: 'まず、てを みずで ぬらします。'
         },
         {
           q: 'せっけんの あと、なにを よく こすりますか。',
           parts: ['', { b: 0 }, 'を よく こすります。'],
           answers: ['てのひら'],
-          tiles: ['てのひら', 'せっけん', 'みず', 'あわ'],
           source: 'それから、てのひらを よく こすります。'
         },
         {
           q: 'さいごに、なにを ながしますか。',
           parts: ['みずで ', { b: 0 }, ' ながします。'],
           answers: ['あわを'],
-          tiles: ['あわを', 'みずを', 'せっけんを', 'てを'],
           source: 'さいごに、みずで あわを ながします。'
         }
       ]
@@ -428,9 +446,67 @@
   // ======================================================
   let curStory = null;   // いま選んでいるおはなし
   let qIndex = 0;        // いま何問目か
-  let blanks = [];       // 各あなに入れたタイル（{idx,text} または null）
+  let blanks = [];       // 各あなに入れた文字（あなごとに [{bankIdx, ch}] の配列）
+  let banks  = [];       // 各あな用の 9もじボタン（あなごとに [{ch, used}] の配列）
   let solved = false;    // この問題が正解済みか
   let mistakes = 0;      // このおはなしで まちがえた回数（正答率の計算用）
+
+  // ======================================================
+  //  9もじボタンづくり
+  // ======================================================
+  /** i番目のあなの正解を「1文字ずつの配列」で返す（空白は除く） */
+  function ansChars(i) {
+    return curStory.questions[qIndex].answers[i].replace(/\s/g, '').split('');
+  }
+
+  /** 配列の中身を ランダムに ならべかえる */
+  function shuffleArr(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ダミー文字が本文から足りないときに使う予備のひらがな
+  const HIRA_POOL = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん'.split('');
+
+  /**
+   * i番目のあな用の「9もじボタン」を作る。
+   * 正解の文字（重複もそのまま）＋ダミー文字を合わせて9もじにして混ぜる。
+   * ダミーは本文に出てくるひらがなから選ぶ。こうすると適当に押しても
+   * 当たりにくく、「本文を読んで ことばを探す」練習になる。
+   * 本文から足りないときは50音から足す。
+   */
+  function buildBank(i) {
+    const need = ansChars(i);
+    const inAnswer = new Set(need);
+    // 本文のひらがなのうち、正解に使わない文字をダミー候補にする
+    const pool = shuffleArr(Array.from(new Set(
+      curStory.text.replace(/[^ぁ-ん]/g, '').split('')
+    )).filter(ch => !inAnswer.has(ch)));
+
+    const bank = need.map(ch => ({ ch, used: false }));
+    while (bank.length < 9) {
+      let ch = pool.pop();
+      // 本文から足りないときは50音からランダムに（正解や重複は避ける）
+      let guard = 0;
+      while (!ch || inAnswer.has(ch) || bank.some(b => b.ch === ch)) {
+        ch = HIRA_POOL[Math.floor(Math.random() * HIRA_POOL.length)];
+        if (++guard > 60) break;
+      }
+      bank.push({ ch, used: false });
+    }
+    return shuffleArr(bank);
+  }
+
+  /** まだ うまっていない最初のあなの番号を返す（全部うまっていれば -1） */
+  function activeBlankIdx() {
+    for (let i = 0; i < blanks.length; i++) {
+      if (blanks[i].length < ansChars(i).length) return i;
+    }
+    return -1;
+  }
 
   // ======================================================
   //  おはなし えらび画面
@@ -471,9 +547,10 @@
     const q = curStory.questions[qIndex];
     solved = false;
 
-    // あなの数だけ「空っぽ」を用意
+    // あなの数だけ「空っぽ」と 9もじボタンを用意
     const blankCount = q.parts.filter(p => typeof p === 'object').length;
-    blanks = new Array(blankCount).fill(null);
+    blanks = Array.from({ length: blankCount }, () => []);
+    banks  = Array.from({ length: blankCount }, (_, i) => buildBank(i));
 
     // 進みぐあいバー
     const total = curStory.questions.length;
@@ -489,14 +566,15 @@
     document.getElementById('feedback').className = 'feedback';
 
     renderFrame();
-    renderTiles();
+    renderBank();
     updateCheckButton();
   }
 
-  /** あなあき文を描画する */
+  /** あなあき文を描画する（あなは 1もじ1マスの マスめで表示） */
   function renderFrame(opts) {
     opts = opts || {};
     const q = curStory.questions[qIndex];
+    const active = activeBlankIdx();
     let html = '';
     q.parts.forEach(p => {
       if (typeof p === 'string') {
@@ -504,55 +582,84 @@
         if (p) html += `<span class="ftext${opts.hintWords ? ' hint' : ''}">${esc(p)}</span>`;
       } else {
         const i = p.b;
-        const filled = blanks[i];
-        let cls = 'blank ' + (filled ? 'filled' : 'empty');
-        // 答えあわせ後は 正解=ok / まちがい=ng の色をつける
-        if (opts.judge && filled) {
-          cls = 'blank ' + (filled.text === q.answers[i] ? 'ok' : 'ng');
+        const need = ansChars(i);
+        const chars = blanks[i];
+        let cls = 'blank';
+        if (opts.judge) {
+          // 答えあわせ後は 正解=ok / まちがい=ng の色をつける
+          cls += chars.map(c => c.ch).join('') === need.join('') ? ' ok' : ' ng';
+        } else if (i === active) {
+          cls += ' active';   // いま文字が入る あな を目立たせる
         }
-        const label = filled ? esc(filled.text) : '？';
-        html += `<span class="${cls}" onclick="clearBlank(${i})">${label}</span>`;
+        // 1もじ1マス。入れた文字を順番に表示する
+        let cells = '';
+        for (let c = 0; c < need.length; c++) {
+          const ch = chars[c] ? esc(chars[c].ch) : '';
+          cells += `<span class="cell${ch ? ' filledc' : ''}">${ch}</span>`;
+        }
+        html += `<span class="${cls}" onclick="clearBlank(${i})">${cells}</span>`;
       }
     });
     document.getElementById('frame').innerHTML = html;
   }
 
-  /** ことばタイルを描画する（使ったタイルは消える） */
-  function renderTiles() {
-    const q = curStory.questions[qIndex];
-    const usedIdx = blanks.filter(b => b).map(b => b.idx);
-    document.getElementById('tiles').innerHTML = q.tiles.map((t, i) =>
-      `<button class="tile ${usedIdx.includes(i) ? 'used' : ''}" onclick="placeTile(${i})">${esc(t)}</button>`
-    ).join('');
+  /** 9もじボタンを描画する（いま入力中のあな用のボタンを出す） */
+  function renderBank() {
+    const wrap = document.getElementById('letters');
+    const active = activeBlankIdx();
+    // 全部うまったときは 最後のあなのボタンをうすく表示（「けす」だけ使える）
+    const bi = active === -1 ? banks.length - 1 : active;
+    const done = active === -1;
+    wrap.innerHTML = banks[bi].map((k, i) =>
+      `<button class="kchar ${k.used ? 'used' : ''}" ${done ? 'disabled' : ''} onclick="tapChar(${i})">${esc(k.ch)}</button>`
+    ).join('') + `<button class="kchar kdel" onclick="tapDel()">← けす</button>`;
   }
 
-  /** タイルをタップ → いちばん左の空いている あな に入れる */
-  function placeTile(tileIdx) {
+  /** もじボタンをタップ → いま入力中のあなに 1もじ入れる */
+  function tapChar(bankIdx) {
     if (solved) return;
-    const q = curStory.questions[qIndex];
-    // すでに使っているタイルなら何もしない
-    if (blanks.some(b => b && b.idx === tileIdx)) return;
-    // 空いている最初の あな を探す
-    const empty = blanks.findIndex(b => b === null);
-    if (empty === -1) return;  // 全部うまっている
-    blanks[empty] = { idx: tileIdx, text: q.tiles[tileIdx] };
+    const i = activeBlankIdx();
+    if (i === -1) return;  // 全部うまっている
+    const k = banks[i][bankIdx];
+    if (k.used) return;    // もう使ったボタン
+    k.used = true;
+    blanks[i].push({ bankIdx, ch: k.ch });
     // やり直しに備えて、判定の色や本文ハイライトは消しておく
     clearPassageHighlight();
     setFeedback('', '');
     renderFrame();
-    renderTiles();
+    renderBank();
     updateCheckButton();
   }
 
-  /** あなをタップ → 中のタイルを戻す（空っぽにする） */
+  /** 「← けす」→ さいごに入れた1もじを消してボタンに戻す */
+  function tapDel() {
+    if (solved) return;
+    // うしろのあなから順に、文字が入っているところを探して1もじ消す
+    for (let i = blanks.length - 1; i >= 0; i--) {
+      if (blanks[i].length > 0) {
+        const last = blanks[i].pop();
+        banks[i][last.bankIdx].used = false;
+        clearPassageHighlight();
+        setFeedback('', '');
+        renderFrame();
+        renderBank();
+        updateCheckButton();
+        return;
+      }
+    }
+  }
+
+  /** あな（マスめ）をタップ → そのあなを からっぽに戻す */
   function clearBlank(i) {
     if (solved) return;
-    if (!blanks[i]) return;
-    blanks[i] = null;
+    if (!blanks[i] || blanks[i].length === 0) return;
+    blanks[i].forEach(c => { banks[i][c.bankIdx].used = false; });
+    blanks[i] = [];
     clearPassageHighlight();
     setFeedback('', '');
     renderFrame();
-    renderTiles();
+    renderBank();
     updateCheckButton();
   }
 
@@ -564,7 +671,7 @@
       btn.textContent = last ? 'できた！ 🎉' : 'つぎへ →';
       btn.disabled = false;
     } else {
-      const allFilled = blanks.every(b => b !== null);
+      const allFilled = activeBlankIdx() === -1;
       btn.textContent = 'こたえあわせ ✓';
       btn.disabled = !allFilled;
     }
@@ -578,7 +685,9 @@
     if (solved) { nextQuestion(); return; }
 
     const q = curStory.questions[qIndex];
-    const allOk = blanks.every((b, i) => b && b.text === q.answers[i]);
+    // 各あなの文字をつなげたものが、正解（空白を除く）と同じか調べる
+    const allOk = blanks.every((chars, i) =>
+      chars.map(c => c.ch).join('') === ansChars(i).join(''));
 
     if (allOk) {
       // 正解：あなを緑にして、本文の もとの一文を光らせる
@@ -596,12 +705,16 @@
       renderFrame({ judge: true, hintWords: true });
       highlightSource(q.source);
       setFeedback('おしい！ あなの まえと あとの ことばを みて、<br>おはなしの ことばを そのまま いれてね', 'ng');
-      // まちがえた あな だけ もどして、もう一度ためせるようにする
+      // まちがえた あな だけ からっぽに戻して、もう一度ためせるようにする
       setTimeout(() => {
-        const q2 = curStory.questions[qIndex];
-        blanks = blanks.map((b, i) => (b && b.text === q2.answers[i]) ? b : null);
+        blanks.forEach((chars, i) => {
+          if (chars.map(c => c.ch).join('') !== ansChars(i).join('')) {
+            chars.forEach(c => { banks[i][c.bankIdx].used = false; });
+            blanks[i] = [];
+          }
+        });
         renderFrame();
-        renderTiles();
+        renderBank();
         updateCheckButton();
       }, 1600);
     }
