@@ -325,6 +325,36 @@
     💾 すべての変更を保存してランチャーに反映する
   </button>
 
+  <!-- ── きょうの しゅくだい設定 ─────────────────────────── -->
+  <div class="card" style="margin-top:32px">
+    <h2 style="color:#dd6b20">📌 きょうの しゅくだい — 「これをやってね」を設定</h2>
+    <p style="font-size:0.83rem;color:#718096;line-height:1.7;margin-bottom:16px">
+      やってほしいアプリに ✔ を入れて、「たしざんを 10もん」のように ひとことメモを書けます。<br>
+      設定すると、ランチャーの いちばん上に「きょうの しゅくだい」として表示され、
+      アプリを開いたときにも お知らせが出ます。1回クリアすると 自動で「✅ できた」になります。<br>
+      ※ この設定は <b>いま使っている この端末（ブラウザ）だけ</b> に保存されます。
+      <b>お子さんが使う端末</b> で設定してください。
+    </p>
+
+    <!-- どの日のしゅくだいか -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <label style="font-size:0.85rem;font-weight:700;color:#4a5568">しゅくだいの日：</label>
+      <input type="date" id="hw-date"
+             style="padding:8px 11px;border:1.5px solid #cbd5e0;border-radius:8px;
+                    font-size:0.9rem;font-family:inherit;outline:none">
+      <button class="btn-small btn-edit" onclick="setHwDate(0)">きょう</button>
+      <button class="btn-small btn-edit" onclick="setHwDate(1)">あした</button>
+      <span id="hw-status" style="font-size:0.8rem;color:#718096;font-weight:700"></span>
+    </div>
+
+    <div id="hw-list" class="app-list"></div>
+
+    <div class="btn-row" style="margin-top:18px">
+      <button class="btn btn-primary" onclick="saveHomework()">💾 しゅくだいを設定する</button>
+      <button class="btn btn-cancel" onclick="clearHomework()">しゅくだいをけす</button>
+    </div>
+  </div>
+
   <!-- ── ポイント設定 ───────────────────────────────────── -->
   <div class="card" style="margin-top:32px">
     <h2 style="color:#b7791f">⭐ ポイント設定 — アプリごとに もらえるポイント</h2>
@@ -453,6 +483,7 @@
     buildColorPresets('color-presets', 'f-color');
     await loadData();
     renderList();
+    renderHomework();
     renderPointsList();
     renderOndokuList();
   });
@@ -623,6 +654,116 @@
   document.getElementById('edit-modal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
   });
+
+  // ─── きょうの しゅくだい設定 ──────────────────────────────────────────────────
+
+  /** 日付を「YYYY-MM-DD」の形にする（input type="date" 用） */
+  function hwDateStr(offsetDays) {
+    const d = new Date();
+    d.setDate(d.getDate() + (offsetDays || 0));
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  /** 「きょう」「あした」ボタンで日付欄をセットする */
+  function setHwDate(offsetDays) {
+    document.getElementById('hw-date').value = hwDateStr(offsetDays);
+  }
+
+  /** しゅくだい設定の対象アプリ（表示中のアプリ。どうがタイマーは除く） */
+  function homeworkApps() {
+    return siteData.apps.filter(a => a.visible !== false && a.id !== 'timer');
+  }
+
+  /** しゅくだい設定の一覧を描画する */
+  function renderHomework() {
+    const list = document.getElementById('hw-list');
+    const apps = homeworkApps();
+    // いま保存されているしゅくだい（日付に関係なく読む）
+    const saved = (typeof Homework !== 'undefined') ? Homework.getRaw() : null;
+    const today = hwDateStr(0);
+
+    // 日付欄：保存ずみの日付が きょう以降ならそれを、なければ きょうを初期表示
+    const dateInput = document.getElementById('hw-date');
+    dateInput.value = (saved && saved.date >= today) ? saved.date : today;
+
+    // 状態表示（きのうのしゅくだいが残っている等の案内）
+    const status = document.getElementById('hw-status');
+    if (saved && saved.date < today) {
+      status.textContent = `※ ${saved.date} のしゅくだいが残っています（きょうの分として新しく設定してください）`;
+    } else {
+      status.textContent = '';
+    }
+
+    if (apps.length === 0) {
+      list.innerHTML = '<p style="color:#a0aec0;text-align:center;padding:20px">対象のアプリがありません</p>';
+      return;
+    }
+
+    list.innerHTML = apps.map(app => {
+      // 保存ずみの設定があれば チェック・メモ・できた状態を復元する
+      const item = saved ? (saved.items || []).find(it => it.appId === app.id) : null;
+      const checked = item ? 'checked' : '';
+      const note = item ? item.note : '';
+      const doneBadge = (item && item.done && saved.date === today)
+        ? '<span style="font-size:0.75rem;color:#276749;font-weight:800;background:#f0fff4;border-radius:6px;padding:2px 8px;margin-left:6px">✅ できた</span>'
+        : '';
+      return `
+        <div class="app-item">
+          <input type="checkbox" id="hw-check-${escHtml(app.id)}" ${checked}
+                 style="width:20px;height:20px;cursor:pointer;flex-shrink:0">
+          <div class="app-item-icon" style="background:${app.color || '#eee'}22">
+            ${escHtml(app.icon || '📖')}
+          </div>
+          <div class="app-item-info">
+            <div class="app-item-name">${escHtml(app.name)}${doneBadge}</div>
+            <input type="text" id="hw-note-${escHtml(app.id)}" value="${escHtml(note)}"
+                   placeholder="ひとことメモ（例：たしざんを 10もん）" maxlength="60"
+                   style="width:100%;margin-top:6px;padding:7px 10px;border:1.5px solid #e2e8f0;
+                          border-radius:8px;font-size:0.85rem;font-family:inherit;outline:none">
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  /** しゅくだいを保存する（この端末のブラウザに保存） */
+  function saveHomework() {
+    const date = document.getElementById('hw-date').value;
+    if (!date) { showToast('⚠️ しゅくだいの日を選んでください'); return; }
+
+    // チェックの入ったアプリだけ集める
+    const prev = (typeof Homework !== 'undefined') ? Homework.getRaw() : null;
+    const items = [];
+    homeworkApps().forEach(app => {
+      const check = document.getElementById('hw-check-' + app.id);
+      if (!check || !check.checked) return;
+      const noteInput = document.getElementById('hw-note-' + app.id);
+      const item = { appId: app.id, note: noteInput ? noteInput.value.trim() : '' };
+      // 同じ日のしゅくだいを保存しなおすとき、「できた」を消さないよう引きつぐ
+      if (prev && prev.date === date) {
+        const p = (prev.items || []).find(it => it.appId === app.id);
+        if (p && p.done) { item.done = true; item.doneAt = p.doneAt; }
+      }
+      items.push(item);
+    });
+
+    if (items.length === 0) {
+      showToast('⚠️ やってほしいアプリに ✔ を入れてください');
+      return;
+    }
+
+    Homework.setFor(date, items);
+    renderHomework();
+    showToast(`🎉 しゅくだいを ${items.length}こ 設定しました！ランチャーに表示されます。`);
+  }
+
+  /** しゅくだいをぜんぶ消す */
+  function clearHomework() {
+    if (!confirm('しゅくだいの設定を ぜんぶ消しますか？')) return;
+    if (typeof Homework !== 'undefined') Homework.clear();
+    renderHomework();
+    showToast('🗑 しゅくだいを消しました。');
+  }
 
   // ─── ポイント設定 ─────────────────────────────────────────────────────────────
   // 各アプリの「初期値（コードに書いてあるポイント数）」。

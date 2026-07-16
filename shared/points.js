@@ -70,6 +70,8 @@ const Points = {
   reward(n) {
     const total = this.add(n);
     showRewardPopup(n, total);
+    // きょうの しゅくだいの アプリなら「できた」にする
+    if (typeof Homework !== 'undefined') Homework.notifyCleared();
     return total;
   },
 
@@ -122,7 +124,11 @@ const Points = {
   rewardFor(fallback) {
     const appId = this._appId();
     const n = appId ? this.pointsFor(appId, fallback) : fallback;
-    if (n <= 0) return this.get();  // 0ポイント設定なら 何も足さない（お祝いも出さない）
+    if (n <= 0) {
+      // 0ポイント設定でも「しゅくだいが できた」ことは記録する
+      if (typeof Homework !== 'undefined') Homework.notifyCleared();
+      return this.get();  // 0ポイント設定なら 何も足さない（お祝いも出さない）
+    }
     return this.reward(n);
   },
 };
@@ -271,6 +277,8 @@ const Stats = {
     e.total   += Math.max(0, Math.floor(total) || 0);
     e.lastUsed = new Date().toISOString();
     this._write(data);
+    // きょうの しゅくだいの アプリなら「できた」にする
+    if (typeof Homework !== 'undefined') Homework.notifyCleared(appId);
   },
 
   /** すべての記録を まとめて返す（記録ページ用）。 */
@@ -284,8 +292,264 @@ const Stats = {
   }
 };
 
+/* ════════════════════════════════════════════════════════════════
+ *  きょうの しゅくだい ライブラリ  (Homework)
+ *  ----------------------------------------------------------------
+ *  おうちの人が「きょうは このアプリを やってね」と きめられる しくみ。
+ *
+ *  ・設定は 管理ツール（manage.html）の「きょうの しゅくだい」から行う
+ *  ・ランチャー（index.html）の いちばん上に しゅくだい一覧が出る
+ *  ・しゅくだいのアプリを ひらくと「きょうの しゅくだいだよ」と お知らせが出る
+ *  ・アプリを 1回クリアすると（Points.reward / Stats.record が よばれると）
+ *    自動で「できた ✅」になる
+ *  ・データは この端末（ブラウザ）の localStorage にだけ保存される。
+ *    お子さんが使う端末で 設定してください。
+ * ════════════════════════════════════════════════════════════════ */
+
+// 保存箱のなまえ（キー）。
+const HOMEWORK_KEY = 'kids_homework';
+
+const Homework = {
+  /** きょうの日付を「2026-07-16」の形の文字で返す（端末の時計を使う）。 */
+  _todayStr() {
+    const d = new Date();
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  },
+
+  /** 保存箱を読みこむ。無い・こわれているときは null。 */
+  _read() {
+    try {
+      return JSON.parse(localStorage.getItem(HOMEWORK_KEY) || 'null');
+    } catch (e) {
+      return null;
+    }
+  },
+
+  /** 保存箱に書きこむ。 */
+  _write(data) {
+    localStorage.setItem(HOMEWORK_KEY, JSON.stringify(data));
+  },
+
+  /**
+   * 「きょうの」しゅくだいを返す。
+   * 保存されている日付が きょうと違うとき（昨日のしゅくだい等）は null。
+   * @returns {{date:string, items:Array}|null}
+   */
+  getToday() {
+    const data = this._read();
+    if (!data || data.date !== this._todayStr()) return null;
+    if (!Array.isArray(data.items) || data.items.length === 0) return null;
+    return data;
+  },
+
+  /** 保存されているしゅくだいを 日付に関係なく返す（管理画面用）。 */
+  getRaw() {
+    return this._read();
+  },
+
+  /**
+   * しゅくだいを設定する（管理ツールから呼ぶ）。
+   * @param {string} date  対象日「YYYY-MM-DD」
+   * @param {Array}  items [{appId, note, done?, doneAt?}] の一覧
+   */
+  setFor(date, items) {
+    this._write({
+      date,
+      items: (items || []).map(it => ({
+        appId:  it.appId,
+        note:   it.note || '',
+        done:   it.done === true,          // 途中保存でも「できた」を消さないため
+        doneAt: it.done === true ? (it.doneAt || null) : null,
+      })),
+    });
+  },
+
+  /** しゅくだいを全部けす（管理ツールから呼ぶ）。 */
+  clear() {
+    localStorage.removeItem(HOMEWORK_KEY);
+  },
+
+  /**
+   * 指定アプリの きょうのしゅくだい項目を返す。対象でなければ null。
+   * @param {string} appId アプリID
+   */
+  itemFor(appId) {
+    const hw = this.getToday();
+    if (!hw) return null;
+    return hw.items.find(it => it.appId === appId) || null;
+  },
+
+  /**
+   * 指定アプリのしゅくだいを「できた」にする。
+   * はじめて「できた」になったときだけ その項目を返す（2回目以降は null）。
+   */
+  markDone(appId) {
+    const data = this._read();
+    if (!data || data.date !== this._todayStr()) return null;
+    const item = (data.items || []).find(it => it.appId === appId);
+    if (!item || item.done) return null;
+    item.done = true;
+    item.doneAt = new Date().toISOString();
+    this._write(data);
+    return item;
+  },
+
+  /**
+   * アプリを1回クリアしたときに よばれる（Points.reward / Stats.record から自動）。
+   * しゅくだい対象なら「できた」にして、お祝いを表示する。
+   * @param {string} [appId] 省略時はURLから自動判定
+   */
+  notifyCleared(appId) {
+    appId = appId || (typeof Stats !== 'undefined' ? Stats._detectId() : null);
+    if (!appId) return;
+    const item = this.markDone(appId);
+    if (!item) return;  // しゅくだい対象でない、またはもう「できた」ずみ
+
+    // 全部おわったかどうかを調べる
+    const hw = this.getToday();
+    const allDone = !!hw && hw.items.every(it => it.done);
+
+    // 「ポイントゲット」のお祝いと重ならないよう、少し待ってから表示する
+    setTimeout(() => showHomeworkClearPopup(allDone), 2400);
+  },
+};
+
+/* ----------------------------------------------------------------
+ *  しゅくだい用ポップアップの共通スタイルを1回だけ差しこむ
+ * ---------------------------------------------------------------- */
+function ensureHomeworkStyle() {
+  if (document.getElementById('homework-style')) return;
+  const style = document.createElement('style');
+  style.id = 'homework-style';
+  style.textContent = `
+    .hw-overlay {
+      position: fixed; inset: 0; z-index: 10000;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(15, 23, 42, 0.45);
+      animation: hwFade 0.25s ease-out;
+      padding: 20px;
+    }
+    .hw-card {
+      background: white;
+      border-radius: 24px;
+      padding: 28px 26px 22px;
+      text-align: center;
+      max-width: 340px;
+      width: 100%;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      animation: hwPop 0.45s cubic-bezier(0.18, 0.9, 0.3, 1.3);
+    }
+    .hw-card .hw-emoji { font-size: 3rem; }
+    .hw-card .hw-title {
+      font-size: 1.2rem; font-weight: 900; color: #e0762e; margin: 6px 0 4px;
+    }
+    .hw-card .hw-note {
+      font-size: 1.15rem; font-weight: 800; color: #2d3748;
+      line-height: 1.6; margin: 10px 0 14px;
+      background: #fff7ec; border-radius: 14px; padding: 12px 10px;
+    }
+    .hw-card .hw-sub { font-size: 0.88rem; color: #64748b; font-weight: 700; }
+    .hw-card .hw-btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+    .hw-card button {
+      border: none; border-radius: 999px; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 1rem;
+      padding: 12px 22px;
+    }
+    .hw-card .hw-btn-go { background: linear-gradient(135deg, #ff9a3c, #ff6b6b); color: white; }
+    .hw-card .hw-btn-speak { background: #eef2ff; color: #5a67d8; }
+    @keyframes hwFade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes hwPop {
+      0%   { transform: scale(0.3); opacity: 0; }
+      60%  { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+/* ----------------------------------------------------------------
+ *  「きょうの しゅくだいだよ！」お知らせポップアップ
+ *  （しゅくだい対象のアプリを ひらいたときに出る）
+ * ---------------------------------------------------------------- */
+function showHomeworkStartPopup(note) {
+  ensureHomeworkStyle();
+  const overlay = document.createElement('div');
+  overlay.className = 'hw-overlay';
+
+  const noteHtml = note
+    ? `<div class="hw-note">${String(note)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;')}</div>`
+    : `<div class="hw-note">この アプリを がんばろう！</div>`;
+
+  overlay.innerHTML = `
+    <div class="hw-card">
+      <div class="hw-emoji">📌</div>
+      <div class="hw-title">きょうの しゅくだい</div>
+      ${noteHtml}
+      <div class="hw-sub">おわると ✅ できた！ になるよ</div>
+      <div class="hw-btn-row">
+        <button class="hw-btn-speak">🔊 よみあげ</button>
+        <button class="hw-btn-go">がんばる！</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  // 「よみあげ」ボタン：しゅくだいの内容を声で読む（読めない子のため）
+  overlay.querySelector('.hw-btn-speak').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance('きょうの しゅくだい。' + (note || 'このアプリを がんばろう！'));
+    u.lang = 'ja-JP';
+    u.rate = 0.85;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  });
+
+  // 「がんばる！」ボタン、または カードの外を タップで閉じる
+  const close = () => overlay.remove();
+  overlay.querySelector('.hw-btn-go').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
+
+/* ----------------------------------------------------------------
+ *  「しゅくだい クリア！」お祝いポップアップ
+ * ---------------------------------------------------------------- */
+function showHomeworkClearPopup(allDone) {
+  ensureHomeworkStyle();
+  const overlay = document.createElement('div');
+  overlay.className = 'hw-overlay';
+  overlay.innerHTML = `
+    <div class="hw-card">
+      <div class="hw-emoji">${allDone ? '🏆' : '💮'}</div>
+      <div class="hw-title">しゅくだい クリア！</div>
+      <div class="hw-sub">${allDone
+        ? 'きょうの しゅくだいは ぜんぶ おわったよ！すごい！！'
+        : 'のこりの しゅくだいも がんばろう！'}</div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  // タップ、または4秒で消える
+  const remove = () => overlay.remove();
+  overlay.addEventListener('click', remove);
+  setTimeout(remove, 4000);
+}
+
 // apps/◯◯/ 配下のアプリを ひらいたときだけ、自動で「ひらいた回数」を1ふやす。
 // （index.html や kiroku.html など apps の外では何もしない）
 if (Stats._detectId()) {
   Stats.open();
+
+  // このアプリが きょうの しゅくだいで、まだ「できた」になっていなければ
+  // 「きょうの しゅくだいだよ！」のお知らせを出す
+  const hwItem = Homework.itemFor(Stats._detectId());
+  if (hwItem && !hwItem.done) {
+    const showStart = () => showHomeworkStartPopup(hwItem.note);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', showStart);
+    } else {
+      showStart();
+    }
+  }
 }
