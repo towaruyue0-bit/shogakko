@@ -230,8 +230,8 @@
 <div class="screen" id="screen-home">
 
   <div class="point-card">
-    <div class="pc-label">いま みられる じかん</div>
-    <div class="pc-big"><span id="home-minutes">0</span><span class="pc-unit">ふん</span></div>
+    <div class="pc-label">いま みられる じかん（ふん：びょう）</div>
+    <div class="pc-big"><span id="home-minutes">0:00</span></div>
     <div class="pc-sub" id="home-sub">⭐ もっているポイント：0</div>
   </div>
 
@@ -279,27 +279,61 @@
   //  どうがタイマー
   //  ・もっているポイント＝みられる分数（1ポイント＝1分）
   //  ・スタートすると1ふんごとに1ポイントへっていく
-  //  ・とちゅうで「おわる」を押すと、のこりは そのまま貯金される
+  //  ・使いかけの1分の「秒数」も毎秒ブラウザに保存するので、
+  //    とちゅうで「おわる」を押しても（アプリを閉じても）
+  //    秒のつづきから ちゃんと へっていく
   // ════════════════════════════════════════════════════════════════
 
   let soundOn   = true;     // 効果音 ON/OFF
   let timerId   = null;     // カウントダウン用のタイマー
   let totalSec  = 0;        // スタート時の もちじかん（秒）
   let elapsed   = 0;        // たった秒数
-  let charged   = 0;        // すでに使った（へらした）ポイント数
+
+  // ─── 使いかけの1分の「もう使った秒数」（0〜59）────────────────────
+  // ポイントは1分単位でしか へらせないので、1分未満の視聴時間は
+  // この「秒の貯金箱」に毎秒ためていき、60秒たまったら1ポイントへらす。
+  // localStorage に保存するので、とちゅうで止めても消えない。
+  const CARRY_KEY = 'timer_sec_used';
+
+  /** もう使った秒数（0〜59）を読みこむ */
+  function getCarry() {
+    const v = parseInt(localStorage.getItem(CARRY_KEY) || '0', 10);
+    return (isNaN(v) || v < 0) ? 0 : Math.min(v, 59);
+  }
+
+  /** もう使った秒数を保存する */
+  function setCarry(v) {
+    localStorage.setItem(CARRY_KEY, String(v));
+  }
+
+  /** いま みられる時間（秒）＝ ポイント×60 − 使いかけの秒数 */
+  function availableSec() {
+    return Math.max(0, Points.get() * 60 - getCarry());
+  }
+
+  /** 秒数を「2:40」のような 見やすい文字にする */
+  function fmtTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
 
   // ─── ホーム画面の表示を最新にする ──────────────────────────────
   function refreshHome() {
     const p = Points.get();
-    document.getElementById('home-minutes').textContent = p;
+    // ポイントが0なのに 使いかけの秒数が残っていたら リセットしておく
+    if (p === 0 && getCarry() > 0) setCarry(0);
+
+    const avail = availableSec();
+    document.getElementById('home-minutes').textContent = fmtTime(avail);
     document.getElementById('home-sub').textContent = `⭐ もっているポイント：${p}`;
 
-    // ポイントが あるか ないかで ボタンとメッセージを出し分け
-    const hasPoints = p > 0;
-    document.getElementById('start-btn').style.display = hasPoints ? 'block' : 'none';
-    document.getElementById('empty-note').style.display = hasPoints ? 'none' : 'block';
+    // みられる時間が あるか ないかで ボタンとメッセージを出し分け
+    const hasTime = avail > 0;
+    document.getElementById('start-btn').style.display = hasTime ? 'block' : 'none';
+    document.getElementById('empty-note').style.display = hasTime ? 'none' : 'block';
     // 「手でへらす」パネルは、へらせるポイントがあるときだけ出す
-    document.getElementById('reduce-card').style.display = hasPoints ? 'block' : 'none';
+    document.getElementById('reduce-card').style.display = p > 0 ? 'block' : 'none';
   }
 
   // ════════════════════════════════════════════════════════════════
@@ -324,12 +358,9 @@
   //  どうがを みはじめる
   // ════════════════════════════════════════════════════════════════
   function startWatch() {
-    const p = Points.get();
-    if (p <= 0) return;          // ポイントが無ければ何もしない
-
-    totalSec = p * 60;           // 1ポイント＝60秒
-    elapsed  = 0;
-    charged  = 0;
+    totalSec = availableSec();   // みられる時間（使いかけの秒数を引いたぶん）
+    if (totalSec <= 0) return;   // みられる時間が無ければ何もしない
+    elapsed = 0;
 
     showScreen('run');
     updateCountdown();
@@ -343,12 +374,14 @@
   function tick() {
     elapsed++;
 
-    // 1ふん（60秒）たつごとに 1ポイントへらす
-    const minutesPassed = Math.floor(elapsed / 60);
-    while (charged < minutesPassed) {
+    // 「秒の貯金箱」に1びょう ためる。60秒たまったら 1ポイントへらす。
+    // 毎秒保存するので、とちゅうで止めても・閉じても 秒数は消えない。
+    let carry = getCarry() + 1;
+    if (carry >= 60) {
       Points.spend(1);           // 実際にポイントをへらす（貯金箱を更新）
-      charged++;
+      carry = 0;
     }
+    setCarry(carry);
 
     updateCountdown();
 
@@ -378,11 +411,12 @@
   // ════════════════════════════════════════════════════════════════
   function stopWatch() {
     clearInterval(timerId);
-    const left = Points.get();
+    // のこり時間は「ポイント×60 − 使いかけの秒数」で秒までせいかくに残る
+    const leftSec = availableSec();
     document.getElementById('done-emoji').textContent = '👍';
     document.getElementById('done-title').textContent = 'おつかれさま！';
     document.getElementById('done-sub').innerHTML =
-      `のこりの <b>${left}ポイント</b> は とってあるよ。<br>また あそんでね😊`;
+      `のこりの <b>${fmtTime(leftSec)}</b> は とってあるよ。<br>また あそんでね😊`;
     showScreen('done');
     playStop();
   }
