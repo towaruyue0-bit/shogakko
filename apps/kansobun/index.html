@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>ほんの インタビュー</title>
+  <style>
+    /* ─── 全体 ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(160deg, #ede9fe 0%, #dbeafe 100%);
+      min-height: 100dvh;
+      padding-bottom: 40px;
+    }
+    .header {
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+      color: white;
+      text-align: center;
+      padding: 20px 16px 16px;
+      box-shadow: 0 4px 16px rgba(139,92,246,0.4);
+      position: relative;
+    }
+    .header h1 { font-size: 1.4rem; font-weight: 900; }
+    .header p  { font-size: 0.82rem; opacity: 0.9; margin-top: 2px; }
+    .back-btn {
+      position: absolute; left: 12px; top: 16px;
+      background: rgba(255,255,255,0.25); color: white;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 20px; padding: 6px 12px;
+      font-size: 0.78rem; text-decoration: none; cursor: pointer;
+      font-family: inherit;
+    }
+
+    .wrap { max-width: 560px; margin: 0 auto; padding: 0 14px; }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .card h2 {
+      font-size: 1rem; font-weight: 900; color: #2d3748;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      border: none; border-radius: 999px; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 0.95rem;
+      padding: 12px 20px;
+      transition: transform 0.1s;
+    }
+    .btn:active { transform: scale(0.95); }
+    .btn-main { background: linear-gradient(135deg, #8b5cf6, #3b82f6); color: white; }
+    .btn-sub  { background: #f1f5f9; color: #64748b; }
+
+    /* ─── 本の一覧 ──────────────────────────────────────── */
+    .book-add-row { display: flex; gap: 8px; }
+    .book-add-row input {
+      flex: 1; border: 2.5px solid #e2e8f0; border-radius: 14px;
+      padding: 12px; font-family: inherit; font-size: 1rem; font-weight: 700;
+      min-width: 0;
+    }
+    .book-add-row input:focus { outline: none; border-color: #8b5cf6; }
+
+    .book-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 4px; border-bottom: 1.5px solid #f1f5f9;
+      cursor: pointer; border-radius: 10px;
+    }
+    .book-row:hover { background: #faf5ff; }
+    .book-row:last-child { border-bottom: none; }
+    .book-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .book-info { flex: 1; min-width: 0; }
+    .book-title { font-weight: 900; font-size: 0.98rem; color: #2d3748; }
+    .book-meta  { font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-top: 2px; }
+    .book-arrow { color: #cbd5e1; font-weight: 900; }
+    .book-empty { text-align: center; color: #94a3b8; font-size: 0.88rem; font-weight: 700; padding: 16px; line-height: 1.8; }
+
+    /* ─── インタビュー画面 ───────────────────────────────── */
+    .iv-book-title {
+      text-align: center; font-size: 1.05rem; font-weight: 900;
+      color: #6d28d9; background: #faf5ff;
+      border-radius: 14px; padding: 10px; margin-bottom: 12px;
+    }
+    .iv-progress { text-align: center; font-size: 0.8rem; font-weight: 900; color: #94a3b8; margin-bottom: 8px; }
+    .iv-dots { display: flex; justify-content: center; gap: 5px; margin-bottom: 14px; }
+    .iv-dot { width: 10px; height: 10px; border-radius: 999px; background: #e2e8f0; }
+    .iv-dot.now { background: #8b5cf6; transform: scale(1.3); }
+    .iv-dot.ok  { background: #a7f3d0; }
+
+    .iv-q {
+      text-align: center; font-size: 1.15rem; font-weight: 900;
+      color: #2d3748; line-height: 1.7; margin-bottom: 6px;
+    }
+    .iv-hint { text-align: center; font-size: 0.78rem; color: #94a3b8; font-weight: 700; margin-bottom: 12px; line-height: 1.6; }
+    .iv-answer {
+      width: 100%; min-height: 96px;
+      border: 2.5px solid #e2e8f0; border-radius: 14px;
+      padding: 12px; font-family: inherit;
+      font-size: 1.05rem; font-weight: 700; color: #2d3748;
+      line-height: 1.7; resize: vertical;
+    }
+    .iv-answer:focus { outline: none; border-color: #8b5cf6; }
+    .iv-nav { display: flex; gap: 8px; margin-top: 12px; }
+    .iv-nav .btn { flex: 1; }
+    .iv-note { text-align: center; font-size: 0.76rem; color: #94a3b8; font-weight: 700; margin-top: 10px; line-height: 1.6; }
+
+    /* ─── せっけいず（設計図）画面 ────────────────────────── */
+    .bp-section { margin-bottom: 16px; }
+    .bp-label {
+      display: inline-block;
+      font-size: 0.8rem; font-weight: 900; color: white;
+      border-radius: 999px; padding: 5px 14px; margin-bottom: 8px;
+    }
+    .bp-label.hajime { background: #f59e0b; }
+    .bp-label.naka   { background: #8b5cf6; }
+    .bp-label.owari  { background: #10b981; }
+    .bp-item {
+      background: #f8fafc; border-radius: 12px;
+      padding: 10px 12px; margin-bottom: 6px;
+    }
+    .bp-q { font-size: 0.72rem; font-weight: 800; color: #94a3b8; margin-bottom: 3px; }
+    .bp-a { font-size: 0.95rem; font-weight: 800; color: #2d3748; line-height: 1.7; }
+    .bp-starter {
+      font-size: 0.8rem; font-weight: 700; color: #6d28d9;
+      background: #faf5ff; border-left: 4px solid #c4b5fd;
+      border-radius: 0 10px 10px 0;
+      padding: 8px 10px; margin-bottom: 8px; line-height: 1.7;
+    }
+    .bp-empty { font-size: 0.82rem; color: #cbd5e1; font-weight: 700; padding: 4px 2px 10px; }
+    .bp-tip {
+      background: #fffbeb; border: 2px dashed #fde68a; border-radius: 12px;
+      padding: 10px 12px; font-size: 0.8rem; font-weight: 700; color: #92400e;
+      line-height: 1.7; margin-top: 8px;
+    }
+
+    /* 画面の切りかえ */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .tab-row { display: flex; gap: 8px; margin-top: 16px; }
+    .tab-btn {
+      flex: 1; border: 2.5px solid #e2e8f0; border-radius: 999px;
+      background: white; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 0.9rem;
+      padding: 10px; color: #94a3b8;
+    }
+    .tab-btn.on { border-color: #8b5cf6; background: #faf5ff; color: #6d28d9; }
+
+    .del-link {
+      display: block; text-align: center; margin-top: 14px;
+      background: none; border: none; cursor: pointer;
+      font-family: inherit; font-size: 0.75rem; font-weight: 700; color: #cbd5e1;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a class="back-btn" id="back-btn" href="../../">← もどる</a>
+    <h1>💬 ほんの インタビュー</h1>
+    <p>よんだ ほんの おはなしを しよう</p>
+  </div>
+
+  <div class="wrap">
+
+    <!-- ═══ 画面1：本の一覧 ═══ -->
+    <div class="screen active" id="screen-list">
+      <div class="card">
+        <h2>📕 よんだ ほんを とうろく</h2>
+        <div class="book-add-row">
+          <input type="text" id="new-title" placeholder="ほんの だいめい" autocomplete="off">
+          <button class="btn btn-main" id="btn-add">＋</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>📚 ほんの リスト</h2>
+        <div id="book-list"></div>
+      </div>
+    </div>
+
+    <!-- ═══ 画面2：本の詳細（インタビュー／せっけいず） ═══ -->
+    <div class="screen" id="screen-book">
+      <div class="tab-row">
+        <button class="tab-btn on" id="tab-iv">🎤 インタビュー</button>
+        <button class="tab-btn" id="tab-bp">📝 かんそうぶんの せっけいず</button>
+      </div>
+
+      <!-- インタビュー -->
+      <div id="pane-iv">
+        <div class="card">
+          <div class="iv-book-title" id="iv-book-title"></div>
+          <div class="iv-progress" id="iv-progress"></div>
+          <div class="iv-dots" id="iv-dots"></div>
+          <div class="iv-q" id="iv-q"></div>
+          <div class="iv-hint" id="iv-hint"></div>
+          <textarea class="iv-answer" id="iv-answer" placeholder="こたえを かいてね（おうちのひとが かいても OK）"></textarea>
+          <div class="iv-nav">
+            <button class="btn btn-sub" id="iv-prev">← まえ</button>
+            <button class="btn btn-main" id="iv-next">つぎ →</button>
+          </div>
+          <div class="iv-note">ぜんぶ こたえなくても だいじょうぶ。<br>「ことばに して はなす」だけでも りっぱな べんきょうだよ</div>
+        </div>
+      </div>
+
+      <!-- せっけいず -->
+      <div id="pane-bp" style="display:none">
+        <div class="card">
+          <h2>📝 かんそうぶんの せっけいず</h2>
+          <div id="bp-body"></div>
+          <div class="bp-tip">💡 おうちのひとへ：この設計図の順番どおりに、お子さんの言葉をつなげていくと感想文になります。1・2年生は800字以内（原稿用紙2枚）。あらすじは短く、「すきなところ＋自分の気持ち・経験」を厚めにすると良い感想文になります。</div>
+        </div>
+      </div>
+
+      <button class="del-link" id="btn-del">この ほんを リストから けす</button>
+    </div>
+
+  </div>
+
+  <script src="../../shared/points.js"></script>
+  <script>
+    /* ════════════════════════════════════════════════════
+     *  ほんの インタビュー アプリ（読書感想文づくり・本のおはなし用）
+     *  ・読んだ本を登録して、質問に1つずつ答えていく
+     *  ・答えは自動保存。あとから何度でも直せる
+     *  ・「せっけいず」タブで、答えが感想文の
+     *    はじめ／なか／おわり の順に並ぶ → 原稿用紙に書くときのお手本
+     *  ・ふだんの本読みのおしゃべりにも使える（全部答えなくてOK）
+     *  ・ポイントは付けない（宿題は自分のやるべき課題のため）
+     * ════════════════════════════════════════════════════ */
+
+    const BOOKS_KEY = 'kansobun_books';
+
+    // インタビューの質問（感想文の組み立て順）
+    // part: はじめ(hajime)／なか(naka)／おわり(owari) のどこで使うか
+    const QUESTIONS = [
+      { id: 'erabi',   part: 'hajime', q: 'この ほんを えらんだのは どうして？',
+        hint: 'ひょうしが すてきだった？ だいめいが きになった？ だれかの おすすめ？' },
+      { id: 'arasuji', part: 'naka', q: 'どんな おはなし だった？',
+        hint: 'ひとことで OK。「◯◯が △△する おはなし」みたいに' },
+      { id: 'dare',    part: 'naka', q: 'だれが でてきた？ どんな ひと（どうぶつ）だった？',
+        hint: 'しゅじんこうの なまえと、どんな せいかくか' },
+      { id: 'suki',    part: 'naka', q: 'いちばん こころに のこった ところは どこ？',
+        hint: 'どきどきした ところ、わらった ところ、びっくりした ところ' },
+      { id: 'kimochi', part: 'naka', q: 'そのとき どんな きもちに なった？ どうして？',
+        hint: 'うれしい・かなしい・すごいなあ・ドキドキ…「どうして そう おもったか」も きいてみて' },
+      { id: 'jibun',   part: 'naka', q: 'もし じぶんだったら どうする？',
+        hint: 'しゅじんこうと おなじように する？ ちがうことを する？' },
+      { id: 'nita',    part: 'naka', q: 'じぶんにも にたような ことが あった？',
+        hint: 'おはなしと にている じぶんの おもいでが あれば' },
+      { id: 'korekara', part: 'owari', q: 'この ほんを よんで、やってみたいと おもったことは？',
+        hint: '「これから ◯◯したいです」で かんそうぶんの おわりに なるよ' },
+    ];
+
+    // 設計図で見出しにつかう区分
+    const PARTS = [
+      { id: 'hajime', label: '🟡 はじめ', cls: 'hajime',
+        starter: '「わたしは『（だいめい）』という ほんを よみました。」から はじめよう' },
+      { id: 'naka', label: '🟣 なか', cls: 'naka',
+        starter: '「いちばん こころに のこったのは …」「わたしだったら …」と つなげよう' },
+      { id: 'owari', label: '🟢 おわり', cls: 'owari',
+        starter: '「この ほんを よんで、…と おもいました。」で しめくくろう' },
+    ];
+
+    let currentBookId = null;   // いま開いている本
+    let qIndex = 0;             // いま表示している質問の番号
+
+    /* ─── 保存まわり ─── */
+    function readBooks() {
+      try { return JSON.parse(localStorage.getItem(BOOKS_KEY) || '[]'); }
+      catch (e) { return []; }
+    }
+    function writeBooks(b) { localStorage.setItem(BOOKS_KEY, JSON.stringify(b)); }
+    function currentBook() { return readBooks().find(b => b.id === currentBookId) || null; }
+
+    /** 本の答えを1問ぶん保存する。 */
+    function saveAnswer(qid, text) {
+      const books = readBooks();
+      const b = books.find(x => x.id === currentBookId);
+      if (!b) return;
+      b.answers = b.answers || {};
+      b.answers[qid] = text.trim();
+      b.updatedAt = new Date().toISOString();
+      writeBooks(books);
+    }
+
+    /* ─── 画面の切りかえ ─── */
+    function showScreen(name) {
+      document.getElementById('screen-list').classList.toggle('active', name === 'list');
+      document.getElementById('screen-book').classList.toggle('active', name === 'book');
+      // ヘッダーの「もどる」の行き先：一覧ではランチャー、本の中では一覧へ
+      const back = document.getElementById('back-btn');
+      if (name === 'book') {
+        back.removeAttribute('href');
+        back.onclick = () => { saveCurrentAnswer(); showScreen('list'); renderList(); };
+      } else {
+        back.setAttribute('href', '../../');
+        back.onclick = null;
+      }
+      window.scrollTo(0, 0);
+    }
+
+    /* ─── 本の一覧 ─── */
+    function renderList() {
+      const books = readBooks();
+      const list = document.getElementById('book-list');
+      if (books.length === 0) {
+        list.innerHTML = '<div class="book-empty">まだ ほんが ないよ。<br>よんだ ほんの だいめいを うえに かいて ＋ を おそう！</div>';
+        return;
+      }
+      list.innerHTML = books.map(b => {
+        const n = Object.values(b.answers || {}).filter(Boolean).length;
+        return `
+          <div class="book-row" data-id="${b.id}">
+            <span class="book-icon">📖</span>
+            <div class="book-info">
+              <div class="book-title">${escHtml(b.title)}</div>
+              <div class="book-meta">こたえた しつもん：${n} / ${QUESTIONS.length}</div>
+            </div>
+            <span class="book-arrow">›</span>
+          </div>`;
+      }).join('');
+      list.querySelectorAll('.book-row').forEach(r =>
+        r.addEventListener('click', () => openBook(r.dataset.id)));
+    }
+
+    // 本の追加
+    document.getElementById('btn-add').addEventListener('click', addBook);
+    document.getElementById('new-title').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addBook();
+    });
+    function addBook() {
+      const input = document.getElementById('new-title');
+      const title = input.value.trim();
+      if (!title) return;
+      const books = readBooks();
+      books.unshift({
+        id: 'b' + Date.now(),
+        title,
+        answers: {},
+        updatedAt: new Date().toISOString(),
+      });
+      writeBooks(books);
+      input.value = '';
+      renderList();
+    }
+
+    /* ─── 本を開く ─── */
+    function openBook(id) {
+      currentBookId = id;
+      qIndex = 0;
+      // まだ答えていない最初の質問から始める（続きからやる感じに）
+      const b = currentBook();
+      const firstEmpty = QUESTIONS.findIndex(q => !(b.answers || {})[q.id]);
+      if (firstEmpty > 0) qIndex = firstEmpty;
+      switchTab('iv');
+      renderInterview();
+      showScreen('book');
+    }
+
+    /* ─── タブ切りかえ ─── */
+    document.getElementById('tab-iv').addEventListener('click', () => { saveCurrentAnswer(); switchTab('iv'); renderInterview(); });
+    document.getElementById('tab-bp').addEventListener('click', () => { saveCurrentAnswer(); switchTab('bp'); renderBlueprint(); });
+    function switchTab(t) {
+      document.getElementById('tab-iv').classList.toggle('on', t === 'iv');
+      document.getElementById('tab-bp').classList.toggle('on', t === 'bp');
+      document.getElementById('pane-iv').style.display = t === 'iv' ? 'block' : 'none';
+      document.getElementById('pane-bp').style.display = t === 'bp' ? 'block' : 'none';
+    }
+
+    /* ─── インタビュー描画 ─── */
+    function renderInterview() {
+      const b = currentBook();
+      if (!b) return;
+      const q = QUESTIONS[qIndex];
+      document.getElementById('iv-book-title').textContent = '📖 ' + b.title;
+      document.getElementById('iv-progress').textContent = `しつもん ${qIndex + 1} / ${QUESTIONS.length}`;
+      document.getElementById('iv-dots').innerHTML = QUESTIONS.map((qq, i) => {
+        const answered = (b.answers || {})[qq.id];
+        return `<span class="iv-dot ${i === qIndex ? 'now' : (answered ? 'ok' : '')}"></span>`;
+      }).join('');
+      document.getElementById('iv-q').textContent = q.q;
+      document.getElementById('iv-hint').textContent = '💡 ' + q.hint;
+      document.getElementById('iv-answer').value = (b.answers || {})[q.id] || '';
+      document.getElementById('iv-prev').style.visibility = qIndex === 0 ? 'hidden' : 'visible';
+      document.getElementById('iv-next').textContent =
+        qIndex === QUESTIONS.length - 1 ? '✅ おわる（せっけいずを みる）' : 'つぎ →';
+    }
+
+    /** いま表示中の答えを保存する。 */
+    function saveCurrentAnswer() {
+      if (!currentBookId) return;
+      const ta = document.getElementById('iv-answer');
+      if (document.getElementById('pane-iv').style.display !== 'none') {
+        saveAnswer(QUESTIONS[qIndex].id, ta.value);
+      }
+    }
+
+    document.getElementById('iv-prev').addEventListener('click', () => {
+      saveCurrentAnswer();
+      if (qIndex > 0) { qIndex--; renderInterview(); }
+    });
+    document.getElementById('iv-next').addEventListener('click', () => {
+      saveCurrentAnswer();
+      if (qIndex < QUESTIONS.length - 1) {
+        qIndex++;
+        renderInterview();
+      } else {
+        // 最後の質問がおわったら 設計図タブへ
+        switchTab('bp');
+        renderBlueprint();
+      }
+    });
+
+    /* ─── せっけいず描画 ─── */
+    function renderBlueprint() {
+      const b = currentBook();
+      if (!b) return;
+      const answers = b.answers || {};
+      let html = '';
+      PARTS.forEach(part => {
+        const qs = QUESTIONS.filter(q => q.part === part.id);
+        const answered = qs.filter(q => answers[q.id]);
+        html += `<div class="bp-section">
+          <span class="bp-label ${part.cls}">${part.label}</span>
+          <div class="bp-starter">✏️ ${part.starter}</div>`;
+        if (answered.length === 0) {
+          html += `<div class="bp-empty">まだ こたえが ないよ（インタビューで きいてみよう）</div>`;
+        } else {
+          answered.forEach(q => {
+            html += `
+              <div class="bp-item">
+                <div class="bp-q">${q.q}</div>
+                <div class="bp-a">${escHtml(answers[q.id])}</div>
+              </div>`;
+          });
+        }
+        html += `</div>`;
+      });
+      document.getElementById('bp-body').innerHTML = html;
+    }
+
+    /* ─── 本の削除 ─── */
+    document.getElementById('btn-del').addEventListener('click', () => {
+      const b = currentBook();
+      if (!b) return;
+      if (!confirm(`「${b.title}」を リストから けしますか？（こたえも きえます）`)) return;
+      writeBooks(readBooks().filter(x => x.id !== currentBookId));
+      currentBookId = null;
+      showScreen('list');
+      renderList();
+    });
+
+    /** XSS 対策：HTML 特殊文字をエスケープする */
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    renderList();
+  </script>
+</body>
+</html>

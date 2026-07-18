@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>いちぎょう にっき</title>
+  <style>
+    /* ─── 全体 ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(160deg, #fef9c3 0%, #fce7f3 100%);
+      min-height: 100dvh;
+      padding-bottom: 40px;
+    }
+    .header {
+      background: linear-gradient(135deg, #f59e0b, #f43f5e);
+      color: white;
+      text-align: center;
+      padding: 20px 16px 16px;
+      box-shadow: 0 4px 16px rgba(245,158,11,0.4);
+      position: relative;
+    }
+    .header h1 { font-size: 1.4rem; font-weight: 900; }
+    .header p  { font-size: 0.82rem; opacity: 0.9; margin-top: 2px; }
+    .back-btn {
+      position: absolute; left: 12px; top: 16px;
+      background: rgba(255,255,255,0.25); color: white;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 20px; padding: 6px 12px;
+      font-size: 0.78rem; text-decoration: none;
+    }
+
+    .wrap { max-width: 520px; margin: 0 auto; padding: 0 14px; }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .card h2 {
+      font-size: 1rem; font-weight: 900; color: #2d3748;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    /* ─── きょうの入力 ──────────────────────────────────── */
+    .date-label { font-size: 1.05rem; font-weight: 900; color: #b45309; }
+
+    .weather-row { display: flex; gap: 8px; margin: 10px 0; }
+    .weather-btn {
+      flex: 1; font-size: 1.5rem; padding: 8px 0;
+      border: 2.5px solid #e2e8f0; border-radius: 14px;
+      background: #f8fafc; cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .weather-btn:active { transform: scale(0.92); }
+    .weather-btn.sel { border-color: #f59e0b; background: #fffbeb; box-shadow: 0 0 0 3px rgba(245,158,11,0.2); }
+
+    textarea {
+      width: 100%; min-height: 88px;
+      border: 2.5px solid #e2e8f0; border-radius: 14px;
+      padding: 12px; font-family: inherit;
+      font-size: 1.05rem; font-weight: 700; color: #2d3748;
+      line-height: 1.7; resize: vertical;
+    }
+    textarea:focus { outline: none; border-color: #f59e0b; }
+    .hint { font-size: 0.76rem; color: #94a3b8; font-weight: 700; margin-top: 6px; }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .btn {
+      border: none; border-radius: 999px; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 0.92rem;
+      padding: 12px 18px;
+      transition: transform 0.1s;
+    }
+    .btn:active { transform: scale(0.95); }
+    .btn-save { background: linear-gradient(135deg, #f59e0b, #f43f5e); color: white; flex: 1; }
+    .btn-interview { background: #ede9fe; color: #7c3aed; }
+    .btn-enikki { background: #e0f2fe; color: #0369a1; }
+    .saved-msg {
+      text-align: center; font-weight: 900; color: #047857;
+      background: #ecfdf5; border-radius: 12px; padding: 10px;
+      margin-top: 10px; font-size: 0.9rem; display: none;
+    }
+
+    /* ─── これまでのにっき一覧 ────────────────────────────── */
+    .day-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 2px; border-bottom: 1.5px solid #f1f5f9;
+      cursor: pointer; border-radius: 8px;
+    }
+    .day-row:hover { background: #fffbeb; }
+    .day-row:last-child { border-bottom: none; }
+    .day-date { width: 4.8em; flex-shrink: 0; font-weight: 900; font-size: 0.85rem; color: #475569; padding-top: 2px; }
+    .day-date .dow { font-size: 0.68rem; color: #94a3b8; }
+    .day-date .dow.sat { color: #3b82f6; }
+    .day-date .dow.sun { color: #ef4444; }
+    .day-weather { font-size: 1.1rem; flex-shrink: 0; }
+    .day-text { flex: 1; font-size: 0.88rem; font-weight: 700; color: #2d3748; line-height: 1.6; }
+    .day-text.empty { color: #cbd5e1; }
+    .day-edit { font-size: 0.72rem; color: #94a3b8; flex-shrink: 0; padding-top: 3px; }
+
+    .progress-note {
+      font-size: 0.8rem; font-weight: 800; color: #b45309;
+      background: #fffbeb; border-radius: 10px; padding: 8px 12px;
+      margin-bottom: 8px; text-align: center;
+    }
+
+    /* ─── インタビューモーダル ────────────────────────────── */
+    .overlay {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(15,23,42,0.5); padding: 16px;
+      animation: fade 0.25s ease-out;
+      overflow-y: auto;
+    }
+    .modal {
+      background: white; border-radius: 24px;
+      padding: 22px 20px; max-width: 400px; width: 100%;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      animation: pop 0.4s cubic-bezier(0.18, 0.9, 0.3, 1.3);
+      max-height: 92dvh; overflow-y: auto;
+    }
+    .modal h3 { font-size: 1.05rem; font-weight: 900; color: #7c3aed; text-align: center; margin-bottom: 4px; }
+    .modal .m-sub { font-size: 0.78rem; color: #94a3b8; font-weight: 700; text-align: center; margin-bottom: 12px; line-height: 1.6; }
+    .q-block { margin-bottom: 12px; }
+    .q-label { font-size: 0.9rem; font-weight: 900; color: #2d3748; margin-bottom: 5px; }
+    .q-block input {
+      width: 100%; border: 2px solid #e2e8f0; border-radius: 12px;
+      padding: 10px 12px; font-family: inherit; font-size: 0.95rem; font-weight: 700;
+    }
+    .q-block input:focus { outline: none; border-color: #a78bfa; }
+    .modal .btn-row { justify-content: center; }
+    .btn-cancel { background: #f1f5f9; color: #64748b; }
+
+    /* ─── えにっき風プレビュー ───────────────────────────── */
+    .enikki-sheet {
+      border: 2.5px solid #475569; border-radius: 6px;
+      padding: 14px; background: #fffdf5;
+    }
+    .enikki-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .enikki-date { font-weight: 900; font-size: 0.95rem; color: #2d3748; }
+    .enikki-weather { font-size: 1.3rem; }
+    .enikki-canvas {
+      border: 2px solid #475569; border-radius: 10px;
+      height: 150px; background: white;
+      display: flex; align-items: center; justify-content: center;
+      color: #cbd5e1; font-weight: 800; font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+    .enikki-line {
+      border-bottom: 2.5px dashed #94a3b8;
+      min-height: 2.1em; line-height: 2.1em;
+      font-size: 1.05rem; font-weight: 700; color: #2d3748;
+    }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a class="back-btn" href="../../">← もどる</a>
+    <h1>📔 いちぎょう にっき</h1>
+    <p>きょうの ことを ひとこと のこそう</p>
+  </div>
+
+  <div class="wrap">
+
+    <!-- きょうの入力（編集対象の日付が変わることもある） -->
+    <div class="card">
+      <h2>✏️ <span class="date-label" id="edit-date-label"></span> の にっき</h2>
+      <div class="weather-row" id="weather-row"></div>
+      <textarea id="diary-text" placeholder="きょうは なにを したかな？（ひとこと で いいよ）"></textarea>
+      <div class="hint">💡 かくのが むずかしい ひは、おうちのひとに インタビューして もらって かいても いいよ</div>
+      <div class="btn-row">
+        <button class="btn btn-interview" id="btn-interview">🎤 インタビューで かく</button>
+        <button class="btn btn-enikki" id="btn-enikki">🖼 えにっきふうに みる</button>
+        <button class="btn btn-save" id="btn-save">📔 きろく する</button>
+      </div>
+      <div class="saved-msg" id="saved-msg">🌟 きろく できたよ！</div>
+    </div>
+
+    <!-- これまでの日記一覧 -->
+    <div class="card">
+      <h2>📚 なつやすみの きろく</h2>
+      <div class="progress-note" id="progress-note"></div>
+      <div id="day-list"></div>
+    </div>
+
+  </div>
+
+  <script src="../../shared/points.js"></script>
+  <script>
+    /* ════════════════════════════════════════════════════
+     *  いちぎょう にっき アプリ
+     *  ・夏休み（7/18〜8/31）の毎日を 1行ずつ記録する
+     *  ・書けない日は「インタビュー」ボタンで おうちの人が
+     *    質問しながら 代わりに記録してあげられる
+     *  ・「えにっきふう」プレビューで 紙に書くときのお手本になる
+     *  ・過去の日をタップすると あとから書ける（記録は財産！）
+     *  ・ポイントは付けない（宿題は自分のやるべき課題のため）
+     * ════════════════════════════════════════════════════ */
+
+    const NIKKI_KEY = 'nikki_2026';
+    const START = '2026-07-18';   // 夏休み初日
+    const END   = '2026-08-31';   // 夏休み最終日
+
+    const WEATHERS = ['☀️', '⛅', '☁️', '🌧️', '⛈️'];
+
+    // インタビューの質問（おうちの人が聞いてあげる）
+    const QUESTIONS = [
+      { id: 'q1', label: '① きょうは なにを した？' },
+      { id: 'q2', label: '② いちばん たのしかった（or びっくりした）ことは？' },
+      { id: 'q3', label: '③ どんな きもち だった？' },
+      { id: 'q4', label: '④ あしたは なにが したい？（かかなくても OK）' },
+    ];
+
+    // いま編集している日付（一覧から過去の日を選ぶと変わる）
+    let editDate = null;
+
+    /** 保存データを読む。 */
+    function readData() {
+      try { return JSON.parse(localStorage.getItem(NIKKI_KEY) || '{}'); }
+      catch (e) { return {}; }
+    }
+    function writeData(d) { localStorage.setItem(NIKKI_KEY, JSON.stringify(d)); }
+
+    /** きょうの日付「2026-07-18」形式。 */
+    function todayStr() {
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    }
+
+    /** 夏休みの日付一覧（7/18〜8/31、きょうまで）を新しい順で返す。 */
+    function summerDates() {
+      const dates = [];
+      const today = todayStr();
+      const d = new Date(START + 'T00:00:00');
+      const end = new Date(END + 'T00:00:00');
+      const p = n => String(n).padStart(2, '0');
+      while (d <= end) {
+        const s = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+        if (s > today) break;   // 未来の日はまだ出さない
+        dates.push(s);
+        d.setDate(d.getDate() + 1);
+      }
+      return dates.reverse();
+    }
+
+    /** 「7/18（土）」のような表示用の日付文字を作る。 */
+    function dateLabel(s) {
+      const d = new Date(s + 'T00:00:00');
+      const dow = ['にち', 'げつ', 'か', 'すい', 'もく', 'きん', 'ど'][d.getDay()];
+      return `${d.getMonth() + 1}/${d.getDate()}（${dow}）`;
+    }
+
+    /* ─── 入力欄の描画 ─── */
+    function renderEditor() {
+      const data = readData();
+      const e = data[editDate] || {};
+      document.getElementById('edit-date-label').textContent = dateLabel(editDate);
+      document.getElementById('diary-text').value = e.text || '';
+
+      const row = document.getElementById('weather-row');
+      row.innerHTML = WEATHERS.map(w =>
+        `<button class="weather-btn ${e.weather === w ? 'sel' : ''}" data-w="${w}">${w}</button>`).join('');
+      row.querySelectorAll('.weather-btn').forEach(b =>
+        b.addEventListener('click', () => {
+          const d = readData();
+          if (!d[editDate]) d[editDate] = {};
+          d[editDate].weather = (d[editDate].weather === b.dataset.w) ? null : b.dataset.w;
+          writeData(d);
+          renderEditor();
+        }));
+    }
+
+    /* ─── 一覧の描画 ─── */
+    function renderList() {
+      const data = readData();
+      const dates = summerDates();
+      const written = dates.filter(d => data[d] && data[d].text).length;
+      document.getElementById('progress-note').textContent =
+        `📝 ${written} にちぶん かけたよ（なつやすみ ${dates.length} にちめ）`;
+
+      document.getElementById('day-list').innerHTML = dates.map(s => {
+        const e = data[s] || {};
+        const d = new Date(s + 'T00:00:00');
+        const dowIdx = d.getDay();
+        const dow = ['にち', 'げつ', 'か', 'すい', 'もく', 'きん', 'ど'][dowIdx];
+        const dowCls = dowIdx === 0 ? 'sun' : (dowIdx === 6 ? 'sat' : '');
+        return `
+          <div class="day-row" data-date="${s}">
+            <div class="day-date">${d.getMonth() + 1}/${d.getDate()} <span class="dow ${dowCls}">（${dow}）</span></div>
+            <div class="day-weather">${e.weather || ''}</div>
+            <div class="day-text ${e.text ? '' : 'empty'}">${e.text ? escHtml(e.text) : 'まだ かいてないよ'}</div>
+            <div class="day-edit">✏️</div>
+          </div>`;
+      }).join('');
+
+      document.querySelectorAll('.day-row').forEach(r =>
+        r.addEventListener('click', () => {
+          editDate = r.dataset.date;
+          renderEditor();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }));
+    }
+
+    /* ─── 保存 ─── */
+    document.getElementById('btn-save').addEventListener('click', () => {
+      const data = readData();
+      if (!data[editDate]) data[editDate] = {};
+      data[editDate].text = document.getElementById('diary-text').value.trim();
+      writeData(data);
+      renderList();
+      const msg = document.getElementById('saved-msg');
+      msg.style.display = 'block';
+      setTimeout(() => { msg.style.display = 'none'; }, 1800);
+    });
+
+    /* ─── インタビューモーダル ─── */
+    document.getElementById('btn-interview').addEventListener('click', () => {
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `
+        <div class="modal">
+          <h3>🎤 インタビュー</h3>
+          <div class="m-sub">おうちのひとが きいて、こたえを かいてあげよう。<br>あとで「にっきの ぶんに する」を おすと まとまるよ。</div>
+          ${QUESTIONS.map(q => `
+            <div class="q-block">
+              <div class="q-label">${q.label}</div>
+              <input type="text" id="${q.id}" autocomplete="off">
+            </div>`).join('')}
+          <div class="btn-row">
+            <button class="btn btn-cancel" id="iv-cancel">やめる</button>
+            <button class="btn btn-save" id="iv-done">にっきの ぶんに する</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      overlay.querySelector('#iv-cancel').addEventListener('click', () => overlay.remove());
+      overlay.querySelector('#iv-done').addEventListener('click', () => {
+        // 答えをつないで日記の文にする（空欄はとばす）
+        const parts = QUESTIONS.map(q => overlay.querySelector('#' + q.id).value.trim()).filter(Boolean);
+        if (parts.length) {
+          const joined = parts.map(p => /[。！？]$/.test(p) ? p : p + '。').join('');
+          const ta = document.getElementById('diary-text');
+          ta.value = (ta.value.trim() ? ta.value.trim() + ' ' : '') + joined;
+        }
+        overlay.remove();
+      });
+    });
+
+    /* ─── えにっき風プレビュー ─── */
+    document.getElementById('btn-enikki').addEventListener('click', () => {
+      const data = readData();
+      const e = data[editDate] || {};
+      const text = document.getElementById('diary-text').value.trim() || e.text || '';
+
+      // 文を だいたい18文字ずつの行に分ける（絵日記の行のイメージ）
+      const lines = [];
+      let rest = text;
+      while (rest.length > 0 && lines.length < 4) {
+        lines.push(rest.slice(0, 18));
+        rest = rest.slice(18);
+      }
+      while (lines.length < 3) lines.push('');
+
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `
+        <div class="modal">
+          <h3>🖼 えにっきに すると こんなかんじ</h3>
+          <div class="m-sub">かみの えにっきに かくときの おてほんだよ</div>
+          <div class="enikki-sheet">
+            <div class="enikki-head">
+              <span class="enikki-date">${dateLabel(editDate)}</span>
+              <span class="enikki-weather">${e.weather || ''}</span>
+            </div>
+            <div class="enikki-canvas">🎨 ここに えを かこう！</div>
+            ${lines.map(l => `<div class="enikki-line">${escHtml(l)}</div>`).join('')}
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-cancel" id="ek-close">とじる</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#ek-close').addEventListener('click', () => overlay.remove());
+    });
+
+    /** XSS 対策：HTML 特殊文字をエスケープする */
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // 起動：きょうの日付を編集対象にする
+    editDate = todayStr();
+    if (editDate < START) editDate = START;
+    if (editDate > END) editDate = END;
+    renderEditor();
+    renderList();
+  </script>
+</body>
+</html>

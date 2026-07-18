@@ -64,6 +64,122 @@
     .points-pill:active { transform: scale(0.96); }
     .points-pill .pts-num { font-size: 1.25rem; }
 
+    /* ─── なつやすみの しゅくだい パネル（2026年 夏限定） ────── */
+    .shw-panel {
+      margin: 18px 14px 0;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.10);
+      overflow: hidden;
+      border: 2.5px solid #7cc7ff;
+    }
+    .shw-head {
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      color: white;
+      font-weight: 900;
+      font-size: 1rem;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .shw-head .shw-progress {
+      margin-left: auto;
+      font-size: 0.82rem;
+      background: rgba(255,255,255,0.25);
+      border-radius: 999px;
+      padding: 4px 12px;
+      white-space: nowrap;
+    }
+    .shw-head .shw-arrow { font-size: 0.8rem; }
+    /* しめきりごとの小見出し（8/24まで・8/31まで など） */
+    .shw-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px 7px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 0.8rem;
+      font-weight: 900;
+      border-bottom: 1.5px solid #dbeafe;
+    }
+    .shw-group .shw-days {
+      margin-left: auto;
+      font-size: 0.74rem;
+      color: #dc2626;
+      background: #fee2e2;
+      border-radius: 999px;
+      padding: 3px 10px;
+    }
+    .shw-group .shw-days.ok { color: #276749; background: #e6f9ee; }
+    .shw-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-bottom: 1.5px solid #e8f2ff;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .shw-item:active, .shw-item:hover { background: #f0f9ff; }
+    .shw-item.done { opacity: 0.62; background: #f7fdf9; }
+    .shw-check { font-size: 1.5rem; flex-shrink: 0; width: 1.7rem; text-align: center; }
+    .shw-info { flex: 1; min-width: 0; }
+    .shw-name { font-weight: 800; font-size: 0.92rem; color: #2d3748; }
+    .shw-item.done .shw-name { text-decoration: line-through; }
+    .shw-note { font-size: 0.78rem; color: #64748b; font-weight: 700; margin-top: 2px; }
+    /* チップの無い宿題だけ 行ぜんたいがタップできる */
+    .shw-item.has-subs { cursor: default; }
+    .shw-item.has-subs:active, .shw-item.has-subs:hover { background: inherit; }
+    /* 「3/21」のような小さな進みぐあい表示 */
+    .shw-mini {
+      margin-left: 8px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      color: #6366f1;
+      background: #eef2ff;
+      border-radius: 999px;
+      padding: 2px 8px;
+      vertical-align: middle;
+    }
+    /* 小さなチップ（ドリルのページ番号・えにっき1まいめ など） */
+    .shw-subrow { display: flex; align-items: flex-start; gap: 8px; margin-top: 7px; }
+    .shw-sublabel {
+      font-size: 0.72rem; font-weight: 900; color: #475569;
+      flex-shrink: 0; width: 4.2em; padding-top: 5px;
+    }
+    .shw-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .shw-chip {
+      font-size: 0.8rem; font-weight: 800;
+      border-radius: 9px; padding: 5px 9px; min-width: 2.1em; text-align: center;
+      background: #eef2f7; color: #64748b; border: 1.5px solid #dbe3ee;
+      cursor: pointer; transition: transform 0.1s, background 0.15s;
+      user-select: none;
+    }
+    .shw-chip:active { transform: scale(0.92); }
+    .shw-chip.done { background: #d1fae5; color: #276749; border-color: #7fdcae; }
+    .shw-chip.done::before { content: '✓'; margin-right: 3px; }
+    .shw-alldone {
+      text-align: center;
+      padding: 12px 14px;
+      font-weight: 900;
+      color: #276749;
+      background: #f0fff4;
+      font-size: 0.95rem;
+    }
+    .shw-footnote {
+      padding: 9px 14px;
+      font-size: 0.74rem;
+      color: #92400e;
+      background: #fffbeb;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
     /* ─── きょうの しゅくだい パネル ─────────────────────── */
     .hw-panel {
       margin: 18px 14px 0;
@@ -233,6 +349,7 @@
   </div>
 
   <div id="loading">⏳</div>
+  <div id="summer-hw-panel"></div>
   <div id="homework-panel"></div>
   <div id="app-container" style="display:none"></div>
 
@@ -364,6 +481,223 @@
         </div>`;
     }
 
+    /* ════════════════════════════════════════════════════════
+     *  なつやすみの しゅくだい（2026年 夏限定の TODO リスト）
+     *  ・学校からもらった宿題プリントの内容を そのまま一覧にしたもの
+     *  ・行をタップすると ✅（もう一度タップで もどる）
+     *  ・チェックは localStorage に保存される（この端末の中だけ）
+     *  ・9/7 以降（あさがお持参期間が終わったら）は自動で表示しない
+     * ════════════════════════════════════════════════════════ */
+    const SUMMER_HW_KEY = 'kids_summer_hw_2026';
+
+    /** 「1」〜「n」の数字チップを作るヘルパー（ドリルのページ番号など用）。 */
+    function summerChips(prefix, n) {
+      const arr = [];
+      for (let i = 1; i <= n; i++) arr.push({ id: `${prefix}${i}`, label: String(i) });
+      return arr;
+    }
+
+    // しめきりグループごとの宿題一覧（1年2組の夏休みプリントより）
+    // subs があるものは 小さなチップを1つずつタップしてすすめる。
+    // チップが全部おわると その宿題が自動で ✅ になる。
+    const SUMMER_HW_GROUPS = [
+      {
+        label: '📮 8/24（げつ）までに だすもの',
+        deadline: '2026-08-24',
+        items: [
+          { id: 'drill', name: 'なつどりる', note: 'まるつけ・なおしまで やる',
+            subs: [
+              { label: 'さんすう',  chips: summerChips('drill_s', 10) },
+              { label: 'こくご',    chips: summerChips('drill_k', 9) },
+              { label: 'せいかつ',  chips: summerChips('drill_se', 2) },
+            ] },
+          { id: 'enikki', name: 'おもいで えにっき', note: '2まい かく',
+            subs: [
+              { label: '', chips: [
+                { id: 'enikki_1', label: '1まいめ' },
+                { id: 'enikki_2', label: '2まいめ' },
+              ] },
+            ] },
+          { id: 'asagao', name: 'あさがおの かんさつ', note: 'みつけたよカード 2まい',
+            subs: [
+              { label: '', chips: [
+                { id: 'asagao_1', label: '1まいめ' },
+                { id: 'asagao_2', label: '2まいめ' },
+              ] },
+            ] },
+          { id: 'kansobun', name: 'どくしょかんそうぶん', note: '800じまで',
+            subs: [
+              { label: '', chips: [
+                { id: 'kansobun_yomu',     label: '①ほんを よむ' },
+                { id: 'kansobun_sitagaki', label: '②したがき' },
+                { id: 'kansobun_siage',    label: '③しあげ' },
+              ] },
+            ] },
+          { id: 'oubo', name: 'じゆうおうぼ：タイタニックごう ちょきんばこ', note: 'たて・よこ・たかさ 25cm いない で つくろう',
+            subs: [
+              { label: '', chips: [
+                { id: 'oubo_design',   label: '①デザインを かんがえる' },
+                { id: 'oubo_zairyo',   label: '②ざいりょう あつめ' },
+                { id: 'oubo_kumitate', label: '③くみたて' },
+                { id: 'oubo_ironuri',  label: '④いろぬり・かざり' },
+                { id: 'oubo_check',    label: '⑤しあげチェック' },
+              ] },
+            ] },
+        ],
+      },
+      {
+        label: '📮 8/31（げつ）までに だすもの',
+        deadline: '2026-08-31',
+        items: [
+          { id: 'seikatsu', name: 'せいかつひょう',      note: 'まいにち ◎○△を つける（さいごまで かけたら ✅）' },
+          { id: 'hamigaki', name: 'はみがき かれんだあ', note: 'まいにち しるしを つける（ぜんぶ うまったら ✅）' },
+          { id: 'marathon', name: 'どくしょまらそん', note: 'ほんを 10さつ いじょう よむ',
+            subs: [
+              { label: 'よんだ ほん', chips: summerChips('marathon_', 10) },
+            ] },
+        ],
+      },
+      {
+        label: '✏️ そのほか',
+        deadline: null,
+        items: [
+          { id: 'jishu', name: 'じしゅがくしゅう', note: 'すきな べんきょうを やってみよう' },
+        ],
+      },
+    ];
+
+    /** その宿題が「できた」かどうか。subs があるものは チップ全部で できた。 */
+    function summerItemDone(it, state) {
+      if (it.subs) return it.subs.every(sg => sg.chips.every(c => state[c.id]));
+      return !!state[it.id];
+    }
+
+    /** チェック状態を読みこむ（無ければ空っぽ）。 */
+    function readSummerHw() {
+      try { return JSON.parse(localStorage.getItem(SUMMER_HW_KEY) || '{}'); }
+      catch (e) { return {}; }
+    }
+
+    /** きょうの日付を「2026-07-18」の形で返す。 */
+    function summerTodayStr() {
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    }
+
+    /** しめきりまでの のこり日数を返す（きょうを含めない）。 */
+    function daysUntil(dateStr) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      return Math.round((new Date(dateStr + 'T00:00:00') - today) / 86400000);
+    }
+
+    /** なつやすみの しゅくだいパネルを描画する。 */
+    function renderSummerHwPanel() {
+      const panel = document.getElementById('summer-hw-panel');
+      // 夏休みが終わったら（9/7以降）は表示しない
+      if (summerTodayStr() > '2026-09-06') { panel.innerHTML = ''; return; }
+
+      const state = readSummerHw();
+      const allItems = SUMMER_HW_GROUPS.flatMap(g => g.items);
+      const doneCount = allItems.filter(it => summerItemDone(it, state)).length;
+      const allDone = doneCount === allItems.length;
+      const collapsed = state._collapsed === true;
+
+      // しめきりグループごとに行を作る
+      let body = '';
+      if (!collapsed) {
+        SUMMER_HW_GROUPS.forEach(g => {
+          // のこり日数バッジ（しめきりが無いグループには出さない）
+          let daysHtml = '';
+          if (g.deadline) {
+            const left = daysUntil(g.deadline);
+            const groupDone = g.items.every(it => summerItemDone(it, state));
+            if (groupDone)       daysHtml = `<span class="shw-days ok">✅ ぜんぶ できた</span>`;
+            else if (left > 1)   daysHtml = `<span class="shw-days">あと ${left}にち</span>`;
+            else if (left === 1) daysHtml = `<span class="shw-days">あした まで！</span>`;
+            else if (left === 0) daysHtml = `<span class="shw-days">きょう まで！</span>`;
+            else                 daysHtml = `<span class="shw-days">しめきり すぎたよ</span>`;
+          }
+          body += `<div class="shw-group">${escHtml(g.label)}${daysHtml}</div>`;
+          g.items.forEach(it => {
+            const done = summerItemDone(it, state);
+
+            // subs があるものは 小さなチップと「3/21」のような進みぐあいを作る
+            let subHtml = '';
+            let miniHtml = '';
+            if (it.subs) {
+              const chips = it.subs.flatMap(sg => sg.chips);
+              const chipDone = chips.filter(c => state[c.id]).length;
+              miniHtml = `<span class="shw-mini">${chipDone}/${chips.length}</span>`;
+              it.subs.forEach(sg => {
+                subHtml += `
+                  <div class="shw-subrow">
+                    ${sg.label ? `<span class="shw-sublabel">${escHtml(sg.label)}</span>` : ''}
+                    <div class="shw-chips">
+                      ${sg.chips.map(c => `
+                        <span class="shw-chip ${state[c.id] ? 'done' : ''}"
+                              data-chip-id="${escHtml(c.id)}">${escHtml(c.label)}</span>`).join('')}
+                    </div>
+                  </div>`;
+              });
+            }
+
+            body += `
+              <div class="shw-item ${done ? 'done' : ''} ${it.subs ? 'has-subs' : ''}"
+                   ${it.subs ? '' : `data-shw-id="${escHtml(it.id)}"`}>
+                <span class="shw-check">${done ? '✅' : '⬜'}</span>
+                <div class="shw-info">
+                  <div class="shw-name">${escHtml(it.name)}${miniHtml}</div>
+                  <div class="shw-note">${escHtml(it.note)}</div>
+                  ${subHtml}
+                </div>
+              </div>`;
+          });
+        });
+        if (allDone) body += `<div class="shw-alldone">🏆 なつやすみの しゅくだい ぜんぶ おわり！すごい！！</div>`;
+        body += `<div class="shw-footnote">🌱 おうちのひとへ：あさがおの鉢は 8/31（月）〜9/6（日）に学校へ。クリアファイルに提出物を入れて持たせてください。</div>`;
+      }
+
+      panel.innerHTML = `
+        <div class="shw-panel">
+          <div class="shw-head" id="shw-toggle">
+            🌻 なつやすみの しゅくだい
+            <span class="shw-arrow">${collapsed ? '▶' : '▼'}</span>
+            <span class="shw-progress">${doneCount} / ${allItems.length} できた</span>
+          </div>
+          ${body}
+        </div>`;
+
+      // 見出しタップで たたむ／ひらく
+      document.getElementById('shw-toggle').addEventListener('click', () => {
+        const s = readSummerHw();
+        s._collapsed = !collapsed;
+        localStorage.setItem(SUMMER_HW_KEY, JSON.stringify(s));
+        renderSummerHwPanel();
+      });
+
+      // 行タップで ✅ をつけたり けしたり する（チップの無い宿題だけ）
+      panel.querySelectorAll('.shw-item[data-shw-id]').forEach(el => {
+        el.addEventListener('click', () => {
+          const s = readSummerHw();
+          s[el.dataset.shwId] = !s[el.dataset.shwId];
+          localStorage.setItem(SUMMER_HW_KEY, JSON.stringify(s));
+          renderSummerHwPanel();
+        });
+      });
+
+      // チップタップで 1つずつ すすめる（もう一度タップで もどる）
+      panel.querySelectorAll('.shw-chip').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const s = readSummerHw();
+          s[el.dataset.chipId] = !s[el.dataset.chipId];
+          localStorage.setItem(SUMMER_HW_KEY, JSON.stringify(s));
+          renderSummerHwPanel();
+        });
+      });
+    }
+
     /** XSS 対策：HTML 特殊文字をエスケープする */
     function escHtml(str) {
       return String(str)
@@ -374,6 +708,7 @@
     }
 
     loadApps();
+    renderSummerHwPanel();
 
     // いまのポイントをヘッダーに表示する
     document.getElementById('pts-num').textContent = Points.get();

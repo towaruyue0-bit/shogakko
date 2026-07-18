@@ -113,6 +113,16 @@
       "visible": true
     },
     {
+      "id": "kansobun",
+      "name": "ほんの インタビュー",
+      "description": "よんだ ほんの おはなしをして かんそうぶんの じゅんびを しよう",
+      "icon": "💬",
+      "color": "#8b5cf6",
+      "url": "apps/kansobun/",
+      "category": "こくご",
+      "visible": true
+    },
+    {
       "id": "keyboard",
       "name": "キーボード れんしゅう",
       "description": "アルファベットを キーボードで うとう",
@@ -130,6 +140,26 @@
       "color": "#10B981",
       "url": "apps/hata/",
       "category": "せいかつ",
+      "visible": true
+    },
+    {
+      "id": "asagao",
+      "name": "あさがお かんさつ",
+      "description": "まいにち みずやりして きのうと くらべてみよう",
+      "icon": "🌸",
+      "color": "#a855f7",
+      "url": "apps/asagao/",
+      "category": "なつやすみ",
+      "visible": true
+    },
+    {
+      "id": "nikki",
+      "name": "いちぎょう にっき",
+      "description": "きょうの ことを ひとこと のこそう",
+      "icon": "📔",
+      "color": "#f59e0b",
+      "url": "apps/nikki/",
+      "category": "なつやすみ",
       "visible": true
     },
     {

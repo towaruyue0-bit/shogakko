@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>あさがお かんさつ</title>
+  <style>
+    /* ─── 全体 ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'MS PGothic', sans-serif;
+      background: linear-gradient(160deg, #e0f2fe 0%, #fce7f3 100%);
+      min-height: 100dvh;
+      padding-bottom: 40px;
+    }
+    .header {
+      background: linear-gradient(135deg, #60a5fa, #a855f7);
+      color: white;
+      text-align: center;
+      padding: 20px 16px 16px;
+      box-shadow: 0 4px 16px rgba(96,165,250,0.4);
+      position: relative;
+    }
+    .header h1 { font-size: 1.4rem; font-weight: 900; }
+    .header p  { font-size: 0.82rem; opacity: 0.9; margin-top: 2px; }
+    .back-btn {
+      position: absolute; left: 12px; top: 16px;
+      background: rgba(255,255,255,0.25); color: white;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 20px; padding: 6px 12px;
+      font-size: 0.78rem; text-decoration: none;
+    }
+
+    .wrap { max-width: 520px; margin: 0 auto; padding: 0 14px; }
+
+    /* ─── カード共通 ────────────────────────────────────── */
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .card h2 {
+      font-size: 1rem; font-weight: 900; color: #2d3748;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .card h2 .step-num {
+      background: #ede9fe; color: #7c3aed;
+      border-radius: 999px; font-size: 0.75rem;
+      padding: 3px 10px; flex-shrink: 0;
+    }
+
+    /* ─── そだちかたの ずかん（成長ステージ一覧） ─────────── */
+    .grow-strip {
+      display: flex; align-items: center; gap: 2px;
+      overflow-x: auto; padding: 6px 2px;
+    }
+    .grow-step { text-align: center; flex-shrink: 0; width: 64px; }
+    .grow-step .g-emoji { font-size: 1.7rem; }
+    .grow-step .g-label { font-size: 0.62rem; font-weight: 800; color: #64748b; margin-top: 2px; line-height: 1.3; }
+    .grow-arrow { color: #cbd5e1; font-weight: 900; flex-shrink: 0; }
+
+    /* ─── 水やりボタン ──────────────────────────────────── */
+    .water-btn {
+      width: 100%;
+      border: none; border-radius: 16px; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 1.05rem;
+      padding: 16px;
+      background: #e0f2fe; color: #0369a1;
+      border: 2.5px dashed #7dd3fc;
+      transition: transform 0.1s;
+    }
+    .water-btn:active { transform: scale(0.97); }
+    .water-btn.done {
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+      color: white; border: 2.5px solid #0ea5e9;
+    }
+
+    /* ─── きょうのすがた えらび ──────────────────────────── */
+    .stage-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    }
+    .stage-btn {
+      border: 2.5px solid #e2e8f0; border-radius: 14px;
+      background: #f8fafc; cursor: pointer;
+      font-family: inherit; padding: 10px 4px 8px;
+      text-align: center; transition: transform 0.1s;
+    }
+    .stage-btn:active { transform: scale(0.94); }
+    .stage-btn .s-emoji { font-size: 1.8rem; display: block; }
+    .stage-btn .s-label { font-size: 0.66rem; font-weight: 800; color: #475569; margin-top: 3px; line-height: 1.3; }
+    .stage-btn.sel {
+      border-color: #a855f7; background: #faf5ff;
+      box-shadow: 0 0 0 3px rgba(168,85,247,0.2);
+    }
+
+    /* ─── ちがい ある？ない？ ────────────────────────────── */
+    .diff-row { display: flex; gap: 10px; }
+    .diff-btn {
+      flex: 1; border: 2.5px solid #e2e8f0; border-radius: 16px;
+      background: #f8fafc; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 1rem;
+      padding: 14px; color: #475569;
+      transition: transform 0.1s;
+    }
+    .diff-btn:active { transform: scale(0.96); }
+    .diff-btn.sel-aru  { border-color: #f59e0b; background: #fffbeb; color: #b45309; }
+    .diff-btn.sel-nai  { border-color: #10b981; background: #ecfdf5; color: #047857; }
+    .diff-hint { font-size: 0.78rem; color: #94a3b8; font-weight: 700; margin-top: 8px; text-align: center; }
+
+    /* ちがいの中身タグ */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .tag {
+      border: 2px solid #fde68a; background: #fffbeb; color: #92400e;
+      border-radius: 999px; padding: 7px 12px;
+      font-family: inherit; font-weight: 800; font-size: 0.8rem;
+      cursor: pointer; transition: transform 0.1s;
+    }
+    .tag:active { transform: scale(0.94); }
+    .tag.sel { background: #f59e0b; border-color: #f59e0b; color: white; }
+
+    /* ─── きょうのまとめ ────────────────────────────────── */
+    .today-done {
+      text-align: center; font-weight: 900; color: #047857;
+      background: #ecfdf5; border-radius: 14px; padding: 12px;
+      margin-top: 14px; font-size: 0.95rem;
+      display: none;
+    }
+
+    /* ─── たねのとりかた（ずかん） ────────────────────────── */
+    .zukan-toggle {
+      width: 100%; border: none; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 0.95rem;
+      background: none; color: #92400e;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .zukan-body { display: none; margin-top: 10px; }
+    .zukan-body.open { display: block; }
+    .zukan-step {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 9px 0; border-bottom: 1.5px dashed #fde68a;
+      font-size: 0.88rem; font-weight: 700; color: #57534e; line-height: 1.6;
+    }
+    .zukan-step:last-child { border-bottom: none; }
+    .zukan-step .z-emoji { font-size: 1.4rem; flex-shrink: 0; }
+    .zukan-warn {
+      background: #fef2f2; border: 2px dashed #fca5a5; border-radius: 12px;
+      padding: 10px 12px; margin-top: 10px;
+      font-size: 0.82rem; font-weight: 800; color: #b91c1c; line-height: 1.6;
+    }
+
+    /* ─── かんさつのきろく（履歴） ────────────────────────── */
+    .log-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 2px; border-bottom: 1.5px solid #f1f5f9;
+      font-size: 0.85rem; font-weight: 700; color: #475569;
+    }
+    .log-row:last-child { border-bottom: none; }
+    .log-date { width: 4.6em; flex-shrink: 0; font-weight: 900; }
+    .log-stage { font-size: 1.3rem; }
+    .log-diff { margin-left: auto; font-size: 0.72rem; color: #b45309; background: #fffbeb; border-radius: 999px; padding: 3px 9px; }
+    .log-diff.nai { color: #047857; background: #ecfdf5; }
+    .log-empty { text-align: center; color: #94a3b8; font-size: 0.85rem; font-weight: 700; padding: 10px; }
+
+    /* ─── お祝い・おしらせモーダル ────────────────────────── */
+    .overlay {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(15,23,42,0.45); padding: 20px;
+      animation: fade 0.25s ease-out;
+    }
+    .modal {
+      background: white; border-radius: 24px;
+      padding: 28px 24px 22px; text-align: center;
+      max-width: 340px; width: 100%;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      animation: pop 0.45s cubic-bezier(0.18, 0.9, 0.3, 1.3);
+    }
+    .modal .m-emoji { font-size: 3.2rem; }
+    .modal .m-title { font-size: 1.15rem; font-weight: 900; color: #7c3aed; margin: 8px 0 6px; }
+    .modal .m-text  { font-size: 0.95rem; font-weight: 800; color: #2d3748; line-height: 1.7; }
+    .modal button {
+      margin-top: 16px; border: none; border-radius: 999px; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 1rem;
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #60a5fa, #a855f7); color: white;
+    }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pop {
+      0% { transform: scale(0.3); opacity: 0; }
+      60% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a class="back-btn" href="../../">← もどる</a>
+    <h1>🌸 あさがお かんさつ</h1>
+    <p>まいにち みて、きのうと くらべてみよう</p>
+  </div>
+
+  <div class="wrap">
+
+    <!-- あさがおの そだちかた（いつでも くらべられる ずかん） -->
+    <div class="card">
+      <h2>🌱 あさがおの そだちかた</h2>
+      <div class="grow-strip" id="grow-strip"></div>
+      <div class="diff-hint">きみの あさがおは いま どのへん かな？</div>
+    </div>
+
+    <!-- ステップ1：みずやり -->
+    <div class="card">
+      <h2><span class="step-num">その1</span>💧 みずやり</h2>
+      <button class="water-btn" id="water-btn">💧 みずやり まだ</button>
+    </div>
+
+    <!-- ステップ2：きょうのすがた -->
+    <div class="card">
+      <h2><span class="step-num">その2</span>👀 きょうの あさがおは どれ？</h2>
+      <div class="stage-grid" id="stage-grid"></div>
+    </div>
+
+    <!-- ステップ3：きのうとのちがい -->
+    <div class="card">
+      <h2><span class="step-num">その3</span>🔍 きのうと くらべて ちがう ところ あった？</h2>
+      <div class="diff-row">
+        <button class="diff-btn" id="diff-aru">あった！</button>
+        <button class="diff-btn" id="diff-nai">なかったよ</button>
+      </div>
+      <div class="tag-row" id="tag-row" style="display:none"></div>
+      <div class="diff-hint">「おなじだった」ことに きづくのも りっぱな かんさつ だよ</div>
+      <div class="today-done" id="today-done">🌟 きょうの かんさつ おしまい！また あした みてみよう</div>
+    </div>
+
+    <!-- たねのとりかた ずかん -->
+    <div class="card" style="background:#fffbeb; border:2px solid #fde68a;">
+      <button class="zukan-toggle" id="zukan-toggle">🟤 たねの とりかた・ほぞんの しかた <span id="zukan-arrow">▶</span></button>
+      <div class="zukan-body" id="zukan-body">
+        <div class="zukan-step"><span class="z-emoji">🥀</span>はなが おわると、まるい みが できるよ</div>
+        <div class="zukan-step"><span class="z-emoji">🟢</span>はじめは みどりいろ。まだ とっちゃ だめ</div>
+        <div class="zukan-step"><span class="z-emoji">🟤</span>ちゃいろに なって カラカラに なったら とりごろ！</div>
+        <div class="zukan-step"><span class="z-emoji">🤲</span>したに てを そえて、そっと つまんで とろう（ぱちんと はじけて たねが とぶよ）</div>
+        <div class="zukan-step"><span class="z-emoji">✉️</span>とった たねは、ふうとうか かみの ふくろに いれる（ビニールは ダメ。カビちゃうよ）</div>
+        <div class="zukan-step"><span class="z-emoji">🏠</span>すずしくて くらい ところで ほぞん。らいねん また うえられるよ</div>
+        <div class="zukan-warn">⚠️ おうちのひとへ：とった種は捨てずに保管してください。学校へ持っていく（提出する）場合があります。</div>
+      </div>
+    </div>
+
+    <!-- かんさつのきろく -->
+    <div class="card">
+      <h2>📔 かんさつの きろく</h2>
+      <div id="log-list"></div>
+    </div>
+
+  </div>
+
+  <script src="../../shared/points.js"></script>
+  <script>
+    /* ════════════════════════════════════════════════════
+     *  あさがお かんさつ アプリ
+     *  ・毎日「水やり → きょうの姿 → きのうとの違い」を記録する
+     *  ・はじめて「はなが さいた」を選んだら → みつけたよカードを書こう！のお知らせ
+     *  ・はじめて「たねが できた」を選んだら → たねの記録＆とりかたのお知らせ
+     *  ・ポイントは付けない（宿題は自分のやるべき課題のため）
+     *  ・データは localStorage に保存（この端末の中だけ）
+     * ════════════════════════════════════════════════════ */
+
+    const ASAGAO_KEY = 'asagao_2026';
+
+    // 成長ステージの一覧（育つ順）
+    const STAGES = [
+      { id: 'me',      emoji: '🌱', label: 'め が でた' },
+      { id: 'futaba',  emoji: '🍃', label: 'ふたば' },
+      { id: 'happa',   emoji: '🌿', label: 'はっぱが ふえた' },
+      { id: 'tsuru',   emoji: '🌀', label: 'つるが のびた' },
+      { id: 'tsubomi', emoji: '🎈', label: 'つぼみ' },
+      { id: 'hana',    emoji: '🌸', label: 'はなが さいた' },
+      { id: 'shibomi', emoji: '🥀', label: 'はなが しぼんだ' },
+      { id: 'mi',      emoji: '🟢', label: 'まるい みが できた' },
+      { id: 'tane',    emoji: '🟤', label: 'たねが できた' },
+    ];
+
+    // 「ちがいが あった」ときに えらべるタグ
+    const DIFF_TAGS = [
+      { id: 'ookiku', label: 'おおきく なった' },
+      { id: 'fueta',  label: 'かずが ふえた' },
+      { id: 'nobita', label: 'つるが のびた' },
+      { id: 'iro',    label: 'いろが かわった' },
+      { id: 'saita',  label: 'はなが さいた・しぼんだ' },
+      { id: 'hoka',   label: 'そのほか' },
+    ];
+
+    /** 保存データを読む。無ければ初期形を返す。 */
+    function readData() {
+      try {
+        const d = JSON.parse(localStorage.getItem(ASAGAO_KEY) || 'null');
+        if (d && d.days) return d;
+      } catch (e) {}
+      return { days: {}, celebrated: {} };
+    }
+    function writeData(d) { localStorage.setItem(ASAGAO_KEY, JSON.stringify(d)); }
+
+    /** きょうの日付「2026-07-18」形式。 */
+    function todayStr() {
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    }
+
+    /** きょうの記録欄を取り出す（無ければ作る）。 */
+    function todayEntry(data) {
+      if (!data.days[todayStr()]) data.days[todayStr()] = {};
+      return data.days[todayStr()];
+    }
+
+    /* ─── そだちかたの ずかんを描画 ─── */
+    function renderGrowStrip() {
+      const el = document.getElementById('grow-strip');
+      el.innerHTML = STAGES.map((s, i) =>
+        `<div class="grow-step"><div class="g-emoji">${s.emoji}</div><div class="g-label">${s.label}</div></div>` +
+        (i < STAGES.length - 1 ? '<span class="grow-arrow">›</span>' : '')
+      ).join('');
+    }
+
+    /* ─── きょうの入力欄を描画 ─── */
+    function render() {
+      const data = readData();
+      const t = data.days[todayStr()] || {};
+
+      // 水やりボタン
+      const wb = document.getElementById('water-btn');
+      wb.textContent = t.water ? '💧 みずやり できた！' : '💧 みずやり まだ';
+      wb.classList.toggle('done', !!t.water);
+
+      // ステージボタン
+      const grid = document.getElementById('stage-grid');
+      grid.innerHTML = STAGES.map(s => `
+        <button class="stage-btn ${t.stage === s.id ? 'sel' : ''}" data-stage="${s.id}">
+          <span class="s-emoji">${s.emoji}</span>
+          <span class="s-label">${s.label}</span>
+        </button>`).join('');
+      grid.querySelectorAll('.stage-btn').forEach(b =>
+        b.addEventListener('click', () => selectStage(b.dataset.stage)));
+
+      // ちがいボタン
+      document.getElementById('diff-aru').classList.toggle('sel-aru', t.diff === 'aru');
+      document.getElementById('diff-nai').classList.toggle('sel-nai', t.diff === 'nai');
+
+      // タグ（「あった」のときだけ表示）
+      const tagRow = document.getElementById('tag-row');
+      if (t.diff === 'aru') {
+        tagRow.style.display = 'flex';
+        const tags = t.tags || [];
+        tagRow.innerHTML = DIFF_TAGS.map(tg =>
+          `<button class="tag ${tags.includes(tg.id) ? 'sel' : ''}" data-tag="${tg.id}">${tg.label}</button>`).join('');
+        tagRow.querySelectorAll('.tag').forEach(b =>
+          b.addEventListener('click', () => toggleTag(b.dataset.tag)));
+      } else {
+        tagRow.style.display = 'none';
+      }
+
+      // きょうのまとめ（姿とちがいの両方が入ったら表示）
+      document.getElementById('today-done').style.display =
+        (t.stage && t.diff) ? 'block' : 'none';
+
+      renderLog(data);
+    }
+
+    /* ─── 記録一覧（新しい日が上） ─── */
+    function renderLog(data) {
+      const list = document.getElementById('log-list');
+      const dates = Object.keys(data.days).sort().reverse();
+      if (dates.length === 0) {
+        list.innerHTML = '<div class="log-empty">まだ きろくが ないよ。きょうから はじめよう！</div>';
+        return;
+      }
+      list.innerHTML = dates.map(d => {
+        const e = data.days[d];
+        const stage = STAGES.find(s => s.id === e.stage);
+        const md = `${parseInt(d.slice(5, 7))}/${parseInt(d.slice(8, 10))}`;
+        let diffHtml = '';
+        if (e.diff === 'aru') {
+          const tagNames = (e.tags || []).map(id => (DIFF_TAGS.find(t => t.id === id) || {}).label).filter(Boolean);
+          diffHtml = `<span class="log-diff">ちがい あった${tagNames.length ? '：' + tagNames.join('・') : ''}</span>`;
+        } else if (e.diff === 'nai') {
+          diffHtml = '<span class="log-diff nai">おなじ だった</span>';
+        }
+        return `
+          <div class="log-row">
+            <span class="log-date">${md}</span>
+            <span>${e.water ? '💧' : ''}</span>
+            <span class="log-stage">${stage ? stage.emoji : ''}</span>
+            <span style="font-size:0.78rem">${stage ? stage.label : ''}</span>
+            ${diffHtml}
+          </div>`;
+      }).join('');
+    }
+
+    /* ─── 操作 ─── */
+
+    // 水やりのON/OFF
+    document.getElementById('water-btn').addEventListener('click', () => {
+      const data = readData();
+      const t = todayEntry(data);
+      t.water = !t.water;
+      writeData(data);
+      render();
+    });
+
+    // きょうの姿を選ぶ（はじめての「はな」「たね」ならお知らせを出す）
+    function selectStage(stageId) {
+      const data = readData();
+      const t = todayEntry(data);
+      t.stage = (t.stage === stageId) ? null : stageId;  // もう一度おすと取り消し
+      writeData(data);
+      render();
+
+      if (t.stage === 'hana' && !data.celebrated.hana) {
+        data.celebrated.hana = true;
+        writeData(data);
+        showModal('🌸', 'はなが さいたね！おめでとう！',
+          'がっこうの「みつけたよカード」に<br>きょうの あさがおを かいてみよう！<br>いろ・かたち・かずを よくみてね');
+      }
+      if (t.stage === 'tane' && !data.celebrated.tane) {
+        data.celebrated.tane = true;
+        writeData(data);
+        showModal('🟤', 'たねが できたね！',
+          '2まいめの「みつけたよカード」に<br>たねの きろくを かこう！<br>したの「たねの とりかた」も みてみてね');
+      }
+    }
+
+    // ちがいの「あった／なかった」
+    document.getElementById('diff-aru').addEventListener('click', () => setDiff('aru'));
+    document.getElementById('diff-nai').addEventListener('click', () => setDiff('nai'));
+    function setDiff(v) {
+      const data = readData();
+      const t = todayEntry(data);
+      t.diff = (t.diff === v) ? null : v;
+      writeData(data);
+      render();
+    }
+
+    // ちがいタグのON/OFF
+    function toggleTag(tagId) {
+      const data = readData();
+      const t = todayEntry(data);
+      t.tags = t.tags || [];
+      const i = t.tags.indexOf(tagId);
+      if (i >= 0) t.tags.splice(i, 1); else t.tags.push(tagId);
+      writeData(data);
+      render();
+    }
+
+    // たねのとりかた ずかんの開閉
+    document.getElementById('zukan-toggle').addEventListener('click', () => {
+      const body = document.getElementById('zukan-body');
+      body.classList.toggle('open');
+      document.getElementById('zukan-arrow').textContent = body.classList.contains('open') ? '▼' : '▶';
+    });
+
+    /* ─── お知らせモーダル ─── */
+    function showModal(emoji, title, htmlText) {
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `
+        <div class="modal">
+          <div class="m-emoji">${emoji}</div>
+          <div class="m-title">${title}</div>
+          <div class="m-text">${htmlText}</div>
+          <button>わかった！</button>
+        </div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelector('button').addEventListener('click', () => overlay.remove());
+    }
+
+    renderGrowStrip();
+    render();
+  </script>
+</body>
+</html>
