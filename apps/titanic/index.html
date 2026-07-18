@@ -286,10 +286,11 @@
   }
 
   /* 出航：船がゆっくり すすんで 画面のそとへ */
+  /* 船首（ふねの前）は左むきに描いてあるので、左へすすませる */
   svg.launching #ship{animation:sail 8s ease-in forwards;}
   @keyframes sail{
     0%{transform:translateX(0);}
-    100%{transform:translateX(1000px);}
+    100%{transform:translateX(-1000px);}
   }
 
   #confetti{position:fixed;inset:0;pointer-events:none;z-index:55;}
