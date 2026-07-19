@@ -3,6 +3,26 @@
   "subtitle": "いっしょにべんきょうしよう！",
   "apps": [
     {
+      "id": "asagao",
+      "name": "あさがお かんさつ",
+      "description": "まいにち みずやりして きのうと くらべてみよう",
+      "icon": "🌸",
+      "color": "#a855f7",
+      "url": "apps/asagao/",
+      "category": "なつやすみ",
+      "visible": true
+    },
+    {
+      "id": "nikki",
+      "name": "いちぎょう にっき",
+      "description": "きょうの ことを ひとこと のこそう",
+      "icon": "📔",
+      "color": "#f59e0b",
+      "url": "apps/nikki/",
+      "category": "なつやすみ",
+      "visible": true
+    },
+    {
       "id": "sansu",
       "name": "けいさんれんしゅう",
       "description": "たしざん・ひきざん・かけざん・わりざん",
@@ -140,26 +160,6 @@
       "color": "#10B981",
       "url": "apps/hata/",
       "category": "せいかつ",
-      "visible": true
-    },
-    {
-      "id": "asagao",
-      "name": "あさがお かんさつ",
-      "description": "まいにち みずやりして きのうと くらべてみよう",
-      "icon": "🌸",
-      "color": "#a855f7",
-      "url": "apps/asagao/",
-      "category": "なつやすみ",
-      "visible": true
-    },
-    {
-      "id": "nikki",
-      "name": "いちぎょう にっき",
-      "description": "きょうの ことを ひとこと のこそう",
-      "icon": "📔",
-      "color": "#f59e0b",
-      "url": "apps/nikki/",
-      "category": "なつやすみ",
       "visible": true
     },
     {

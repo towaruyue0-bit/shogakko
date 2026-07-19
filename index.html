@@ -77,20 +77,21 @@
       background: linear-gradient(135deg, #38bdf8, #6366f1);
       color: white;
       font-weight: 900;
-      font-size: 1rem;
-      padding: 12px 16px;
+      font-size: 0.92rem;
+      padding: 12px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       cursor: pointer;
       user-select: none;
+      white-space: nowrap;
     }
     .shw-head .shw-progress {
       margin-left: auto;
-      font-size: 0.82rem;
+      font-size: 0.74rem;
       background: rgba(255,255,255,0.25);
       border-radius: 999px;
-      padding: 4px 12px;
+      padding: 3px 10px;
       white-space: nowrap;
     }
     .shw-head .shw-arrow { font-size: 0.8rem; }
@@ -601,7 +602,8 @@
       const allItems = SUMMER_HW_GROUPS.flatMap(g => g.items);
       const doneCount = allItems.filter(it => summerItemDone(it, state)).length;
       const allDone = doneCount === allItems.length;
-      const collapsed = state._collapsed === true;
+      // ふだんは たたんだ状態で表示する（開いた状態は _collapsed === false のときだけ）
+      const collapsed = state._collapsed !== false;
 
       // しめきりグループごとに行を作る
       let body = '';
@@ -663,7 +665,7 @@
           <div class="shw-head" id="shw-toggle">
             🌻 なつやすみの しゅくだい
             <span class="shw-arrow">${collapsed ? '▶' : '▼'}</span>
-            <span class="shw-progress">${doneCount} / ${allItems.length} できた</span>
+            <span class="shw-progress">${doneCount}/${allItems.length} できた</span>
           </div>
           ${body}
         </div>`;
