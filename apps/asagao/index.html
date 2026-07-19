@@ -33,7 +33,6 @@
 
     .wrap { max-width: 520px; margin: 0 auto; padding: 0 14px; }
 
-    /* ─── カード共通 ────────────────────────────────────── */
     .card {
       background: white;
       border-radius: 20px;
@@ -46,88 +45,115 @@
       display: flex; align-items: center; gap: 8px;
       margin-bottom: 10px;
     }
-    .card h2 .step-num {
-      background: #ede9fe; color: #7c3aed;
-      border-radius: 999px; font-size: 0.75rem;
-      padding: 3px 10px; flex-shrink: 0;
+
+    /* ─── いまの あさがお（大きなイラスト） ─────────────── */
+    .stage-figure { text-align: center; }
+    .stage-figure svg { width: min(65vw, 230px); height: auto; }
+    .stage-name {
+      font-size: 1.1rem; font-weight: 900; color: #6d28d9;
+      background: #faf5ff; border-radius: 14px;
+      padding: 10px; margin-top: 8px;
+    }
+    .stage-fix {
+      display: block; margin: 10px auto 0;
+      background: none; border: none; cursor: pointer;
+      font-family: inherit; font-size: 0.72rem; font-weight: 700;
+      color: #cbd5e1; text-decoration: underline;
     }
 
-    /* ─── そだちかたの ずかん（成長ステージ一覧） ─────────── */
-    .grow-strip {
-      display: flex; align-items: center; gap: 2px;
-      overflow-x: auto; padding: 6px 2px;
-    }
-    .grow-step { text-align: center; flex-shrink: 0; width: 64px; }
-    .grow-step .g-emoji { font-size: 1.7rem; }
-    .grow-step .g-label { font-size: 0.62rem; font-weight: 800; color: #64748b; margin-top: 2px; line-height: 1.3; }
-    .grow-arrow { color: #cbd5e1; font-weight: 900; flex-shrink: 0; }
-
-    /* ─── 水やりボタン ──────────────────────────────────── */
+    /* ─── みずやりボタン ─────────────────────────────────── */
     .water-btn {
       width: 100%;
-      border: none; border-radius: 16px; cursor: pointer;
-      font-family: inherit; font-weight: 900; font-size: 1.05rem;
-      padding: 16px;
+      border-radius: 18px; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 1.15rem;
+      padding: 18px;
       background: #e0f2fe; color: #0369a1;
-      border: 2.5px dashed #7dd3fc;
+      border: 3px dashed #7dd3fc;
       transition: transform 0.1s;
     }
     .water-btn:active { transform: scale(0.97); }
     .water-btn.done {
       background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-      color: white; border: 2.5px solid #0ea5e9;
+      color: white; border: 3px solid #0ea5e9;
     }
 
-    /* ─── きょうのすがた えらび ──────────────────────────── */
-    .stage-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-    }
-    .stage-btn {
-      border: 2.5px solid #e2e8f0; border-radius: 14px;
-      background: #f8fafc; cursor: pointer;
-      font-family: inherit; padding: 10px 4px 8px;
-      text-align: center; transition: transform 0.1s;
-    }
-    .stage-btn:active { transform: scale(0.94); }
-    .stage-btn .s-emoji { font-size: 1.8rem; display: block; }
-    .stage-btn .s-label { font-size: 0.66rem; font-weight: 800; color: #475569; margin-top: 3px; line-height: 1.3; }
-    .stage-btn.sel {
-      border-color: #a855f7; background: #faf5ff;
-      box-shadow: 0 0 0 3px rgba(168,85,247,0.2);
-    }
-
-    /* ─── ちがい ある？ない？ ────────────────────────────── */
+    /* ─── かわった？かわってない？ ────────────────────────── */
     .diff-row { display: flex; gap: 10px; }
     .diff-btn {
-      flex: 1; border: 2.5px solid #e2e8f0; border-radius: 16px;
+      flex: 1; border: 3px solid #e2e8f0; border-radius: 18px;
       background: #f8fafc; cursor: pointer;
-      font-family: inherit; font-weight: 900; font-size: 1rem;
-      padding: 14px; color: #475569;
+      font-family: inherit; font-weight: 900; font-size: 1.05rem;
+      padding: 18px 8px; color: #475569;
       transition: transform 0.1s;
+      line-height: 1.4;
     }
     .diff-btn:active { transform: scale(0.96); }
-    .diff-btn.sel-aru  { border-color: #f59e0b; background: #fffbeb; color: #b45309; }
-    .diff-btn.sel-nai  { border-color: #10b981; background: #ecfdf5; color: #047857; }
-    .diff-hint { font-size: 0.78rem; color: #94a3b8; font-weight: 700; margin-top: 8px; text-align: center; }
+    .diff-btn.sel-yes { border-color: #f59e0b; background: #fffbeb; color: #b45309; }
+    .diff-btn.sel-no  { border-color: #10b981; background: #ecfdf5; color: #047857; }
+    .diff-hint { font-size: 0.78rem; color: #94a3b8; font-weight: 700; margin-top: 8px; text-align: center; line-height: 1.6; }
 
-    /* ちがいの中身タグ */
-    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .tag {
-      border: 2px solid #fde68a; background: #fffbeb; color: #92400e;
-      border-radius: 999px; padding: 7px 12px;
-      font-family: inherit; font-weight: 800; font-size: 0.8rem;
-      cursor: pointer; transition: transform 0.1s;
+    /* かわったときの追加パネル */
+    .changed-panel { display: none; margin-top: 14px; }
+    .changed-panel.show { display: block; }
+    .memo-label { font-size: 0.85rem; font-weight: 900; color: #2d3748; margin-bottom: 6px; }
+    .memo-input {
+      width: 100%; min-height: 60px;
+      border: 2.5px solid #e2e8f0; border-radius: 12px;
+      padding: 10px; font-family: inherit;
+      font-size: 0.95rem; font-weight: 700; color: #2d3748;
+      line-height: 1.6; resize: vertical;
     }
-    .tag:active { transform: scale(0.94); }
-    .tag.sel { background: #f59e0b; border-color: #f59e0b; color: white; }
+    .memo-input:focus { outline: none; border-color: #a855f7; }
+    .memo-save {
+      margin-top: 8px;
+      border: none; border-radius: 999px; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 0.85rem;
+      padding: 9px 18px; background: #ede9fe; color: #6d28d9;
+    }
+    .memo-saved { font-size: 0.8rem; font-weight: 900; color: #047857; margin-left: 8px; display: none; }
 
-    /* ─── きょうのまとめ ────────────────────────────────── */
-    .today-done {
-      text-align: center; font-weight: 900; color: #047857;
-      background: #ecfdf5; border-radius: 14px; padding: 12px;
-      margin-top: 14px; font-size: 0.95rem;
-      display: none;
+    /* つぎのすがたへ すすむ */
+    .advance-box {
+      margin-top: 14px;
+      background: #fdf4ff; border: 2.5px dashed #d8b4fe;
+      border-radius: 16px; padding: 12px;
+      display: flex; align-items: center; gap: 12px;
     }
+    .advance-box svg { width: 64px; height: auto; flex-shrink: 0; }
+    .advance-info { flex: 1; }
+    .advance-q { font-size: 0.88rem; font-weight: 900; color: #6d28d9; line-height: 1.5; }
+    .advance-btn {
+      margin-top: 8px;
+      border: none; border-radius: 999px; cursor: pointer;
+      font-family: inherit; font-weight: 900; font-size: 0.92rem;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #a855f7, #ec4899); color: white;
+      transition: transform 0.1s;
+    }
+    .advance-btn:active { transform: scale(0.95); }
+
+    /* ─── カレンダー ─────────────────────────────────────── */
+    .cal-month { margin-bottom: 14px; }
+    .cal-title { font-size: 0.9rem; font-weight: 900; color: #475569; margin-bottom: 6px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .cal-head { text-align: center; font-size: 0.66rem; font-weight: 900; color: #94a3b8; padding: 2px 0; }
+    .cal-head.sun { color: #ef4444; }
+    .cal-head.sat { color: #3b82f6; }
+    .cal-cell {
+      aspect-ratio: 1;
+      border-radius: 10px; background: #f8fafc;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 800; color: #64748b;
+      cursor: pointer; position: relative;
+      border: 2px solid transparent;
+      line-height: 1.1;
+    }
+    .cal-cell.out { visibility: hidden; }
+    .cal-cell.today { border-color: #a855f7; }
+    .cal-cell .c-marks { font-size: 0.6rem; height: 0.8em; }
+    .cal-cell.advanced { background: #fdf4ff; border-color: #e9d5ff; }
+    .cal-cell .c-stage { font-size: 0.85rem; }
+    .cal-legend { font-size: 0.72rem; color: #94a3b8; font-weight: 700; margin-top: 6px; line-height: 1.7; }
 
     /* ─── たねのとりかた（ずかん） ────────────────────────── */
     .zukan-toggle {
@@ -151,42 +177,43 @@
       font-size: 0.82rem; font-weight: 800; color: #b91c1c; line-height: 1.6;
     }
 
-    /* ─── かんさつのきろく（履歴） ────────────────────────── */
-    .log-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 2px; border-bottom: 1.5px solid #f1f5f9;
-      font-size: 0.85rem; font-weight: 700; color: #475569;
-    }
-    .log-row:last-child { border-bottom: none; }
-    .log-date { width: 4.6em; flex-shrink: 0; font-weight: 900; }
-    .log-stage { font-size: 1.3rem; }
-    .log-diff { margin-left: auto; font-size: 0.72rem; color: #b45309; background: #fffbeb; border-radius: 999px; padding: 3px 9px; }
-    .log-diff.nai { color: #047857; background: #ecfdf5; }
-    .log-empty { text-align: center; color: #94a3b8; font-size: 0.85rem; font-weight: 700; padding: 10px; }
-
-    /* ─── お祝い・おしらせモーダル ────────────────────────── */
+    /* ─── モーダル ──────────────────────────────────────── */
     .overlay {
       position: fixed; inset: 0; z-index: 100;
       display: flex; align-items: center; justify-content: center;
       background: rgba(15,23,42,0.45); padding: 20px;
       animation: fade 0.25s ease-out;
+      overflow-y: auto;
     }
     .modal {
       background: white; border-radius: 24px;
-      padding: 28px 24px 22px; text-align: center;
-      max-width: 340px; width: 100%;
+      padding: 24px 22px 20px; text-align: center;
+      max-width: 360px; width: 100%;
       box-shadow: 0 12px 40px rgba(0,0,0,0.25);
       animation: pop 0.45s cubic-bezier(0.18, 0.9, 0.3, 1.3);
+      max-height: 90dvh; overflow-y: auto;
     }
-    .modal .m-emoji { font-size: 3.2rem; }
+    .modal .m-emoji { font-size: 3rem; }
     .modal .m-title { font-size: 1.15rem; font-weight: 900; color: #7c3aed; margin: 8px 0 6px; }
-    .modal .m-text  { font-size: 0.95rem; font-weight: 800; color: #2d3748; line-height: 1.7; }
-    .modal button {
+    .modal .m-text  { font-size: 0.92rem; font-weight: 800; color: #2d3748; line-height: 1.7; }
+    .modal .m-btn {
       margin-top: 16px; border: none; border-radius: 999px; cursor: pointer;
       font-family: inherit; font-weight: 900; font-size: 1rem;
       padding: 12px 28px;
       background: linear-gradient(135deg, #60a5fa, #a855f7); color: white;
     }
+    /* すがた選びなおし（親用） */
+    .fix-row {
+      display: flex; align-items: center; gap: 10px;
+      border: 2.5px solid #e2e8f0; border-radius: 14px;
+      padding: 8px 12px; margin-top: 8px; cursor: pointer;
+      font-weight: 900; font-size: 0.9rem; color: #475569;
+      text-align: left;
+    }
+    .fix-row.now { border-color: #a855f7; background: #faf5ff; color: #6d28d9; }
+    .fix-row svg { width: 40px; height: auto; flex-shrink: 0; }
+    /* カレンダー日別モーダルの中身 */
+    .day-detail { text-align: left; font-size: 0.9rem; font-weight: 800; color: #2d3748; line-height: 2; }
     @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
     @keyframes pop {
       0% { transform: scale(0.3); opacity: 0; }
@@ -205,35 +232,48 @@
 
   <div class="wrap">
 
-    <!-- あさがおの そだちかた（いつでも くらべられる ずかん） -->
+    <!-- いまの あさがお -->
     <div class="card">
-      <h2>🌱 あさがおの そだちかた</h2>
-      <div class="grow-strip" id="grow-strip"></div>
-      <div class="diff-hint">きみの あさがおは いま どのへん かな？</div>
+      <div class="stage-figure" id="stage-figure"></div>
+      <div class="stage-name" id="stage-name"></div>
+      <button class="stage-fix" id="stage-fix">すがたを なおす（おうちのひと用）</button>
     </div>
 
-    <!-- ステップ1：みずやり -->
+    <!-- みずやり -->
     <div class="card">
-      <h2><span class="step-num">その1</span>💧 みずやり</h2>
-      <button class="water-btn" id="water-btn">💧 みずやり まだ</button>
+      <button class="water-btn" id="water-btn">💧 みずを あげた！</button>
     </div>
 
-    <!-- ステップ2：きょうのすがた -->
+    <!-- きのうとくらべて -->
     <div class="card">
-      <h2><span class="step-num">その2</span>👀 きょうの あさがおは どれ？</h2>
-      <div class="stage-grid" id="stage-grid"></div>
-    </div>
-
-    <!-- ステップ3：きのうとのちがい -->
-    <div class="card">
-      <h2><span class="step-num">その3</span>🔍 きのうと くらべて ちがう ところ あった？</h2>
+      <h2>👀 きのうと くらべて どうだった？</h2>
       <div class="diff-row">
-        <button class="diff-btn" id="diff-aru">あった！</button>
-        <button class="diff-btn" id="diff-nai">なかったよ</button>
+        <button class="diff-btn" id="diff-yes">🔍 かわった！</button>
+        <button class="diff-btn" id="diff-no">おなじ だった</button>
       </div>
-      <div class="tag-row" id="tag-row" style="display:none"></div>
-      <div class="diff-hint">「おなじだった」ことに きづくのも りっぱな かんさつ だよ</div>
-      <div class="today-done" id="today-done">🌟 きょうの かんさつ おしまい！また あした みてみよう</div>
+      <div class="diff-hint">「おなじだった」に きづくのも りっぱな かんさつ だよ</div>
+
+      <!-- かわったときだけ出るパネル -->
+      <div class="changed-panel" id="changed-panel">
+        <div class="memo-label">✏️ なにが かわったかな？（おうちのひとが メモしてOK）</div>
+        <textarea class="memo-input" id="memo-input" placeholder="れい：はっぱが おおきくなった、つぼみが 3つに ふえた…"></textarea>
+        <button class="memo-save" id="memo-save">メモを のこす</button>
+        <span class="memo-saved" id="memo-saved">✅ のこしたよ</span>
+        <div class="advance-box" id="advance-box" style="display:none">
+          <div id="advance-fig"></div>
+          <div class="advance-info">
+            <div class="advance-q" id="advance-q"></div>
+            <button class="advance-btn" id="advance-btn">つぎに すすむ！</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- カレンダー -->
+    <div class="card">
+      <h2>📅 かんさつ カレンダー</h2>
+      <div id="calendar"></div>
+      <div class="cal-legend">💧＝みずやり ／ 🔍＝かわったところ はっけん ／ 🌱🌸などの マークの日＝つぎの すがたに すすんだ日。日にちを タップすると メモが みられるよ</div>
     </div>
 
     <!-- たねのとりかた ずかん -->
@@ -250,159 +290,282 @@
       </div>
     </div>
 
-    <!-- かんさつのきろく -->
-    <div class="card">
-      <h2>📔 かんさつの きろく</h2>
-      <div id="log-list"></div>
-    </div>
-
   </div>
 
   <script src="../../shared/points.js"></script>
   <script>
     /* ════════════════════════════════════════════════════
-     *  あさがお かんさつ アプリ
-     *  ・毎日「水やり → きょうの姿 → きのうとの違い」を記録する
-     *  ・はじめて「はなが さいた」を選んだら → みつけたよカードを書こう！のお知らせ
-     *  ・はじめて「たねが できた」を選んだら → たねの記録＆とりかたのお知らせ
+     *  あさがお かんさつ アプリ（v2）
+     *  ----------------------------------------------------
+     *  1年生でも迷わない3ステップ：
+     *    ① いまの あさがおの絵が ドンと出る
+     *    ② 💧みずを あげた！ をタップ
+     *    ③ きのうと くらべて「かわった！／おなじだった」をタップ
+     *       └ かわった → 親がメモ ＋「つぎの すがたに すすむ？」
+     *  ・すがたは 一方通行で進む（自由選択はしない）
+     *  ・カレンダーで 水やり・発見・すすんだ日 が見える
+     *  ・はな／たね に進んだら「みつけたよカード」を書く促し
      *  ・ポイントは付けない（宿題は自分のやるべき課題のため）
-     *  ・データは localStorage に保存（この端末の中だけ）
      * ════════════════════════════════════════════════════ */
 
-    const ASAGAO_KEY = 'asagao_2026';
+    const KEY = 'asagao2_2026';
 
-    // 成長ステージの一覧（育つ順）
+    // 成長ステージ（この順に一方通行で進む）
     const STAGES = [
-      { id: 'me',      emoji: '🌱', label: 'め が でた' },
-      { id: 'futaba',  emoji: '🍃', label: 'ふたば' },
-      { id: 'happa',   emoji: '🌿', label: 'はっぱが ふえた' },
-      { id: 'tsuru',   emoji: '🌀', label: 'つるが のびた' },
-      { id: 'tsubomi', emoji: '🎈', label: 'つぼみ' },
-      { id: 'hana',    emoji: '🌸', label: 'はなが さいた' },
-      { id: 'shibomi', emoji: '🥀', label: 'はなが しぼんだ' },
-      { id: 'mi',      emoji: '🟢', label: 'まるい みが できた' },
-      { id: 'tane',    emoji: '🟤', label: 'たねが できた' },
+      { id: 'nashi',    name: 'まだ なにも でてないよ' },
+      { id: 'me',       name: 'めが でた！' },
+      { id: 'tsuru13',  name: 'つるが しちゅうの ３ぶんの１まで きた' },
+      { id: 'tsuru23',  name: 'つるが しちゅうの ３ぶんの２まで きた' },
+      { id: 'tsuruUe',  name: 'つるが うえまで のぼった！' },
+      { id: 'tsubomi',  name: 'つぼみが できた' },
+      { id: 'hana',     name: 'はなが さいた！' },
+      { id: 'shibomi',  name: 'はなが しぼんで みが できてきた' },
+      { id: 'tane',     name: 'たねが とれた！' },
     ];
+    // カレンダーに出す 各ステージのマーク
+    const STAGE_MARKS = ['🪴', '🌱', '🌿', '🌿', '🌀', '🎈', '🌸', '🥀', '🟤'];
 
-    // 「ちがいが あった」ときに えらべるタグ
-    const DIFF_TAGS = [
-      { id: 'ookiku', label: 'おおきく なった' },
-      { id: 'fueta',  label: 'かずが ふえた' },
-      { id: 'nobita', label: 'つるが のびた' },
-      { id: 'iro',    label: 'いろが かわった' },
-      { id: 'saita',  label: 'はなが さいた・しぼんだ' },
-      { id: 'hoka',   label: 'そのほか' },
-    ];
+    /* ─── あさがおのイラスト（SVGを組み立てる） ───
+     * 鉢・支柱・つる・葉・つぼみ・花・実を ステージに応じて描く。 */
+    function asagaoSvg(stage) {
+      const parts = [];
 
-    /** 保存データを読む。無ければ初期形を返す。 */
+      // 支柱（つるが伸びはじめる ステージ2から見える）
+      if (stage >= 2) {
+        parts.push(`
+          <line x1="80" y1="235" x2="80" y2="60" stroke="#b45309" stroke-width="4" stroke-linecap="round"/>
+          <line x1="110" y1="235" x2="110" y2="55" stroke="#b45309" stroke-width="4" stroke-linecap="round"/>
+          <line x1="140" y1="235" x2="140" y2="60" stroke="#b45309" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="110" cy="90"  rx="33" ry="7" fill="none" stroke="#d97706" stroke-width="3"/>
+          <ellipse cx="110" cy="150" rx="35" ry="7" fill="none" stroke="#d97706" stroke-width="3"/>
+          <ellipse cx="110" cy="205" rx="37" ry="7" fill="none" stroke="#d97706" stroke-width="3"/>`);
+      }
+
+      // 鉢と土
+      parts.push(`
+        <path d="M68 232 L152 232 L144 274 L76 274 Z" fill="#3b82f6"/>
+        <rect x="63" y="226" width="94" height="12" rx="5" fill="#2563eb"/>
+        <ellipse cx="110" cy="232" rx="40" ry="6" fill="#78350f"/>`);
+
+      // つるの高さ（支柱 y=235〜60 を 1/3 ずつ）
+      const vineTop = { 2: 178, 3: 120, 4: 62 }[Math.min(stage, 4)] || null;
+      const leafColor = stage >= 8 ? '#a16207' : '#16a34a';
+      const vineColor = stage >= 8 ? '#854d0e' : '#15803d';
+
+      if (stage === 1) {
+        // 芽（ふたば）
+        parts.push(`
+          <line x1="110" y1="230" x2="110" y2="208" stroke="#16a34a" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="98" cy="203" rx="13" ry="8" fill="#22c55e" transform="rotate(-25 98 203)"/>
+          <ellipse cx="122" cy="203" rx="13" ry="8" fill="#22c55e" transform="rotate(25 122 203)"/>`);
+      } else if (stage >= 2) {
+        // つる：支柱に巻きつくジグザグの線
+        const top = vineTop || 62;
+        let d = 'M110 230';
+        let y = 230;
+        let side = 1;
+        while (y > top) {
+          const ny = Math.max(top, y - 28);
+          d += ` Q ${110 + side * 26} ${ (y + ny) / 2 } 110 ${ny}`;
+          y = ny;
+          side = -side;
+        }
+        parts.push(`<path d="${d}" fill="none" stroke="${vineColor}" stroke-width="5" stroke-linecap="round"/>`);
+        // 葉っぱ：つるに そって 交互に つける
+        let ly = 216, lside = -1;
+        while (ly > top + 6) {
+          parts.push(`
+            <path d="M110 ${ly} q ${lside * 26} -14 ${lside * 30} 4 q ${-lside * 14} 14 ${-lside * 30} -4 Z"
+                  fill="${leafColor}" opacity="0.92"/>`);
+          ly -= 34; lside = -lside;
+        }
+      }
+
+      // つぼみ（ステージ5）
+      if (stage === 5) {
+        parts.push(`
+          <path d="M92 84 q 5 -18 10 0 q -5 10 -10 0" fill="#ec4899"/>
+          <path d="M124 70 q 5 -18 10 0 q -5 10 -10 0" fill="#ec4899"/>
+          <path d="M138 100 q 5 -18 10 0 q -5 10 -10 0" fill="#db2777"/>`);
+      }
+
+      // 花（ステージ6：らっぱ型を まるで表現）
+      if (stage === 6) {
+        const flower = (x, y, r, c) => `
+          <circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>
+          <circle cx="${x}" cy="${y}" r="${r * 0.55}" fill="#fbcfe8"/>
+          <path d="M${x - r} ${y} L${x + r} ${y} M${x} ${y - r} L${x} ${y + r} M${x - r * 0.7} ${y - r * 0.7} L${x + r * 0.7} ${y + r * 0.7} M${x - r * 0.7} ${y + r * 0.7} L${x + r * 0.7} ${y - r * 0.7}"
+                stroke="#f9a8d4" stroke-width="2" opacity="0.7"/>`;
+        parts.push(flower(88, 82, 17, '#a855f7'));
+        parts.push(flower(130, 66, 19, '#ec4899'));
+        parts.push(flower(140, 112, 15, '#8b5cf6'));
+      }
+
+      // しぼんだ花と 若い実（ステージ7）
+      if (stage === 7) {
+        parts.push(`
+          <ellipse cx="90" cy="88" rx="6" ry="14" fill="#be185d" transform="rotate(20 90 88)"/>
+          <ellipse cx="132" cy="70" rx="6" ry="14" fill="#9d174d" transform="rotate(-15 132 70)"/>
+          <circle cx="142" cy="112" r="8" fill="#65a30d"/>
+          <circle cx="98" cy="128" r="7" fill="#65a30d"/>`);
+      }
+
+      // たね（ステージ8：茶色い実）
+      if (stage === 8) {
+        parts.push(`
+          <circle cx="90" cy="88" r="9" fill="#92400e"/>
+          <circle cx="132" cy="70" r="10" fill="#78350f"/>
+          <circle cx="142" cy="112" r="9" fill="#92400e"/>
+          <circle cx="100" cy="132" r="8" fill="#78350f"/>
+          <text x="110" y="40" text-anchor="middle" font-size="20">✨</text>`);
+      }
+
+      // なにもない状態には「？」の芽待ち感
+      if (stage === 0) {
+        parts.push(`<text x="110" y="200" text-anchor="middle" font-size="26" fill="#cbd5e1" font-weight="bold">？</text>`);
+      }
+
+      return `<svg viewBox="0 0 220 285" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg>`;
+    }
+
+    /* ─── 保存まわり ─── */
     function readData() {
       try {
-        const d = JSON.parse(localStorage.getItem(ASAGAO_KEY) || 'null');
+        const d = JSON.parse(localStorage.getItem(KEY) || 'null');
         if (d && d.days) return d;
       } catch (e) {}
-      return { days: {}, celebrated: {} };
+      // 旧バージョン（asagao_2026）から 水やり記録だけ引きつぐ
+      const init = { stage: 6, days: {}, celebrated: {} };  // 7月は開花期なので初期値は「はなが さいた」
+      try {
+        const old = JSON.parse(localStorage.getItem('asagao_2026') || 'null');
+        if (old && old.days) {
+          Object.entries(old.days).forEach(([date, e]) => {
+            init.days[date] = { water: !!e.water };
+          });
+        }
+      } catch (e) {}
+      return init;
     }
-    function writeData(d) { localStorage.setItem(ASAGAO_KEY, JSON.stringify(d)); }
+    function writeData(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
 
-    /** きょうの日付「2026-07-18」形式。 */
     function todayStr() {
       const d = new Date();
       const p = n => String(n).padStart(2, '0');
       return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
     }
-
-    /** きょうの記録欄を取り出す（無ければ作る）。 */
     function todayEntry(data) {
       if (!data.days[todayStr()]) data.days[todayStr()] = {};
       return data.days[todayStr()];
     }
 
-    /* ─── そだちかたの ずかんを描画 ─── */
-    function renderGrowStrip() {
-      const el = document.getElementById('grow-strip');
-      el.innerHTML = STAGES.map((s, i) =>
-        `<div class="grow-step"><div class="g-emoji">${s.emoji}</div><div class="g-label">${s.label}</div></div>` +
-        (i < STAGES.length - 1 ? '<span class="grow-arrow">›</span>' : '')
-      ).join('');
-    }
-
-    /* ─── きょうの入力欄を描画 ─── */
+    /* ─── 画面の描画 ─── */
     function render() {
       const data = readData();
       const t = data.days[todayStr()] || {};
 
-      // 水やりボタン
+      // いまの姿
+      document.getElementById('stage-figure').innerHTML = asagaoSvg(data.stage);
+      document.getElementById('stage-name').textContent =
+        STAGE_MARKS[data.stage] + ' ' + STAGES[data.stage].name;
+
+      // みずやり
       const wb = document.getElementById('water-btn');
-      wb.textContent = t.water ? '💧 みずやり できた！' : '💧 みずやり まだ';
+      wb.textContent = t.water ? '💧 みずやり できた！えらい！' : '💧 みずを あげた！';
       wb.classList.toggle('done', !!t.water);
 
-      // ステージボタン
-      const grid = document.getElementById('stage-grid');
-      grid.innerHTML = STAGES.map(s => `
-        <button class="stage-btn ${t.stage === s.id ? 'sel' : ''}" data-stage="${s.id}">
-          <span class="s-emoji">${s.emoji}</span>
-          <span class="s-label">${s.label}</span>
-        </button>`).join('');
-      grid.querySelectorAll('.stage-btn').forEach(b =>
-        b.addEventListener('click', () => selectStage(b.dataset.stage)));
+      // かわった？
+      document.getElementById('diff-yes').classList.toggle('sel-yes', t.changed === 'yes');
+      document.getElementById('diff-no').classList.toggle('sel-no', t.changed === 'no');
 
-      // ちがいボタン
-      document.getElementById('diff-aru').classList.toggle('sel-aru', t.diff === 'aru');
-      document.getElementById('diff-nai').classList.toggle('sel-nai', t.diff === 'nai');
-
-      // タグ（「あった」のときだけ表示）
-      const tagRow = document.getElementById('tag-row');
-      if (t.diff === 'aru') {
-        tagRow.style.display = 'flex';
-        const tags = t.tags || [];
-        tagRow.innerHTML = DIFF_TAGS.map(tg =>
-          `<button class="tag ${tags.includes(tg.id) ? 'sel' : ''}" data-tag="${tg.id}">${tg.label}</button>`).join('');
-        tagRow.querySelectorAll('.tag').forEach(b =>
-          b.addEventListener('click', () => toggleTag(b.dataset.tag)));
-      } else {
-        tagRow.style.display = 'none';
+      // かわったパネル（メモ＋すすむ）
+      const panel = document.getElementById('changed-panel');
+      panel.classList.toggle('show', t.changed === 'yes');
+      if (t.changed === 'yes') {
+        document.getElementById('memo-input').value = t.memo || '';
+        // 次のステージがあるなら「すすむ？」を出す
+        const box = document.getElementById('advance-box');
+        if (data.stage < STAGES.length - 1 && !t.advancedTo) {
+          box.style.display = 'flex';
+          const next = data.stage + 1;
+          document.getElementById('advance-fig').innerHTML = asagaoSvg(next);
+          document.getElementById('advance-q').textContent =
+            `もしかして…「${STAGES[next].name}」に なった？`;
+        } else {
+          box.style.display = 'none';
+        }
       }
 
-      // きょうのまとめ（姿とちがいの両方が入ったら表示）
-      document.getElementById('today-done').style.display =
-        (t.stage && t.diff) ? 'block' : 'none';
-
-      renderLog(data);
+      renderCalendar(data);
     }
 
-    /* ─── 記録一覧（新しい日が上） ─── */
-    function renderLog(data) {
-      const list = document.getElementById('log-list');
-      const dates = Object.keys(data.days).sort().reverse();
-      if (dates.length === 0) {
-        list.innerHTML = '<div class="log-empty">まだ きろくが ないよ。きょうから はじめよう！</div>';
-        return;
-      }
-      list.innerHTML = dates.map(d => {
-        const e = data.days[d];
-        const stage = STAGES.find(s => s.id === e.stage);
-        const md = `${parseInt(d.slice(5, 7))}/${parseInt(d.slice(8, 10))}`;
-        let diffHtml = '';
-        if (e.diff === 'aru') {
-          const tagNames = (e.tags || []).map(id => (DIFF_TAGS.find(t => t.id === id) || {}).label).filter(Boolean);
-          diffHtml = `<span class="log-diff">ちがい あった${tagNames.length ? '：' + tagNames.join('・') : ''}</span>`;
-        } else if (e.diff === 'nai') {
-          diffHtml = '<span class="log-diff nai">おなじ だった</span>';
+    /* ─── カレンダー描画（7月・8月） ─── */
+    function renderCalendar(data) {
+      const cal = document.getElementById('calendar');
+      const months = [ { y: 2026, m: 7 }, { y: 2026, m: 8 } ];
+      const today = todayStr();
+      const p = n => String(n).padStart(2, '0');
+      const heads = ['日', '月', '火', '水', '木', '金', '土'];
+
+      cal.innerHTML = months.map(({ y, m }) => {
+        const first = new Date(y, m - 1, 1);
+        const daysInMonth = new Date(y, m, 0).getDate();
+        let cells = heads.map((h, i) =>
+          `<div class="cal-head ${i === 0 ? 'sun' : (i === 6 ? 'sat' : '')}">${h}</div>`).join('');
+        // 月初の曜日ぶん 空セル
+        for (let i = 0; i < first.getDay(); i++) cells += '<div class="cal-cell out"></div>';
+        for (let d = 1; d <= daysInMonth; d++) {
+          const ds = `${y}-${p(m)}-${p(d)}`;
+          const e = data.days[ds] || {};
+          const marks = (e.water ? '💧' : '') + (e.changed === 'yes' ? '🔍' : '');
+          const adv = (e.advancedTo != null) ? `<span class="c-stage">${STAGE_MARKS[e.advancedTo]}</span>` : '';
+          cells += `
+            <div class="cal-cell ${ds === today ? 'today' : ''} ${e.advancedTo != null ? 'advanced' : ''}" data-date="${ds}">
+              <span>${d}</span>
+              ${adv || `<span class="c-marks">${marks}</span>`}
+            </div>`;
         }
-        return `
-          <div class="log-row">
-            <span class="log-date">${md}</span>
-            <span>${e.water ? '💧' : ''}</span>
-            <span class="log-stage">${stage ? stage.emoji : ''}</span>
-            <span style="font-size:0.78rem">${stage ? stage.label : ''}</span>
-            ${diffHtml}
-          </div>`;
+        return `<div class="cal-month"><div class="cal-title">${m}月</div><div class="cal-grid">${cells}</div></div>`;
       }).join('');
+
+      cal.querySelectorAll('.cal-cell[data-date]').forEach(c =>
+        c.addEventListener('click', () => showDayDetail(c.dataset.date)));
+    }
+
+    /* ─── 日別の詳細モーダル（メモの見返し・親の追記） ─── */
+    function showDayDetail(date) {
+      const data = readData();
+      const e = data.days[date] || {};
+      const md = `${parseInt(date.slice(5, 7))}月${parseInt(date.slice(8, 10))}日`;
+      const lines = [
+        `💧 みずやり：${e.water ? 'した' : 'しなかった'}`,
+        `🔍 きのうとの ちがい：${e.changed === 'yes' ? 'あった！' : (e.changed === 'no' ? 'おなじだった' : 'まだ きろく なし')}`,
+      ];
+      if (e.advancedTo != null) lines.push(`${STAGE_MARKS[e.advancedTo]} 「${STAGES[e.advancedTo].name}」に すすんだ日！`);
+
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `
+        <div class="modal">
+          <div class="m-title">📅 ${md} の きろく</div>
+          <div class="day-detail">${lines.join('<br>')}</div>
+          <div class="memo-label" style="text-align:left; margin-top:10px">✏️ メモ</div>
+          <textarea class="memo-input" id="day-memo">${escHtml(e.memo || '')}</textarea>
+          <button class="m-btn" id="day-close">とじる</button>
+        </div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#day-close').addEventListener('click', () => {
+        // 閉じるときにメモを保存（親があとから追記できる）
+        const d = readData();
+        if (!d.days[date]) d.days[date] = {};
+        d.days[date].memo = overlay.querySelector('#day-memo').value.trim();
+        writeData(d);
+        overlay.remove();
+        render();
+      });
     }
 
     /* ─── 操作 ─── */
 
-    // 水やりのON/OFF
     document.getElementById('water-btn').addEventListener('click', () => {
       const data = readData();
       const t = todayEntry(data);
@@ -411,51 +574,97 @@
       render();
     });
 
-    // きょうの姿を選ぶ（はじめての「はな」「たね」ならお知らせを出す）
-    function selectStage(stageId) {
+    document.getElementById('diff-yes').addEventListener('click', () => setChanged('yes'));
+    document.getElementById('diff-no').addEventListener('click', () => setChanged('no'));
+    function setChanged(v) {
       const data = readData();
       const t = todayEntry(data);
-      t.stage = (t.stage === stageId) ? null : stageId;  // もう一度おすと取り消し
+      t.changed = (t.changed === v) ? null : v;
+      writeData(data);
+      render();
+    }
+
+    // メモ保存
+    document.getElementById('memo-save').addEventListener('click', () => {
+      const data = readData();
+      const t = todayEntry(data);
+      t.memo = document.getElementById('memo-input').value.trim();
+      writeData(data);
+      const s = document.getElementById('memo-saved');
+      s.style.display = 'inline';
+      setTimeout(() => { s.style.display = 'none'; }, 1800);
+    });
+
+    // つぎのすがたへ すすむ
+    document.getElementById('advance-btn').addEventListener('click', () => {
+      const data = readData();
+      if (data.stage >= STAGES.length - 1) return;
+      data.stage += 1;
+      const t = todayEntry(data);
+      t.advancedTo = data.stage;
       writeData(data);
       render();
 
-      if (t.stage === 'hana' && !data.celebrated.hana) {
+      const s = STAGES[data.stage].id;
+      if (s === 'hana' && !data.celebrated.hana) {
         data.celebrated.hana = true;
         writeData(data);
         showModal('🌸', 'はなが さいたね！おめでとう！',
           'がっこうの「みつけたよカード」に<br>きょうの あさがおを かいてみよう！<br>いろ・かたち・かずを よくみてね');
-      }
-      if (t.stage === 'tane' && !data.celebrated.tane) {
+      } else if (s === 'tane' && !data.celebrated.tane) {
         data.celebrated.tane = true;
         writeData(data);
-        showModal('🟤', 'たねが できたね！',
+        showModal('🟤', 'たねが とれたね！',
           '2まいめの「みつけたよカード」に<br>たねの きろくを かこう！<br>したの「たねの とりかた」も みてみてね');
+      } else {
+        showModal(STAGE_MARKS[data.stage], 'すすんだ！',
+          `「${STAGES[data.stage].name}」<br>よく きづいたね！`);
       }
-    }
+    });
 
-    // ちがいの「あった／なかった」
-    document.getElementById('diff-aru').addEventListener('click', () => setDiff('aru'));
-    document.getElementById('diff-nai').addEventListener('click', () => setDiff('nai'));
-    function setDiff(v) {
+    /**
+     * すがた選びモーダル（共通）。
+     * はじめの設定（持って帰ってきた日）と「すがたを なおす」の両方で使う。
+     * @param {string} title    見出し
+     * @param {string} subtitle 説明文
+     * @param {boolean} closable 「とじる」ボタンを出すか（初回設定では選ぶまで閉じない）
+     */
+    function showStagePicker(title, subtitle, closable) {
       const data = readData();
-      const t = todayEntry(data);
-      t.diff = (t.diff === v) ? null : v;
-      writeData(data);
-      render();
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `
+        <div class="modal">
+          <div class="m-title">${title}</div>
+          <div class="m-text" style="font-size:0.8rem; color:#94a3b8">${subtitle}</div>
+          ${STAGES.map((s, i) => `
+            <div class="fix-row ${i === data.stage ? 'now' : ''}" data-i="${i}">
+              ${asagaoSvg(i)}
+              <span>${STAGE_MARKS[i]} ${s.name}</span>
+            </div>`).join('')}
+          ${closable ? '<button class="m-btn" id="fix-close">とじる</button>' : ''}
+        </div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelectorAll('.fix-row').forEach(r =>
+        r.addEventListener('click', () => {
+          const d = readData();
+          d.stage = parseInt(r.dataset.i, 10);
+          d.stageSet = true;   // 一度えらんだら 初回設定は もう出さない
+          writeData(d);
+          overlay.remove();
+          render();
+        }));
+      const closeBtn = overlay.querySelector('#fix-close');
+      if (closeBtn) closeBtn.addEventListener('click', () => overlay.remove());
     }
 
-    // ちがいタグのON/OFF
-    function toggleTag(tagId) {
-      const data = readData();
-      const t = todayEntry(data);
-      t.tags = t.tags || [];
-      const i = t.tags.indexOf(tagId);
-      if (i >= 0) t.tags.splice(i, 1); else t.tags.push(tagId);
-      writeData(data);
-      render();
-    }
+    // すがたを なおす（親用：ステージを選び直す）
+    document.getElementById('stage-fix').addEventListener('click', () => {
+      showStagePicker('すがたを なおす',
+        'いまの あさがおに あう ものを えらんでください（保護者用）', true);
+    });
 
-    // たねのとりかた ずかんの開閉
+    // ずかんの開閉
     document.getElementById('zukan-toggle').addEventListener('click', () => {
       const body = document.getElementById('zukan-body');
       body.classList.toggle('open');
@@ -471,14 +680,27 @@
           <div class="m-emoji">${emoji}</div>
           <div class="m-title">${title}</div>
           <div class="m-text">${htmlText}</div>
-          <button>わかった！</button>
+          <button class="m-btn">わかった！</button>
         </div>`;
       document.body.appendChild(overlay);
-      overlay.querySelector('button').addEventListener('click', () => overlay.remove());
+      overlay.querySelector('.m-btn').addEventListener('click', () => overlay.remove());
     }
 
-    renderGrowStrip();
+    /** XSS 対策：HTML 特殊文字をエスケープする */
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     render();
+
+    // はじめて開いたとき（まだ すがたを設定していないとき）は
+    // 「もってかえってきた あさがおの すがた」を選んでもらう
+    if (!readData().stageSet) {
+      showStagePicker('🌸 はじめの せってい',
+        'あさがおを もってかえってきたら、いまの すがたに いちばん ちかい ものを えらんでね（おうちのひとと いっしょに）', false);
+    }
   </script>
 </body>
 </html>
