@@ -368,6 +368,30 @@
   <div class="level-btns" id="level-btns"></div>
 </div>
 
+<!-- ①b レベル1の もんだいえらび（クイズモードのみ） -->
+<div class="screen" id="screen-variant">
+  <div class="sos-title">❓ レベル1 クイズ</div>
+  <div class="sos-sub">どの もんだいに する？</div>
+  <div class="level-btns">
+    <button class="level-btn" onclick="startQuiz(1, 'et')">
+      <span class="lv-num">その1</span>
+      <span>ト と ツー<br><small>E と T だけ</small></span>
+    </button>
+    <button class="level-btn" onclick="startQuiz(1, 'im')">
+      <span class="lv-num">その2</span>
+      <span>トト と ツーツー<br><small>I と M だけ</small></span>
+    </button>
+    <button class="level-btn" onclick="startQuiz(1, 'mix')">
+      <span class="lv-num">その3</span>
+      <span>まぜこぜ<br><small>E・T・I・M ぜんぶ</small></span>
+    </button>
+  </div>
+  <div class="section-label">『まぜこぜ』で 8もん せいかいすると<br>レベル2が あそべるように なるよ</div>
+  <div class="sub-btns">
+    <button class="sub-btn" onclick="goHome()">⛵ ホームへ</button>
+  </div>
+</div>
+
 <!-- ② きくモード -->
 <div class="screen" id="screen-listen">
   <div class="section-label" id="listen-title"></div>
@@ -483,6 +507,16 @@ const LEVELS = {
 
 const QUIZ_COUNT = 10;   // クイズの問題数
 const PASS_SCORE = 8;    // 次のレベルが解放される正解数
+
+// レベル1の「まえだんかい」もんだい（クイズモードで えらべる）
+// ・その1: ト と ツー だけ（E・T の 2たく）
+// ・その2: トト と ツーツー（I・M の 2たく）
+// ・その3: まぜこぜ（4もじ ぜんぶ）← これに合格すると レベル2が あそべる
+const L1_VARIANTS = {
+  et:  { label: 'ト と ツー',       letters: ['E', 'T'],           main: false },
+  im:  { label: 'トト と ツーツー', letters: ['I', 'M'],           main: false },
+  mix: { label: 'まぜこぜ',         letters: ['E', 'T', 'I', 'M'], main: true  },
+};
 
 // 正解のときに1行ずつ出す豆知識（ひらがな・カタカナのみ）
 const TRIVIA = [
@@ -840,6 +874,8 @@ function startLevel(lv) {
   ensureAudio();  // タップのタイミングで音の準備をしておく（スマホ対策）
   if (mode === 'listen') {
     showListen(lv);
+  } else if (lv === 1) {
+    showScreen('variant');   // レベル1は もんだいの種類を選んでから始める
   } else if (lv === 4) {
     showSosQuiz();       // レベル4はSOS送信の特別クイズ
   } else {
@@ -901,16 +937,27 @@ function listenSOS() {
  *  ・点数に入るのは「1回目で正解できたか」だけ
  * ════════════════════════════════════════════════════════════════ */
 
-let quizLevel = 1;    // いま遊んでいるレベル
-let qNum = 0;         // いま何問目か
-let qScore = 0;       // 正解数（1回目の答えで数える）
-let qLetter = null;   // いまの問題の正解の文字
-let qFirstTry = true; // この問題を1回目で答えられるか
-let triviaIndex = 0;  // 豆知識を順番に出すためのカウンター
+let quizLevel = 1;      // いま遊んでいるレベル
+let quizVariant = null; // レベル1のもんだいの種類（et / im / mix。ほかのレベルは null）
+let quizLetters = [];   // いまのクイズで出題する文字
+let quizIsMain = true;  // 合格するとレベルが解放される「本番」クイズかどうか
+let qNum = 0;           // いま何問目か
+let qScore = 0;         // 正解数（1回目の答えで数える）
+let qLetter = null;     // いまの問題の正解の文字
+let qFirstTry = true;   // この問題を1回目で答えられるか
+let triviaIndex = 0;    // 豆知識を順番に出すためのカウンター
 
-/** クイズを最初から始める */
-function startQuiz(lv) {
+/**
+ * クイズを最初から始める。
+ * @param {number} lv レベル番号
+ * @param {string} [variantKey] レベル1のもんだいの種類（et / im / mix）
+ */
+function startQuiz(lv, variantKey) {
   quizLevel = lv;
+  quizVariant = variantKey || null;
+  const v = quizVariant ? L1_VARIANTS[quizVariant] : null;
+  quizLetters = v ? v.letters : LEVELS[lv].letters;
+  quizIsMain = v ? v.main : true;   // 練習のもんだいでは レベルは解放しない
   qNum = 0;
   qScore = 0;
   qLetter = null;
@@ -927,9 +974,13 @@ function nextQuestion() {
   qNum++;
   qFirstTry = true;
 
-  const letters = LEVELS[quizLevel].letters;
+  const letters = quizLetters;
   // 前の問題と同じ文字が続かないように選ぶ
-  const candidates = letters.filter(l => l !== qLetter);
+  // （2もじだけの練習では、それだと かならず交互になって答えがバレるので、
+  //   同じ文字が続くことも あるようにする）
+  const candidates = letters.length > 2
+    ? letters.filter(l => l !== qLetter)
+    : letters;
   qLetter = candidates[Math.floor(Math.random() * candidates.length)];
 
   // 4択の選択肢を作る（正解 + まちがい3つをシャッフル）
@@ -954,8 +1005,12 @@ function nextQuestion() {
 
 /** クイズ1問ぶんの画面を組み立てる */
 function buildQuizScreen(choices) {
+  // レベル1は もんだいの種類の名前を、ほかのレベルは 航海の名前を出す
+  const quizName = quizVariant
+    ? L1_VARIANTS[quizVariant].label
+    : LEVELS[quizLevel].name;
   document.getElementById('quiz-count').textContent =
-    `❓ レベル${quizLevel} ${LEVELS[quizLevel].name}　（${qNum}／${QUIZ_COUNT}もんめ）`;
+    `❓ レベル${quizLevel} ${quizName}　（${qNum}／${QUIZ_COUNT}もんめ）`;
   document.getElementById('quiz-feedback').textContent = '';
   document.getElementById('quiz-feedback').className = 'feedback-main';
   document.getElementById('quiz-trivia').textContent = '';
@@ -1010,17 +1065,20 @@ function answerQuiz(letter) {
   }
 }
 
-/** 10問終了後の結果画面。8問以上で次のレベルを解放する */
+/** 10問終了後の結果画面。本番クイズで8問以上なら次のレベルを解放する */
 function showQuizResult() {
   const passed = qScore >= PASS_SCORE;
 
-  // 進捗を保存（ベストスコアとレベル解放）
-  progress.level_scores[quizLevel] =
-    Math.max(progress.level_scores[quizLevel] || 0, qScore);
-  if (passed && progress.unlocked_level < quizLevel + 1) {
-    progress.unlocked_level = quizLevel + 1;
+  // ベストスコアとレベル解放は「本番」クイズ（まぜこぜ など）のときだけ。
+  // 練習のもんだい（ト と ツー だけ等）では進めない
+  if (quizIsMain) {
+    progress.level_scores[quizLevel] =
+      Math.max(progress.level_scores[quizLevel] || 0, qScore);
+    if (passed && progress.unlocked_level < quizLevel + 1) {
+      progress.unlocked_level = quizLevel + 1;
+    }
+    saveProgress();
   }
-  saveProgress();
   drawScene(false);
 
   // きろくページ用に「正解数／問題数」を記録する
@@ -1030,9 +1088,14 @@ function showQuizResult() {
   document.getElementById('result-score').textContent = qScore;
   const msg = document.getElementById('result-msg');
   if (passed) {
-    msg.textContent = quizLevel < 4
-      ? `すごい！ レベル${quizLevel + 1}が あそべるように なったよ！`
-      : 'すごい！ りっぱな つうしんしだね！';
+    if (!quizIsMain) {
+      // 練習のもんだいに合格 → まぜこぜへ さそう
+      msg.textContent = 'すごい！ つぎは『まぜこぜ』に ちょうせんしてみよう！';
+    } else {
+      msg.textContent = quizLevel < 4
+        ? `すごい！ レベル${quizLevel + 1}が あそべるように なったよ！`
+        : 'すごい！ りっぱな つうしんしだね！';
+    }
     msg.className = 'result-msg';
   } else {
     msg.textContent = 'おしい！ きくモードで れんしゅうして もういちど ちょうせんしよう';
@@ -1044,9 +1107,9 @@ function showQuizResult() {
   if (passed) Points.rewardFor(3);
 }
 
-/** 結果画面の「もういちど あそぶ」 */
+/** 結果画面の「もういちど あそぶ」（同じもんだいの種類でやり直す） */
 function retryQuiz() {
-  startQuiz(quizLevel);
+  startQuiz(quizLevel, quizVariant);
 }
 
 /* ════════════════════════════════════════════════════════════════
