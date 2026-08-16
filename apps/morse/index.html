@@ -791,13 +791,16 @@ function drawShip(ctx, x, y, s, funnels) {
   ctx.fill();
   // 上部のデッキ
   ctx.fillRect(x + 34 * s, y - 16 * s, 162 * s, 16 * s);
-  // 煙突
+  // 煙突（何本でも ふねの まんなかに そろえて並べる。
+  // カルパチアごうは1本なので、ちょうど まんなかに くる）
   ctx.fillStyle = '#33415C';
-  const gap = (130 * s) / Math.max(funnels, 1);
-  let fx = x + 52 * s;
+  const fw = 16 * s;    // 煙突1本の幅
+  const fgap = 16 * s;  // 煙突どうしの すきま
+  const groupW = funnels * fw + (funnels - 1) * fgap;
+  let fx = x + 115 * s - groupW / 2;   // ふねの中心（x + 115*s）にそろえる
   for (let i = 0; i < funnels; i++) {
-    ctx.fillRect(fx, y - 44 * s, 16 * s, 28 * s);
-    fx += gap;
+    ctx.fillRect(fx, y - 44 * s, fw, 28 * s);
+    fx += fw + fgap;
   }
   // あかり（丸い窓）
   ctx.fillStyle = '#FFD84D';
