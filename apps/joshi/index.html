@@ -540,6 +540,8 @@ function startMode(mode) {
   qIndex  = 0;
   scoreOk = 0;
   scoreNg = 0;
+  // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
+  Stats.beginPlay();
   showScreen('screen-quiz');
   showQuestion();
 }
@@ -566,6 +568,9 @@ function showQuestion() {
   answered = false;
   const q     = currentQuestions[qIndex];
   const total = currentQuestions.length;
+
+  /* この問題の計測スタート（画面には出さない） */
+  Stats.lapStart();
 
   /* プログレスバー */
   document.getElementById('prog-fill').style.width = (qIndex / total * 100) + '%';
@@ -618,6 +623,9 @@ function choose(btnIdx) {
   const btnB   = document.getElementById('btn-b');
   const chosen = btnIdx === 0 ? btnA : btnB;
   const isOk   = chosen.textContent === q.answer;
+
+  /* 1問ぶんの時間を記録する（画面には出さない） */
+  Stats.lap(isOk);
 
   btnA.disabled = true;
   btnB.disabled = true;

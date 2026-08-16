@@ -372,6 +372,46 @@
     </div>
   </div>
 
+  <!-- ── 時間の記録（おうちの人用） ──────────────────────── -->
+  <style>
+    /* 時間の記録カード専用のスタイル */
+    .tl-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+    .tl-table th {
+      text-align:left; color:#8a97b0; font-size:0.72rem; font-weight:700;
+      padding:6px 8px; border-bottom:2px solid #e9edf5; white-space:nowrap;
+    }
+    .tl-table td { padding:8px; border-bottom:1px solid #eef2fb; vertical-align:top; }
+    .tl-table tr:nth-child(even) td { background:#f8fafd; }
+    .tl-laps { font-size:0.72rem; color:#8a97b0; line-height:1.7; margin-top:3px; word-break:break-all; }
+    .tl-laps b { color:#e53e3e; font-weight:700; }
+    .tl-flag {
+      display:inline-block; background:#fff5f5; color:#e53e3e; border:1px solid #f0b3b3;
+      border-radius:10px; padding:1px 8px; font-size:0.7rem; font-weight:700; white-space:nowrap;
+    }
+    .tl-sum {
+      display:inline-block; background:#eef2ff; color:#5a67d8; border-radius:10px;
+      padding:4px 12px; font-size:0.8rem; font-weight:700; margin:0 8px 8px 0;
+    }
+    #time-app-select {
+      padding:8px 12px; border:2px solid #e2e8f0; border-radius:8px;
+      font-size:0.9rem; font-family:inherit; outline:none; margin-bottom:14px;
+    }
+    .tl-scroll { overflow-x:auto; }
+  </style>
+  <div class="card" style="margin-top:32px">
+    <h2 style="color:#2b6cb0">⏱ 時間の記録 — 1回ごとの かかった時間（おうちの人用）</h2>
+    <p style="font-size:0.83rem;color:#718096;line-height:1.7;margin-bottom:16px">
+      アプリで1回あそぶごとに「かかった時間」と「1問ごとの秒数」を こっそり記録しています。<br>
+      <b>お子さんの画面には 時間はいっさい表示されません</b>（きろくページにも出ません）。ここでだけ見られます。<br>
+      ※ 記録は <b>あそんだ端末（ブラウザ）の中だけ</b> に残ります。お子さんの端末で この管理ページを開いてください。<br>
+      ※ めやす：学校の「けいさん50もんを3分」は <b>1問あたり 約3.6秒</b> のペースです。
+    </p>
+
+    <div id="time-summary"></div>
+    <select id="time-app-select" onchange="renderTimeTable()"></select>
+    <div class="tl-scroll"><div id="time-table"></div></div>
+  </div>
+
   <!-- ── おんどく おはなし管理 ──────────────────────────── -->
   <div class="card" style="margin-top:32px">
     <h2 style="color:#d53f8c">📖 おんどく れんしゅう — おはなし管理</h2>
@@ -485,6 +525,7 @@
     renderList();
     renderHomework();
     renderPointsList();
+    renderTimeLog();
     renderOndokuList();
   });
 
@@ -836,6 +877,135 @@
     else localStorage.removeItem('kids_point_config');
     renderPointsList();
     showToast('↩️ 初期値にもどしました。');
+  }
+
+  // ─── 時間の記録（おうちの人用） ───────────────────────────────────────────────
+  // points.js の Stats が ためている history（1回ごとの記録）を一覧表示する。
+  // ここでしか時間は見えない（子ども向けの画面には出さない）。
+
+  /** 記録（history）が1件でもあるアプリの一覧を返す */
+  function timeApps() {
+    const stat = (typeof Stats !== 'undefined') ? Stats.all() : {};
+    const ids = Object.keys(stat).filter(id =>
+      Array.isArray(stat[id].history) && stat[id].history.length > 0);
+    // apps.json の情報（名前・アイコン）とくっつける。無ければIDのまま表示
+    return ids.map(id => {
+      const app = siteData.apps.find(a => a.id === id);
+      return { id, name: app ? app.name : id, icon: app ? (app.icon || '📖') : '📦' };
+    });
+  }
+
+  /**
+   * 1回ぶんの記録から「1問あたりの秒数」を計算する。
+   * 1問ごとの記録（laps）があればその平均、無ければ 合計時間÷問題数。
+   * 時間の記録が無い古いデータは null を返す。
+   */
+  function perQuestionSec(s) {
+    if (Array.isArray(s.laps) && s.laps.length > 0) {
+      const sum = s.laps.reduce((a, l) => a + (l.s || 0), 0);
+      return sum / s.laps.length;
+    }
+    if (typeof s.sec === 'number' && s.t > 0) return s.sec / s.t;
+    return null;
+  }
+
+  /** 秒数を「3分05秒」のような読みやすい形にする */
+  function fmtSec(sec) {
+    if (typeof sec !== 'number') return '—';
+    const m = Math.floor(sec / 60), s = Math.round(sec % 60);
+    return m > 0 ? `${m}分${String(s).padStart(2, '0')}秒` : `${s}秒`;
+  }
+
+  /** 日時を「7/19 14:03」のような短い形にする */
+  function fmtWhen(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '—';
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getMonth() + 1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  /** まとめ（直近7日の合計時間・回数）と アプリ選択メニューを描画する */
+  function renderTimeLog() {
+    const stat = (typeof Stats !== 'undefined') ? Stats.all() : {};
+    const apps = timeApps();
+    const sel  = document.getElementById('time-app-select');
+    const sumEl = document.getElementById('time-summary');
+
+    // ── 直近7日のまとめ（全アプリ合計） ──
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    let weekSec = 0, weekPlays = 0;
+    Object.keys(stat).forEach(id => {
+      (stat[id].history || []).forEach(s => {
+        const t = new Date(s.at).getTime();
+        if (!isNaN(t) && t >= weekAgo) {
+          weekPlays++;
+          if (typeof s.sec === 'number') weekSec += s.sec;
+        }
+      });
+    });
+    sumEl.innerHTML =
+      `<span class="tl-sum">📅 直近7日：あそんだ回数 ${weekPlays}回</span>` +
+      `<span class="tl-sum">⏱ 直近7日：学習時間 ${fmtSec(weekSec)}</span>`;
+
+    // ── アプリ選択メニュー ──
+    if (apps.length === 0) {
+      sel.style.display = 'none';
+      document.getElementById('time-table').innerHTML =
+        '<p style="color:#a0aec0;text-align:center;padding:20px">まだ記録がありません。アプリで1回あそぶと たまりはじめます。</p>';
+      return;
+    }
+    const before = sel.value;  // えらんでいたアプリを おぼえておく
+    sel.style.display = '';
+    sel.innerHTML = apps.map(a =>
+      `<option value="${escHtml(a.id)}">${escHtml(a.icon)} ${escHtml(a.name)}</option>`).join('');
+    if (apps.some(a => a.id === before)) sel.value = before;
+
+    renderTimeTable();
+  }
+
+  /** えらんだアプリの 1回ごとの記録テーブルを描画する */
+  function renderTimeTable() {
+    const stat = (typeof Stats !== 'undefined') ? Stats.all() : {};
+    const id = document.getElementById('time-app-select').value;
+    const history = (stat[id] && Array.isArray(stat[id].history)) ? stat[id].history : [];
+
+    // 新しい順に、最大30回ぶんを表示する
+    const rows = history.slice().reverse().slice(0, 30).map(s => {
+      const acc = s.t > 0 ? Math.round(s.c / s.t * 100) : null;
+      const per = perQuestionSec(s);
+
+      // 「はやすぎかも」の目印：
+      // 1問あたり2秒未満なのに 正答率90%以上（5問以上のとき）は、
+      // 本当に解いていない可能性があるので しるしをつける
+      const tooFast = per !== null && per < 2 && s.t >= 5 && acc !== null && acc >= 90;
+
+      // 1問ごとの秒数（まちがえた問題は赤の太字で表示）
+      let lapsHtml = '';
+      if (Array.isArray(s.laps) && s.laps.length > 0) {
+        lapsHtml = '<div class="tl-laps">1問ごと（秒）： ' + s.laps.map(l => {
+          const v = (l.s || 0).toFixed(1);
+          return (l.ok === false) ? `<b>${v}❌</b>` : v;
+        }).join('・') + '</div>';
+      }
+
+      return `<tr>
+        <td style="white-space:nowrap">${fmtWhen(s.at)}</td>
+        <td style="white-space:nowrap">${s.c} / ${s.t}${acc !== null ? `（${acc}%）` : ''}</td>
+        <td style="white-space:nowrap">${typeof s.sec === 'number' ? fmtSec(s.sec) : '—'}</td>
+        <td style="white-space:nowrap">${per !== null ? per.toFixed(1) + '秒' : '—'}</td>
+        <td>${tooFast ? '<span class="tl-flag">⚡ はやすぎかも？</span>' : ''}${lapsHtml}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('time-table').innerHTML = `
+      <table class="tl-table">
+        <tr><th>日時</th><th>せいせき</th><th>かかった時間</th><th>1問あたり</th><th>ようす</th></tr>
+        ${rows}
+      </table>
+      <p style="font-size:0.72rem;color:#8a97b0;margin-top:10px;line-height:1.7">
+        ※「1問あたり」は 1問ごとの記録があればその平均、無ければ 合計時間÷問題数 です。<br>
+        ※ 時間が「—」の記録は、このしくみを入れる前のものです。これからの記録には時間がつきます。
+      </p>`;
   }
 
   // ─── おんどく おはなし管理 ────────────────────────────────────────────────────

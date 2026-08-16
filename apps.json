@@ -153,6 +153,16 @@
       "visible": true
     },
     {
+      "id": "morse",
+      "name": "タイタニックの つうしんし",
+      "description": "モールスしんごうを おぼえて SOSで きゅうじょを よぼう",
+      "icon": "📡",
+      "color": "#312E81",
+      "url": "apps/morse/",
+      "category": "えいご",
+      "visible": true
+    },
+    {
       "id": "hata",
       "name": "はたあげ ゲーム",
       "description": "みぎ・ひだりを おぼえよう",

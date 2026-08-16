@@ -212,6 +212,52 @@ function showRewardPopup(n, total) {
 const STATS_KEY = 'kids_stats';
 
 const Stats = {
+  /* ──────────────────────────────────────────────────────────
+   *  時間の記録（画面には いっさい表示しない）
+   *  ----------------------------------------------------------
+   *  ・beginPlay() … クイズが始まった瞬間によぶ（各アプリのスタート処理で1行）
+   *  ・lapStart()  … 問題を画面に出した瞬間によぶ
+   *  ・lap(ok)     … 問題に答えが出た瞬間によぶ（1問ぶんの秒数を記録）
+   *  ・record()    … 従来どおり。beginPlay されていれば、かかった時間と
+   *                  1問ごとの秒数も いっしょに history に保存する
+   *  記録した時間は 管理ツール（manage.html）の「時間の記録」でだけ見られる。
+   *  子ども向けの画面（アプリ本体・きろくページ）には出さない。
+   * ────────────────────────────────────────────────────────── */
+
+  _playStartMs: null,   // クイズ開始時刻（ミリ秒）。null なら計測していない
+  _lapStartMs:  null,   // いまの問題を表示した時刻
+  _lastLapMs:   null,   // 直前の問題に答えた時刻（lapStart が無いアプリ用の代わり）
+  _laps:        [],     // 1問ごとの記録 [{s: 秒, ok: 正解かどうか(省略あり)}]
+
+  /** クイズ（1回ぶんのプレイ）の計測を始める。 */
+  beginPlay() {
+    this._playStartMs = performance.now();
+    this._lapStartMs  = performance.now();
+    this._lastLapMs   = null;
+    this._laps        = [];
+  },
+
+  /** 問題を画面に出した瞬間によぶ（1問の計測スタート）。 */
+  lapStart() {
+    if (this._playStartMs === null) return;  // beginPlay していなければ何もしない
+    this._lapStartMs = performance.now();
+  },
+
+  /**
+   * 1問に答えが出た瞬間によぶ（1問ぶんの秒数を確定する）。
+   * @param {boolean} [ok] 正解なら true。省略すると 正誤なしで時間だけ記録
+   */
+  lap(ok) {
+    if (this._playStartMs === null) return;
+    const now = performance.now();
+    // 問題表示時刻 → なければ 直前の答えの時刻 → なければ クイズ開始時刻 から測る
+    const base = this._lapStartMs ?? this._lastLapMs ?? this._playStartMs;
+    const s = Math.round((now - base) / 100) / 10;  // 0.1秒きざみ
+    const entry = (ok === undefined) ? { s } : { s, ok: !!ok };
+    if (this._laps.length < 200) this._laps.push(entry);  // ためすぎ防止
+    this._lastLapMs  = now;
+    this._lapStartMs = null;
+  },
   /** 保存箱を読みこむ。こわれていても空っぽとして扱う。 */
   _read() {
     try {
@@ -276,6 +322,30 @@ const Stats = {
     e.correct += Math.max(0, Math.floor(correct) || 0);
     e.total   += Math.max(0, Math.floor(total) || 0);
     e.lastUsed = new Date().toISOString();
+
+    // ── 1回ぶんの詳しい記録（history）を残す ──
+    // 時間の計測（beginPlay）をしていれば、かかった秒数と1問ごとの秒数も入れる。
+    // この記録は 管理ツールの「時間の記録」でだけ使う（子どもの画面には出さない）。
+    const session = {
+      at: e.lastUsed,                        // いつ
+      c:  Math.max(0, Math.floor(correct) || 0),  // 正解数
+      t:  Math.max(0, Math.floor(total) || 0),    // 問題数
+    };
+    if (this._playStartMs !== null) {
+      session.sec = Math.round((performance.now() - this._playStartMs) / 1000);
+      if (this._laps.length > 0) session.laps = this._laps;
+    }
+    if (!Array.isArray(e.history)) e.history = [];
+    e.history.push(session);
+    // 古いものから消して、アプリごとに最大60回ぶんだけ残す（保存箱のパンク防止）
+    if (e.history.length > 60) e.history.splice(0, e.history.length - 60);
+
+    // 計測をリセットする（「もういちど」は 次の beginPlay からまた測る）
+    this._playStartMs = null;
+    this._lapStartMs  = null;
+    this._lastLapMs   = null;
+    this._laps        = [];
+
     this._write(data);
     // きょうの しゅくだいの アプリなら「できた」にする
     if (typeof Homework !== 'undefined') Homework.notifyCleared(appId);

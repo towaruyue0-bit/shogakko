@@ -529,6 +529,8 @@
     curStory = STORIES[idx];
     qIndex = 0;
     mistakes = 0;
+    // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
+    Stats.beginPlay();
     renderPassage();
     showQuestion();
     showScreen('quiz');
@@ -546,6 +548,9 @@
   function showQuestion() {
     const q = curStory.questions[qIndex];
     solved = false;
+
+    // この問題の計測スタート（画面には出さない）
+    Stats.lapStart();
 
     // あなの数だけ「空っぽ」と 9もじボタンを用意
     const blankCount = q.parts.filter(p => typeof p === 'object').length;
@@ -692,6 +697,8 @@
     if (allOk) {
       // 正解：あなを緑にして、本文の もとの一文を光らせる
       solved = true;
+      // 1問ぶんの時間を記録する（画面には出さない）
+      Stats.lap();
       renderFrame({ judge: true });
       highlightSource(q.source);
       setFeedback('せいかい！ ここに かいて あったね 👀', 'ok');

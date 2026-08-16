@@ -580,6 +580,9 @@
     // 旗を両方とも下げた状態にする
     renderFlags();
 
+    // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
+    Stats.beginPlay();
+
     document.getElementById('qtotal-disp').textContent = TOTAL_Q;
 
     showScreen('game');
@@ -597,6 +600,9 @@
 
     // 規定の問題数をこえたら結果へ
     if (qNum > TOTAL_Q) { showDone(); return; }
+
+    // この問題の計測スタート（画面には出さない）
+    Stats.lapStart();
 
     // 正解の方向をランダムに決める（直前と同じになりにくくする）
     let side = Math.random() < 0.5 ? 'left' : 'right';
@@ -664,6 +670,8 @@
       renderFlags();
 
       score++;
+      // 1問ぶんの時間を記録する（画面には出さない）
+      Stats.lap();
       document.getElementById('score-disp').textContent = score;
       markEl.textContent = '⭕';
       markEl.classList.add('show');

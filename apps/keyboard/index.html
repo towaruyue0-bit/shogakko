@@ -676,6 +676,9 @@
     correctCount = 0;
     wrongCount   = 0;
 
+    // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
+    Stats.beginPlay();
+
     document.getElementById('screen-setup').style.display  = 'none';
     document.getElementById('screen-result').style.display = 'none';
     document.getElementById('screen-quiz').style.display   = 'block';
@@ -688,6 +691,9 @@
   function showQuestion() {
     answered = false;
     const letter = questions[currentQ];
+
+    // この問題の計測スタート（画面には出さない）
+    Stats.lapStart();
 
     document.getElementById('target-letter').textContent = letter;
     document.getElementById('feedback').className        = 'feedback';
@@ -741,6 +747,8 @@
     const target = questions[currentQ];
     // 大文字・小文字の区別をせず、キーの位置だけで判定する
     const isCorrect = (typed.toLowerCase() === target.toLowerCase());
+    // 1問ぶんの時間を記録する（画面には出さない）
+    Stats.lap(isCorrect);
     const fb = document.getElementById('feedback');
     const letterEl = document.getElementById('target-letter');
 

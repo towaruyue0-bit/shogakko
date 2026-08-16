@@ -385,6 +385,8 @@
   // ---------- ゲーム進行 ----------
   function renderProblem(){
     var p = problems[index];
+    // この問題の計測スタート（画面には出さない）
+    if (typeof Stats !== "undefined" && Stats.lapStart) Stats.lapStart();
     $("a").textContent = p.a;
     $("b").textContent = p.b;
     var slot = $("slot");
@@ -412,6 +414,8 @@
     if (value === p.ans){
       locked = true;
       solved++;
+      // 1問ぶんの時間を記録する（画面には出さない）
+      if (typeof Stats !== "undefined" && Stats.lap) Stats.lap();
       var slot = $("slot");
       slot.textContent = p.ans;
       $("problem").classList.add("correct");
@@ -442,6 +446,8 @@
     if (ac && ac.state === "suspended") ac.resume();
     problems = shuffle(buildProblems(mode));
     index = 0; solved = 0; remaining = TIME_LIMIT; locked = false;
+    // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
+    if (typeof Stats !== "undefined" && Stats.beginPlay) Stats.beginPlay();
     $("total").textContent = problems.length;
     $("timeText").textContent = formatTime(remaining);
     $("timer").classList.remove("low");

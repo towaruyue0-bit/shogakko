@@ -549,6 +549,8 @@
   function startGame() {
     score = 0;
     qNum = 0;
+    // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
+    Stats.beginPlay();
     showScreen('game');
     nextQuestion();
   }
@@ -607,6 +609,9 @@
     formula = '';
     firstTry = true;
     solved = false;
+
+    // この問題の計測スタート（画面には出さない）
+    Stats.lapStart();
 
     document.getElementById('score-disp').textContent = score;
     document.getElementById('qnum-disp').textContent = qNum;
@@ -765,6 +770,8 @@
   function finishCorrect() {
     solved = true;
     if (firstTry) score++;
+    // 1問ぶんの時間を記録する（画面には出さない。ok＝一発で正解できたか）
+    Stats.lap(firstTry);
     const disp = document.getElementById('formula-disp');
     disp.textContent = fmtShiki(current.a, current.op, current.b) + ' ＝ ' + current.answer;
     disp.className = 'formula-disp correct';
@@ -892,6 +899,8 @@
     // ─ せいかい ─
     solved = true;
     if (firstTry) score++;
+    // 1問ぶんの時間を記録する（画面には出さない。ok＝一発で正解できたか）
+    Stats.lap(firstTry);
     disp.className = 'formula-disp correct';
     msg.textContent = firstTry ? 'せいかい！🎉' : 'できたね！🎉';
     msg.className = 'msg ok';

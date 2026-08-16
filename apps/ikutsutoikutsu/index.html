@@ -478,6 +478,9 @@
     // 'all'モードのときは、5〜10のすべての組み合わせのリストを作る
     if (gameMode === 'all') buildAllQueue();
 
+    // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
+    Stats.beginPlay();
+
     // 「おしまい」ボタンは endless モードのときだけ表示する
     document.getElementById('end-btn').style.display =
       gameMode === 'endless' ? 'block' : 'none';
@@ -546,6 +549,9 @@
     document.getElementById('score-disp').textContent = score;
     document.getElementById('qnum-disp').textContent = qNum;
 
+    // この問題の計測スタート（画面には出さない）
+    Stats.lapStart();
+
     renderQuestion();
     renderDots();
     renderChoices();
@@ -610,6 +616,8 @@
     if (chosen === correctAns) {
       // ─ 正解 ─
       score++;
+      // 1問ぶんの時間を記録する（画面には出さない）
+      Stats.lap();
       blank.textContent = chosen;
       blank.classList.add('correct');
       btn.classList.add('correct-ans');

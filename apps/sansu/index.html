@@ -944,6 +944,9 @@
     correctCount = 0;
     wrongCount   = 0;
 
+    // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
+    Stats.beginPlay();
+
     document.getElementById('screen-setup').style.display  = 'none';
     document.getElementById('screen-result').style.display = 'none';
     document.getElementById('screen-quiz').style.display   = 'block';
@@ -954,6 +957,9 @@
   /** 現在の問題を表示する */
   function showQuestion() {
     const q = questions[currentQ];
+
+    // この問題の計測スタート（画面には出さない）
+    Stats.lapStart();
 
     // フェーズを初期化する（さくらんぼあり → 'box'、なし → 'direct'）
     currentPhase = q.intermediate ? 'box' : 'direct';
@@ -1092,6 +1098,9 @@
     answered = true;
     const userAnswer = parseInt(input, 10);
     const correct    = q.answer;
+
+    // 1問ぶんの時間を記録する（画面には出さない）
+    Stats.lap(userAnswer === correct);
 
     if (userAnswer === correct) {
       // 正解

@@ -397,6 +397,8 @@
     if (ac && ac.state === "suspended") ac.resume();
     quiz = buildQuiz();
     index = 0; score = 0;
+    // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
+    if (typeof Stats !== "undefined" && Stats.beginPlay) Stats.beginPlay();
     $("qTotal").textContent = TOTAL_Q;
     renderQuestion();
     show("game");
@@ -407,6 +409,8 @@
     var q = quiz[index];
     firstTry = true;
     locked = false;
+    // この問題の計測スタート（画面には出さない）
+    if (typeof Stats !== "undefined" && Stats.lapStart) Stats.lapStart();
     $("qNum").textContent = index + 1;
     // おだい：「🐟 さかなの 『さ』」／すうじは「🔢 すうじの 『5』」
     $("promptWord").innerHTML =
@@ -433,6 +437,8 @@
       // ---- ほんものを 見破った！ ----
       locked = true;
       if (firstTry) score++;
+      // 1問ぶんの時間を記録する（画面には出さない。ok＝一発で見破れたか）
+      if (typeof Stats !== "undefined" && Stats.lap) Stats.lap(firstTry);
       card.classList.add("right");
       fb.textContent = firstTry ? "そう！それが ほんもの！🕵️" : "みつけたね！";
       fb.className = "feedback ok";
