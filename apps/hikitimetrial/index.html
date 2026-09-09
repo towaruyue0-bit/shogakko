@@ -238,6 +238,18 @@
         </button>
       </div>
 
+      <p class="pick-label">もんだいの じゅんばん をえらんでね</p>
+      <div class="picker" role="group" aria-label="出題順">
+        <button class="pill" data-order="random" aria-pressed="true">
+          <span class="big">🔀</span>
+          <span class="small">ランダム</span>
+        </button>
+        <button class="pill" data-order="seq" aria-pressed="false">
+          <span class="big">🔢</span>
+          <span class="small">じゅんばん</span>
+        </button>
+      </div>
+
       <div class="toggles">
         <button class="sound-toggle" id="soundToggle" aria-pressed="true">
           <span id="soundIcon">🔊</span> おと あり
@@ -298,11 +310,18 @@
   var TIME_LIMIT = 180; // 3分
   var mode = "all";
   var soundOn = true;
+  // 出題順: "random"（ばらばら）か "seq"（学校と同じ じゅんばん）。
+  // 前回えらんだものを ブラウザに保存しておき、次に開いたときも同じにする。
+  var ORDER_KEY = "hikitimetrial_order";
+  var order = "random";
+  try{ order = localStorage.getItem(ORDER_KEY) || "random"; }catch(e){}
 
   // ---------- 問題生成 ----------
   // 繰り下がりなし = 1けたどうしの ひきざんで 答えが 0いじょうになるもの。
   // a - b で a,b は 0〜9、a >= b のときだけ採用する（マイナスにならない）。
   // 1けた同士なので、この条件なら 繰り下がりは絶対に起きない。
+  // 並び順は 0-0, 1-0, 1-1, 2-0, 2-1, 2-2 … と、前の数→後ろの数の順に大きくなる。
+  // 「じゅんばん」モードでは この並びのまま出題する（シャッフルしない）。
   function buildProblems(m){
     var list = [];
     for (var a = 0; a <= 9; a++){
@@ -444,7 +463,9 @@
 
   function startGame(){
     if (ac && ac.state === "suspended") ac.resume();
-    problems = shuffle(buildProblems(mode));
+    // 「ランダム」ならシャッフル、「じゅんばん」なら作った順のまま出題する
+    problems = buildProblems(mode);
+    if (order === "random") problems = shuffle(problems);
     index = 0; solved = 0; remaining = TIME_LIMIT; locked = false;
     // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
     if (typeof Stats !== "undefined" && Stats.beginPlay) Stats.beginPlay();
@@ -534,14 +555,29 @@
   }
 
   // ---------- UI操作 ----------
-  Array.prototype.forEach.call(document.querySelectorAll(".pill"), function(pill){
+  // 問題数（data-mode）のピル。同じグループ内だけ 押した状態を切り替える
+  Array.prototype.forEach.call(document.querySelectorAll(".pill[data-mode]"), function(pill){
     pill.addEventListener("click", function(){
       mode = pill.dataset.mode;
-      document.querySelectorAll(".pill").forEach(function(p){
+      document.querySelectorAll(".pill[data-mode]").forEach(function(p){
         p.setAttribute("aria-pressed", p === pill ? "true" : "false");
       });
     });
   });
+  // 出題順（data-order）のピル。えらんだら保存して 次回も同じにする
+  function applyOrderUI(){
+    document.querySelectorAll(".pill[data-order]").forEach(function(p){
+      p.setAttribute("aria-pressed", p.dataset.order === order ? "true" : "false");
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".pill[data-order]"), function(pill){
+    pill.addEventListener("click", function(){
+      order = pill.dataset.order;
+      try{ localStorage.setItem(ORDER_KEY, order); }catch(e){}
+      applyOrderUI();
+    });
+  });
+  applyOrderUI();
   $("soundToggle").addEventListener("click", function(){
     soundOn = !soundOn;
     this.setAttribute("aria-pressed", soundOn ? "true" : "false");
