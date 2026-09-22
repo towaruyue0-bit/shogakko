@@ -163,6 +163,16 @@
       "visible": true
     },
     {
+      "id": "junbi",
+      "name": "じゅんび チェック",
+      "description": "おとまりや がっこうの もちものを チェックして わすれものゼロ！",
+      "icon": "🧳",
+      "color": "#f97316",
+      "url": "apps/junbi/",
+      "category": "せいかつ",
+      "visible": true
+    },
+    {
       "id": "hata",
       "name": "はたあげ ゲーム",
       "description": "みぎ・ひだりを おぼえよう",
