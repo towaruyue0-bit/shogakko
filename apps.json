@@ -10,7 +10,7 @@
       "color": "#a855f7",
       "url": "apps/asagao/",
       "category": "なつやすみ",
-      "visible": true
+      "visible": false
     },
     {
       "id": "nikki",
@@ -20,7 +20,7 @@
       "color": "#f59e0b",
       "url": "apps/nikki/",
       "category": "なつやすみ",
-      "visible": true
+      "visible": false
     },
     {
       "id": "sansu",
