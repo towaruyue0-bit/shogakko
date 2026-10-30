@@ -65,7 +65,7 @@
     {
       "id": "timetrial",
       "name": "たしざん タイムトライアル",
-      "description": "3ぷんで くりあがりなしの たしざんを ぜんもん とこう",
+      "description": "3ぷんで たしざんを ぜんもん とこう（くりあがり なし／あり）",
       "icon": "⏱️",
       "color": "#4db1ff",
       "url": "apps/timetrial/",

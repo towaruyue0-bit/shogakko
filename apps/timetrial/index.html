@@ -160,6 +160,7 @@
   .problem .eq{color:var(--ink-soft);}
   .slot{
     min-width:clamp(64px,20vw,96px);height:clamp(64px,20vw,96px);
+    padding:0 10px; /* 2けたの答え（11〜18）が入っても はみ出さないように */
     border-radius:22px;background:#eef5ff;
     display:flex;align-items:center;justify-content:center;
     color:var(--ink-soft);box-shadow:inset 0 3px 6px rgba(36,74,138,.12);
@@ -222,18 +223,30 @@
   <!-- ============ START ============ -->
   <section class="screen active" id="screen-start">
     <div class="start">
-      <span class="badge"><span class="dot"></span> くりあがり なし</span>
+      <span class="badge"><span class="dot"></span> <span id="badgeText">くりあがり なし</span></span>
       <h1>たしざん<br><span class="plus">タイムトライアル</span></h1>
       <p class="tagline">3ぷんで ぜんもん とけるかな？</p>
+
+      <p class="pick-label">くりあがり を えらんでね</p>
+      <div class="picker" role="group" aria-label="くりあがり">
+        <button class="pill" data-carry="no" aria-pressed="true">
+          <span class="big">3+4</span>
+          <span class="small">くりあがり なし</span>
+        </button>
+        <button class="pill" data-carry="yes" aria-pressed="false">
+          <span class="big">8+5</span>
+          <span class="small">くりあがり あり</span>
+        </button>
+      </div>
 
       <p class="pick-label">もんだいの かず をえらんでね</p>
       <div class="picker" role="group" aria-label="問題数">
         <button class="pill" data-mode="all" aria-pressed="true">
-          <span class="big">55</span>
+          <span class="big" id="countAll">55</span>
           <span class="small">ぜんぶ</span>
         </button>
         <button class="pill" data-mode="short" aria-pressed="false">
-          <span class="big">30</span>
+          <span class="big" id="countShort">30</span>
           <span class="small">みじかめ</span>
         </button>
       </div>
@@ -257,7 +270,7 @@
       </div>
 
       <button class="btn-go" id="startBtn">スタート</button>
-      <p class="hint">こたえは 0〜9 の ボタンを タップ！</p>
+      <p class="hint" id="hint">こたえは 0〜9 の ボタンを タップ！</p>
     </div>
   </section>
 
@@ -315,16 +328,28 @@
   var ORDER_KEY = "timetrial_order";
   var order = "random";
   try{ order = localStorage.getItem(ORDER_KEY) || "random"; }catch(e){}
+  // くりあがり: "no"（答えが 9 まで）か "yes"（答えが 11〜18）。
+  // こちらも前回えらんだものを保存しておく。
+  var CARRY_KEY = "timetrial_carry";
+  var carry = "no";
+  try{ carry = localStorage.getItem(CARRY_KEY) || "no"; }catch(e){}
 
   // ---------- 問題生成 ----------
   // 繰り上がりなし = a + b の答えが 9 以下（a,b は 0〜9）
+  // 繰り上がりあり = a,b とも 2〜9 で、答えが 11 以上（2+9, 3+8, 3+9 … 9+9 の 36問）。
+  //   ※ 1+9 や 2+8 のような「答えが ちょうど10」は「10になるたしざん」として
+  //     べつに ならうので、ここには入れない。
   // 並び順は 0+0, 0+1, 0+2 … 1+0, 1+1 … と、前の数→後ろの数の順に大きくなる。
   // 「じゅんばん」モードでは この並びのまま出題する（シャッフルしない）。
-  function buildProblems(m){
+  function buildProblems(m, c){
     var list = [];
     for (var a = 0; a <= 9; a++){
       for (var b = 0; b <= 9; b++){
-        if (a + b > 9) continue;
+        if (c === "yes"){
+          if (a < 2 || b < 2 || a + b < 11) continue;
+        } else {
+          if (a + b > 9) continue;
+        }
         if (m === "short" && a > b) continue; // 短めは順序なし（3+4のみ、4+3は省く）
         list.push({a:a, b:b, ans:a+b});
       }
@@ -342,6 +367,8 @@
   // ---------- 状態 ----------
   var problems = [], index = 0, solved = 0;
   var remaining = TIME_LIMIT, timerId = null, locked = false;
+  // いま打ちこんでいる途中の数字（くりあがりありは 2けたなので 1けたずつ ためる）
+  var typed = "";
 
   // ---------- DOM ----------
   var $ = function(id){ return document.getElementById(id); };
@@ -405,6 +432,7 @@
     $("b").textContent = p.b;
     var slot = $("slot");
     slot.textContent = "?";
+    typed = "";
     $("problem").classList.remove("correct");
   }
   function updateHud(){
@@ -425,26 +453,13 @@
   function answer(value, btn){
     if (locked) return;
     var p = problems[index];
-    if (value === p.ans){
-      locked = true;
-      solved++;
-      // 1問ぶんの時間を記録する（画面には出さない）
-      if (typeof Stats !== "undefined" && Stats.lap) Stats.lap();
-      var slot = $("slot");
-      slot.textContent = p.ans;
-      $("problem").classList.add("correct");
-      updateHud();
-      soundCorrect();
-      if (solved >= problems.length){
-        setTimeout(function(){ clearInterval(timerId); finish(true); }, 320);
-        return;
-      }
-      setTimeout(function(){
-        index++;
-        renderProblem();
-        locked = false;
-      }, 300);
-    } else {
+    var ansStr = String(p.ans);
+    // 1けたずつ受け取る。くりあがりありの答え（11〜18）は 2回タップする。
+    // 途中でまちがった数字を押したら その場で「ちがう」と知らせて、最初からやり直し。
+    typed += value;
+    if (ansStr.indexOf(typed) !== 0){
+      typed = "";
+      $("slot").textContent = "?";
       soundWrong();
       if (btn){
         btn.classList.add("wrong");
@@ -453,13 +468,39 @@
       var prob = $("problem");
       prob.classList.add("shake");
       setTimeout(function(){ prob.classList.remove("shake"); }, 400);
+      return;
     }
+    if (typed.length < ansStr.length){
+      // まだ途中（たとえば「1」だけ）。スロットに表示して 次の数字を待つ
+      $("slot").textContent = typed;
+      beep(520, 0.06, "triangle");
+      return;
+    }
+    // ぜんぶの けたが合った → せいかい
+    typed = "";
+    locked = true;
+    solved++;
+    // 1問ぶんの時間を記録する（画面には出さない）
+    if (typeof Stats !== "undefined" && Stats.lap) Stats.lap();
+    $("slot").textContent = p.ans;
+    $("problem").classList.add("correct");
+    updateHud();
+    soundCorrect();
+    if (solved >= problems.length){
+      setTimeout(function(){ clearInterval(timerId); finish(true); }, 320);
+      return;
+    }
+    setTimeout(function(){
+      index++;
+      renderProblem();
+      locked = false;
+    }, 300);
   }
 
   function startGame(){
     if (ac && ac.state === "suspended") ac.resume();
     // 「ランダム」ならシャッフル、「じゅんばん」なら作った順のまま出題する
-    problems = buildProblems(mode);
+    problems = buildProblems(mode, carry);
     if (order === "random") problems = shuffle(problems);
     index = 0; solved = 0; remaining = TIME_LIMIT; locked = false;
     // かかった時間の計測を始める（画面には出さない。管理ツール用の記録）
@@ -573,6 +614,27 @@
     });
   });
   applyOrderUI();
+  // くりあがり（data-carry）のピル。えらんだら保存し、バッジ・問題数・ヒントも書きかえる
+  function applyCarryUI(){
+    document.querySelectorAll(".pill[data-carry]").forEach(function(p){
+      p.setAttribute("aria-pressed", p.dataset.carry === carry ? "true" : "false");
+    });
+    var yes = carry === "yes";
+    $("badgeText").textContent = yes ? "くりあがり あり" : "くりあがり なし";
+    $("countAll").textContent = buildProblems("all", carry).length;
+    $("countShort").textContent = buildProblems("short", carry).length;
+    $("hint").textContent = yes
+      ? "こたえが 13 なら 1 → 3 の じゅんに タップ！"
+      : "こたえは 0〜9 の ボタンを タップ！";
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".pill[data-carry]"), function(pill){
+    pill.addEventListener("click", function(){
+      carry = pill.dataset.carry;
+      try{ localStorage.setItem(CARRY_KEY, carry); }catch(e){}
+      applyCarryUI();
+    });
+  });
+  applyCarryUI();
   $("soundToggle").addEventListener("click", function(){
     soundOn = !soundOn;
     this.setAttribute("aria-pressed", soundOn ? "true" : "false");
